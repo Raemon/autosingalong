@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
+    "dev:turbo": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -14,6 +15,7 @@
     "lodash": "^4.17.21",
     "next": "15.1.2",
     "opensheetmusicdisplay": "^1.9.2",
+    "pdf-to-png-converter": "^3.10.0",
     "pdfjs-dist": "^5.4.296",
     "pptxgenjs": "^3.12.0",
     "react": "^19.0.0",

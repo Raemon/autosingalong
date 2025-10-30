@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 type ConversionState = 'idle' | 'converting' | 'success' | 'error';
 
-type ConversionStatus = {
+export type ConversionStatus = {
   state: ConversionState;
   error: string | null;
   fileName: string | null;
@@ -34,7 +34,13 @@ export const usePdfToLilypond = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const contentType = response.headers.get('content-type');
+        let errorData;
+        if (contentType && contentType.includes('application/json')) {
+          errorData = await response.json();
+        } else {
+          throw new Error(`Conversion failed: ${response.status} ${response.statusText}`);
+        }
         throw new Error(errorData.details || errorData.error || 'Conversion failed');
       }
 

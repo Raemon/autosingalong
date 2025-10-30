@@ -1,10 +1,61 @@
 import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { getDocument } from 'pdfjs-dist';
+// @ts-ignore - canvas doesn't have types
+import canvas from 'canvas';
 
-// Configure PDF.js to work in Node environment
-const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
+const { createCanvas, DOMMatrix } = canvas;
+
+// Polyfill DOMMatrix for Node.js environment
+if (typeof globalThis.DOMMatrix === 'undefined' && DOMMatrix) {
+  globalThis.DOMMatrix = DOMMatrix;
+}
+
+// Use dynamic import for pdfjs-dist to avoid issues with ESM
+let pdfjsLib: any;
+async function getPdfjsLib() {
+  if (!pdfjsLib) {
+    // Use legacy build which is designed for Node.js and doesn't require workers
+    pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    // Set workerSrc - required even with disableWorker: true
+    // We use a dummy path since the worker won't actually be used
+    if (pdfjsLib.GlobalWorkerOptions) {
+      try {
+        // Try to resolve the actual worker path from node_modules
+        const workerPath = require.resolve('pdfjs-dist/legacy/build/pdf.worker.mjs');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = workerPath;
+      } catch (e) {
+        // Fallback to a dummy value - with disableWorker: true, it won't be loaded anyway
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '//fake-worker-path';
+      }
+    }
+  }
+  return pdfjsLib;
+}
+
+// NodeCanvasFactory for pdfjs to work with node-canvas
+class NodeCanvasFactory {
+  create(width: number, height: number) {
+    const canvas = createCanvas(width, height);
+    const context = canvas.getContext('2d');
+    return {
+      canvas,
+      context,
+    };
+  }
+
+  reset(canvasAndContext: any, width: number, height: number) {
+    canvasAndContext.canvas.width = width;
+    canvasAndContext.canvas.height = height;
+  }
+
+  destroy(canvasAndContext: any) {
+    canvasAndContext.canvas.width = 0;
+    canvasAndContext.canvas.height = 0;
+    canvasAndContext.canvas = null;
+    canvasAndContext.context = null;
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -23,25 +74,56 @@ export async function POST(request: Request) {
 
     // Read PDF file
     const arrayBuffer = await file.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
+    const data = new Uint8Array(arrayBuffer);
+
+    // Load PDF.js library
+    const pdfjs = await getPdfjsLib();
 
     // Load PDF document
-    const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
+    const canvasFactory = new NodeCanvasFactory();
+    const loadingTask = pdfjs.getDocument({ 
+      data,
+      canvasFactory,
+      disableWorker: true,
+      useWorkerFetch: false,
+      isEvalSupported: false,
+      useSystemFonts: true,
+    });
     const pdfDocument = await loadingTask.promise;
     const numPages = pdfDocument.numPages;
 
-    // Extract all pages as images concurrently
-    const pagePromises = [];
-    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-      pagePromises.push(extractPageAsBase64(pdfDocument, pageNum));
-    }
-    const pageImages = await Promise.all(pagePromises);
+    // Convert all pages to PNG images concurrently
+    const pagePromises = Array.from({ length: numPages }, async (_, index: number) => {
+      const pageNumber = index + 1;
+      const page = await pdfDocument.getPage(pageNumber);
+      
+      // Set viewport scale
+      const viewport = page.getViewport({ scale: 2.0 });
+      
+      // Create canvas using the factory
+      const canvasAndContext = canvasFactory.create(viewport.width, viewport.height);
+      
+      // Render PDF page to canvas
+      const renderContext = {
+        canvasContext: canvasAndContext.context,
+        viewport: viewport,
+        canvas: canvasAndContext.canvas,
+      };
+      await page.render(renderContext).promise;
+      
+      // Convert canvas to PNG buffer
+      const buffer = canvasAndContext.canvas.toBuffer('image/png');
+      return buffer.toString('base64');
+    });
+
+    const pageImages: string[] = await Promise.all(pagePromises);
 
     // Send all pages to OpenRouter concurrently
     const openRouterKey = process.env.OPENROUTER_API_KEY;
     if (!openRouterKey) {
       return NextResponse.json({ error: 'OpenRouter API key not configured' }, { status: 500 });
     }
+    console.log('openRouterKey', openRouterKey);
 
     const conversionPromises = pageImages.map((imageBase64, index) => 
       convertPageToLilypond(imageBase64, index + 1, numPages, openRouterKey)
@@ -74,27 +156,6 @@ export async function POST(request: Request) {
   }
 }
 
-async function extractPageAsBase64(pdfDocument: any, pageNum: number): Promise<string> {
-  const page = await pdfDocument.getPage(pageNum);
-  const viewport = page.getViewport({ scale: 2.0 });
-
-  // Create canvas
-  const { createCanvas } = require('canvas');
-  const canvas = createCanvas(viewport.width, viewport.height);
-  const context = canvas.getContext('2d');
-
-  // Render page to canvas
-  const renderContext = {
-    canvasContext: context,
-    viewport: viewport,
-  };
-  await page.render(renderContext).promise;
-
-  // Convert to base64 PNG
-  const base64 = canvas.toDataURL('image/png').split(',')[1];
-  return base64;
-}
-
 async function convertPageToLilypond(
   imageBase64: string, 
   pageNum: number, 
@@ -113,7 +174,7 @@ async function convertPageToLilypond(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'google/gemini-flash-1.5-8b',
+      model: 'google/gemini-2.5-flash',
       messages: [
         {
           role: 'user',
@@ -171,7 +232,7 @@ function stitchLilypondPages(pages: string[]): string {
   }
 
   // Extract header block
-  const headerMatch = firstPageMusic.match(/\\header\s*\{[^}]*\}/s);
+  const headerMatch = firstPageMusic.match(/\\header\s*\{[\s\S]*?\}/);
   if (headerMatch) {
     header = headerMatch[0] + '\n\n';
     firstPageMusic = firstPageMusic.replace(headerMatch[0], '').trim();
@@ -186,7 +247,7 @@ function stitchLilypondPages(pages: string[]): string {
     const combinedMusic = musicBlocks.join('\n');
     
     // Reconstruct with merged music
-    const layoutMatch = firstPageMusic.match(/\\layout\s*\{[^}]*\}/s);
+    const layoutMatch = firstPageMusic.match(/\\layout\s*\{[\s\S]*?\}/);
     const layout = layoutMatch ? '\n  ' + layoutMatch[0] : '';
     
     return `${version}${header}\\score {\n  {\n${combinedMusic}\n  }${layout}\n}`;
@@ -196,7 +257,7 @@ function stitchLilypondPages(pages: string[]): string {
       if (index === 0) return firstPageMusic;
       // Strip any headers/versions from subsequent pages
       let cleaned = page.replace(/\\version\s+"[^"]+"\s*/g, '');
-      cleaned = cleaned.replace(/\\header\s*\{[^}]*\}\s*/gs, '');
+      cleaned = cleaned.replace(/\\header\s*\{[\s\S]*?\}\s*/g, '');
       return cleaned.trim();
     }).join('\n\n');
     
@@ -207,14 +268,14 @@ function stitchLilypondPages(pages: string[]): string {
 function extractMusicFromScore(page: string): string {
   // Remove version and header
   let cleaned = page.replace(/\\version\s+"[^"]+"\s*/g, '');
-  cleaned = cleaned.replace(/\\header\s*\{[^}]*\}\s*/gs, '');
+  cleaned = cleaned.replace(/\\header\s*\{[\s\S]*?\}\s*/g, '');
   
   // Try to extract content within \score { ... }
   const scoreMatch = cleaned.match(/\\score\s*\{([\s\S]*)\}/);
   if (scoreMatch) {
     let scoreContent = scoreMatch[1].trim();
     // Remove layout block
-    scoreContent = scoreContent.replace(/\\layout\s*\{[^}]*\}\s*/gs, '');
+    scoreContent = scoreContent.replace(/\\layout\s*\{[\s\S]*?\}\s*/g, '');
     // Remove outer braces if present
     scoreContent = scoreContent.replace(/^\{\s*/, '').replace(/\s*\}$/, '');
     return '    ' + scoreContent.trim().split('\n').join('\n    ');
