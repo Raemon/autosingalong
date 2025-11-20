@@ -52,6 +52,15 @@ export async function GET(request: Request) {
             },
           });
         }
+        // For Lilypond files, return as plain text to avoid backslash escaping
+        if (lowerFileName.endsWith('.ly')) {
+          const content = await fs.readFile(filePath, 'utf-8');
+          return new NextResponse(content, {
+            headers: {
+              'Content-Type': 'text/plain; charset=utf-8',
+            },
+          });
+        }
         // For binary files (like .mscz), return as blob
         if (binary === 'true' || fileName.toLowerCase().endsWith('.mscz')) {
           const content = await fs.readFile(filePath);

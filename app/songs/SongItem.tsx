@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import SheetMusicViewer from './SheetMusicViewer';
 import PDFViewer from './PDFViewer';
+import LilypondViewer from './LilypondViewer';
 import { usePdfToLilypond } from './usePdfToLilypond';
 
 type Song = {
@@ -26,6 +27,10 @@ const isMusicScoreFile = (fileName: string): boolean => {
 
 const isPDFFile = (fileName: string): boolean => {
   return fileName.toLowerCase().endsWith('.pdf');
+};
+
+const isLilypondFile = (fileName: string): boolean => {
+  return fileName.toLowerCase().endsWith('.ly');
 };
 
 // Formatting utilities
@@ -82,6 +87,10 @@ const FileContentRenderer = ({fileName, isLoading, content, songName}: {fileName
   
   if (isMusicScoreFile(fileName)) {
     return <SheetMusicViewer musicXml={content} />;
+  }
+  
+  if (isLilypondFile(fileName)) {
+    return <LilypondViewer lilypondContent={content} />;
   }
   
   return <pre className="text-gray-800 text-xs overflow-x-auto whitespace-pre-wrap break-words">{content}</pre>;
@@ -189,6 +198,12 @@ const SongItem = ({song, onRefreshSongs, renderName, renderFiles}: {
         }
         const mxmlContent = await convertResponse.text();
         setFileContents(prev => ({ ...prev, [fileKey]: mxmlContent }));
+      } else if (isLilypondFile(fileName)) {
+        // For Lilypond files, fetch as plain text to avoid backslash escaping
+        const response = await fetch(`/api/songs?song=${encodeURIComponent(song.name)}&file=${encodeURIComponent(fileName)}`);
+        if (!response.ok) throw new Error('Failed to fetch file content');
+        const content = await response.text();
+        setFileContents(prev => ({ ...prev, [fileKey]: content }));
       } else {
         // For other files, fetch content normally
         const response = await fetch(`/api/songs?song=${encodeURIComponent(song.name)}&file=${encodeURIComponent(fileName)}`);
@@ -219,6 +234,7 @@ const SongItem = ({song, onRefreshSongs, renderName, renderFiles}: {
       setExpandedFiles(newExpandedFiles);
 
       // Skip fetching content for audio and PDF files (they'll be loaded directly via src)
+      // Fetch content for Lilypond files since we need to convert them
       const needsContentFetch = !isAudioFile(fileName) && !isPDFFile(fileName);
       
       if (needsContentFetch && !fileContents[fileKey]) {
@@ -243,7 +259,7 @@ const SongItem = ({song, onRefreshSongs, renderName, renderFiles}: {
 
   if (renderName) {
     return (
-      <div className="px-2 py-1 text-base font-medium border-b border-gray-200">
+      <div className="px-2 py-1 text-base font-medium border-b border-gray-200 font-georgia">
         {song.name.replace(/_/g, ' ')}
       </div>
     );

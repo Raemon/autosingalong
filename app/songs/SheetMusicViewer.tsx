@@ -26,6 +26,7 @@ const SheetMusicViewer = ({musicXml}:{musicXml: string | undefined}) => {
 
         // Load and render the MusicXML
         await osmdRef.current.load(musicXml);
+        osmdRef.current.zoom = 0.75;
         osmdRef.current.render();
       } catch (error) {
         console.error('Error rendering sheet music:', error);

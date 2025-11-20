@@ -28,3 +28,11 @@ body {
 .animate-shimmer {
   animation: shimmer 2s infinite;
 }
+
+.font-georgia {
+  font-family: 'Georgia', serif;
+}
+
+.text-sm {
+  font-size: 12px;
+}

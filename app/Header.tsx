@@ -1,0 +1,17 @@
+import Link from 'next/link';
+
+const Header = () => {
+  return (
+    <header className="px-4 py-3 flex items-center justify-between">
+      <h1 className="font-georgia text-2xl">Secular Solstice</h1>
+      <nav className="flex gap-6">
+        <Link href="/" className="hover:underline">Home</Link>
+        <Link href="/songs" className="hover:underline">Songs</Link>
+        <Link href="/slides" className="hover:underline">Slides</Link>
+      </nav>
+    </header>
+  );
+};
+
+export default Header;
+
