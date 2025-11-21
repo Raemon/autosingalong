@@ -1,17 +1,18 @@
 import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
-// @ts-ignore - canvas doesn't have types
 import canvas from 'canvas';
 
 const { createCanvas, DOMMatrix } = canvas;
 
 // Polyfill DOMMatrix for Node.js environment
 if (typeof globalThis.DOMMatrix === 'undefined' && DOMMatrix) {
+  // @ts-expect-error - DOMMatrix types may not match exactly between canvas and globalThis
   globalThis.DOMMatrix = DOMMatrix;
 }
 
 // Use dynamic import for pdfjs-dist to avoid issues with ESM
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let pdfjsLib: any;
 async function getPdfjsLib() {
   if (!pdfjsLib) {
@@ -24,7 +25,7 @@ async function getPdfjsLib() {
         // Try to resolve the actual worker path from node_modules
         const workerPath = require.resolve('pdfjs-dist/legacy/build/pdf.worker.mjs');
         pdfjsLib.GlobalWorkerOptions.workerSrc = workerPath;
-      } catch (e) {
+      } catch {
         // Fallback to a dummy value - with disableWorker: true, it won't be loaded anyway
         pdfjsLib.GlobalWorkerOptions.workerSrc = '//fake-worker-path';
       }
@@ -44,11 +45,13 @@ class NodeCanvasFactory {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   reset(canvasAndContext: any, width: number, height: number) {
     canvasAndContext.canvas.width = width;
     canvasAndContext.canvas.height = height;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   destroy(canvasAndContext: any) {
     canvasAndContext.canvas.width = 0;
     canvasAndContext.canvas.height = 0;

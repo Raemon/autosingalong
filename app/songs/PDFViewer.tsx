@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 const PDFViewer = ({fileUrl}:{fileUrl: string}) => {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [ReactPDF, setReactPDF] = useState<any>(null);
 
   useEffect(() => {
@@ -15,7 +16,7 @@ const PDFViewer = ({fileUrl}:{fileUrl: string}) => {
         // Configure PDF.js worker
         pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
         setReactPDF({ Document, Page });
-      } catch (err) {
+      } catch {
         setError('Failed to load PDF viewer');
       }
     };

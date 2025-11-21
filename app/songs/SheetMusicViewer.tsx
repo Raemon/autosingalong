@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 
 const SheetMusicViewer = ({musicXml}:{musicXml: string | undefined}) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const osmdRef = useRef<any>(null);
 
   useEffect(() => {

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import LilypondViewer from '../songs/LilypondViewer';
 
 const TestLilypondPage = () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

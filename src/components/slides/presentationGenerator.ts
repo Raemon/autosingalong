@@ -1,8 +1,9 @@
 import { parseHTMLContent, groupIntoSlides, extractFrames, invertImage } from './utils';
-import { StatusType, Slide } from './types';
+import { StatusType } from './types';
 
 // Generate PowerPoint presentation from video and HTML content
 export async function generatePresentation(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   PptxGenJS: any,
   videoFile: File | null,
   videoElement: HTMLVideoElement | null,

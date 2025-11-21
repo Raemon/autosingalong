@@ -8,6 +8,7 @@ const Header = () => {
         <Link href="/" className="hover:underline">Home</Link>
         <Link href="/songs" className="hover:underline">Songs</Link>
         <Link href="/slides" className="hover:underline">Slides</Link>
+        <Link href="/chord-player" className="hover:underline">Chord Player</Link>
       </nav>
     </header>
   );

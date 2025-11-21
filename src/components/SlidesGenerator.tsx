@@ -135,12 +135,8 @@ const SlidesGenerator = () => {
   }, [videoFile, videoElement, htmlContent, linesPerSlide, extractedFrames]);
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600 p-4">
-      <h3 className="text-center text-white text-base font-semibold mb-5">HTML to Presentation Generator</h3>
-      
-      <div className="max-w-[1600px] mx-auto bg-white rounded-2xl shadow-2xl p-12 relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-600" />
-        
+    <div className="p-4">
+      <div className="max-w-[1600px] mx-auto">
         <VideoUploader onVideoLoad={handleVideoLoad} />
         
         <ContentEditor htmlContent={htmlContent} setHtmlContent={setHtmlContent} rawHtml={rawHtml} slides={slides} extractedFrames={extractedFrames} onPaste={handlePaste} />
