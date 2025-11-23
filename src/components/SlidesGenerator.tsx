@@ -5,6 +5,7 @@ import VideoUploader from './slides/VideoUploader';
 import ContentEditor from './slides/ContentEditor';
 import SettingsPanel from './slides/SettingsPanel';
 import GenerateButton from './slides/GenerateButton';
+import DownloadButton from './slides/DownloadButton';
 import ProgressBar from './slides/ProgressBar';
 import StatusMessage from './slides/StatusMessage';
 import { parseHTMLContent, groupIntoSlides } from './slides/utils';
@@ -32,6 +33,8 @@ const SlidesGenerator = () => {
   const [showProgress, setShowProgress] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [frameExtractionInProgress, setFrameExtractionInProgress] = useState(false);
+  const [generatedPresentation, setGeneratedPresentation] = useState<AnyBecauseLibrary | null>(null);
+  const [presentationFileName, setPresentationFileName] = useState<string>('');
   
   // Load PptxGenJS on mount and restore from localStorage
   useEffect(() => {
@@ -131,8 +134,20 @@ const SlidesGenerator = () => {
   
   // Generate presentation
   const generatePresentation = useCallback(async () => {
-    await createPresentation(PptxGenJS, videoFile, videoElement, htmlContent, linesPerSlide, extractedFrames, showStatus, updateProgress, setIsGenerating, setShowProgress);
+    const result = await createPresentation(PptxGenJS, videoFile, videoElement, htmlContent, linesPerSlide, extractedFrames, showStatus, updateProgress, setIsGenerating, setShowProgress);
+    if (result) {
+      setGeneratedPresentation(result.pres);
+      setPresentationFileName(result.fileName);
+    }
   }, [videoFile, videoElement, htmlContent, linesPerSlide, extractedFrames]);
+  
+  // Download previously generated presentation
+  const downloadPresentation = useCallback(async () => {
+    if (generatedPresentation && presentationFileName) {
+      await generatedPresentation.writeFile({ fileName: presentationFileName });
+      showStatus('Presentation downloaded!', 'success');
+    }
+  }, [generatedPresentation, presentationFileName]);
   
   return (
     <div className="p-4">
@@ -144,6 +159,10 @@ const SlidesGenerator = () => {
         <SettingsPanel linesPerSlide={linesPerSlide} setLinesPerSlide={setLinesPerSlide} />
         
         <GenerateButton onClick={generatePresentation} disabled={!videoFile || !htmlContent.trim() || isGenerating} isGenerating={isGenerating} />
+        
+        {generatedPresentation && presentationFileName && (
+          <DownloadButton onClick={downloadPresentation} fileName={presentationFileName} />
+        )}
         
         <ProgressBar percent={progressPercent} text={progressText} show={showProgress} />
         

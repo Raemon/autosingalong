@@ -1,10 +1,13 @@
 import { parseHTMLContent, groupIntoSlides, extractFrames, invertImage } from './utils';
 import { StatusType } from './types';
+import type { default as PptxGenJSInstance } from 'pptxgenjs';
+
+type PptxGenJSConstructor = new () => PptxGenJSInstance;
+type PresentationResult = { pres: PptxGenJSInstance, fileName: string };
 
 // Generate PowerPoint presentation from video and HTML content
 export async function generatePresentation(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  PptxGenJS: any,
+  PptxGenJS: PptxGenJSConstructor | null,
   videoFile: File | null,
   videoElement: HTMLVideoElement | null,
   htmlContent: string,
@@ -14,22 +17,22 @@ export async function generatePresentation(
   updateProgress: (percent: number, text: string) => void,
   setIsGenerating: (generating: boolean) => void,
   setShowProgress: (show: boolean) => void
-): Promise<void> {
+): Promise<PresentationResult | null> {
   if (!PptxGenJS) {
     showStatus('PptxGenJS library not loaded yet. Please try again.', 'error');
-    return;
+    return null;
   }
   
   try {
     // Validate inputs
     if (!videoFile) {
       showStatus('Please upload an MP4 video file', 'error');
-      return;
+      return null;
     }
     
     if (!htmlContent.trim()) {
       showStatus('Please paste formatted content', 'error');
-      return;
+      return null;
     }
     
     setIsGenerating(true);
@@ -46,7 +49,7 @@ export async function generatePresentation(
       showStatus('No content found to create slides', 'error');
       setIsGenerating(false);
       setShowProgress(false);
-      return;
+      return null;
     }
     
     // Use cached frames or extract new ones if needed
@@ -174,7 +177,8 @@ export async function generatePresentation(
     // Save presentation
     updateProgress(95, 'Saving presentation...');
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-    await pres.writeFile({ fileName: `presentation-${timestamp}.pptx` });
+    const fileName = `presentation-${timestamp}.pptx`;
+    await pres.writeFile({ fileName });
     
     updateProgress(100, 'Complete!');
     showStatus(`Successfully created presentation with ${slidesList.length} slides!`, 'success');
@@ -185,11 +189,14 @@ export async function generatePresentation(
       setShowProgress(false);
     }, 2000);
     
+    return { pres, fileName };
+    
   } catch (error) {
     console.error('Error generating presentation:', error);
     showStatus(`Error: ${(error as Error).message}`, 'error');
     setIsGenerating(false);
     setShowProgress(false);
+    return null;
   }
 }
 

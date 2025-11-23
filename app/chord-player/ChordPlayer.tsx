@@ -2,6 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 
+type ToneModule = typeof import('tone');
+type PolySynthInstance = import('tone').PolySynth;
+
 const ChordPlayer = () => {
   const [chordChart, setChordChart] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -9,9 +12,9 @@ const ChordPlayer = () => {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentChord, setCurrentChord] = useState<string | null>(null);
-  const synthRef = useRef<any>(null);
+  const synthRef = useRef<PolySynthInstance | null>(null);
   const scheduledEventsRef = useRef<number[]>([]);
-  const ToneRef = useRef<any>(null);
+  const ToneRef = useRef<ToneModule | null>(null);
   const chordTimelineRef = useRef<Array<{ chord: string; startTime: number; endTime: number }>>([]);
   const playbackStartTimeRef = useRef<number>(0);
   const updateIntervalRef = useRef<number | null>(null);
