@@ -25,7 +25,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ songs });
   } catch (error) {
     console.error('Failed to load songs from database:', error);
-    return NextResponse.json({ error: 'Failed to load songs' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error('Error details:', { errorMessage, errorStack, hasDatabaseUrl: !!process.env.DATABASE_URL });
+    return NextResponse.json({ 
+      error: 'Failed to load songs',
+      details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+    }, { status: 500 });
   }
 }
 
