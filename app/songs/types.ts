@@ -4,6 +4,8 @@ export type SongVersion = {
   content: string | null;
   audioUrl: string | null;
   previousVersionId: string | null;
+  nextVersionId: string | null;
+  originalVersionId: string | null;
   createdAt: string;
 };
 
