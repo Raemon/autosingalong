@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import SearchInput from './SearchInput';
 import SongList from './SongList';
 import VersionDetailPanel from './VersionDetailPanel';
+import CreateVersionForm from './CreateVersionForm';
 import type { Song, SongVersion } from './types';
 
 const SongsFileList = () => {
@@ -18,6 +19,10 @@ const SongsFileList = () => {
   const [isCreatingVersion, setIsCreatingVersion] = useState(false);
   const [newVersionForm, setNewVersionForm] = useState({ label: '', content: '', audioUrl: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCreatingSong, setIsCreatingSong] = useState(false);
+  const [newSongTitle, setNewSongTitle] = useState('');
+  const [isSubmittingSong, setIsSubmittingSong] = useState(false);
+  const [creatingVersionForSong, setCreatingVersionForSong] = useState<Song | null>(null);
 
   const fetchSongs = async () => {
     console.log('fetchSongs called');
@@ -96,8 +101,17 @@ const SongsFileList = () => {
     });
   };
 
+  const handleCreateNewVersionForSong = (song: Song) => {
+    setCreatingVersionForSong(song);
+    setSelectedVersion(null);
+    setPreviousVersions([]);
+    setIsCreatingVersion(true);
+    setNewVersionForm({ label: '', content: '', audioUrl: '' });
+  };
+
   const handleCancelCreateVersion = () => {
     setIsCreatingVersion(false);
+    setCreatingVersionForSong(null);
     setNewVersionForm({ label: '', content: '', audioUrl: '' });
   };
 
@@ -113,15 +127,15 @@ const SongsFileList = () => {
   };
 
   const handleSubmitVersion = async () => {
-    if (!selectedVersion) return;
+    if (!selectedVersion && !creatingVersionForSong) return;
     
     if (!newVersionForm.label.trim()) {
       setError('Label is required');
       return;
     }
     
-    const songId = (selectedVersion as SongVersion & { songId: string }).songId || songs.find(song => 
-      song.versions.some(v => v.id === selectedVersion.id)
+    const songId = creatingVersionForSong?.id || (selectedVersion as SongVersion & { songId: string }).songId || songs.find(song => 
+      song.versions.some(v => v.id === selectedVersion!.id)
     )?.id;
     
     if (!songId) {
@@ -143,7 +157,7 @@ const SongsFileList = () => {
           label: newVersionForm.label,
           content: newVersionForm.content || null,
           audioUrl: newVersionForm.audioUrl || null,
-          previousVersionId: selectedVersion.id,
+          previousVersionId: selectedVersion?.id || null,
         }),
       });
 
@@ -154,6 +168,7 @@ const SongsFileList = () => {
 
       const data = await response.json();
       setIsCreatingVersion(false);
+      setCreatingVersionForSong(null);
       setNewVersionForm({ label: '', content: '', audioUrl: '' });
       
       const oldSelectedVersion = selectedVersion;
@@ -168,6 +183,38 @@ const SongsFileList = () => {
       setError(err instanceof Error ? err.message : 'Failed to create version');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateSong = async () => {
+    if (!newSongTitle.trim()) {
+      setError('Song title is required');
+      return;
+    }
+    
+    setIsSubmittingSong(true);
+    setError(null);
+    
+    try {
+      const response = await fetch('/api/songs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newSongTitle.trim() }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create song');
+      }
+
+      setIsCreatingSong(false);
+      setNewSongTitle('');
+      await fetchSongs();
+    } catch (err) {
+      console.error('Error creating song:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create song');
+    } finally {
+      setIsSubmittingSong(false);
     }
   };
 
@@ -195,15 +242,42 @@ const SongsFileList = () => {
     <div className="min-h-screen p-4">
       <div className="flex gap-4 h-[calc(100vh-2rem)] mx-auto max-w-6xl">
         <div className="flex-1 overflow-y-auto max-w-md">
-          <SearchInput
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-          />
+          <div className="flex gap-2 items-center mb-3">
+            <SearchInput
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+            />
+            <button
+              onClick={() => setIsCreatingSong(!isCreatingSong)}
+              className="text-xs px-2 py-1 bg-blue-600 text-white whitespace-nowrap"
+            >
+              + Song
+            </button>
+          </div>
+          {isCreatingSong && (
+            <div className="flex gap-2 items-center mb-3">
+              <input
+                type="text"
+                value={newSongTitle}
+                onChange={(e) => setNewSongTitle(e.target.value)}
+                placeholder="Song title"
+                className="flex-1 px-2 py-1 text-sm"
+                onKeyDown={(e) => e.key === 'Enter' && handleCreateSong()}
+              />
+              <button onClick={handleCreateSong} disabled={isSubmittingSong} className="text-xs px-2 py-1 bg-green-600 text-white disabled:opacity-50">
+                {isSubmittingSong ? '...' : 'Create'}
+              </button>
+              <button onClick={() => { setIsCreatingSong(false); setNewSongTitle(''); }} className="text-xs px-2 py-1 text-gray-600">
+                Cancel
+              </button>
+            </div>
+          )}
           
           <SongList
             songs={filteredSongs}
             selectedVersionId={selectedVersion?.id}
             onVersionClick={handleVersionClick}
+            onCreateNewVersion={handleCreateNewVersionForSong}
           />
         </div>
         
@@ -224,6 +298,26 @@ const SongsFileList = () => {
             onFormChange={handleFormChange}
             onSubmitVersion={handleSubmitVersion}
           />
+        )}
+        {creatingVersionForSong && !selectedVersion && (
+          <div className="border-l border-gray-200 pl-4 overflow-y-auto w-full max-w-xl">
+            <div className="mb-2">
+              <div className="flex items-start justify-between mb-2">
+                <button onClick={handleCancelCreateVersion} className="text-gray-400 text-xs">× Close</button>
+              </div>
+              <h3 className="font-mono text-sm font-medium text-gray-800 mb-1">
+                New version for: {creatingVersionForSong.title.replace(/_/g, ' ')}
+              </h3>
+            </div>
+            <CreateVersionForm
+              form={newVersionForm}
+              onFormChange={handleFormChange}
+              onSubmit={handleSubmitVersion}
+              onCancel={handleCancelCreateVersion}
+              isSubmitting={isSubmitting}
+              error={error}
+            />
+          </div>
         )}
       </div>
     </div>

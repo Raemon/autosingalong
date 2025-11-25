@@ -35,7 +35,7 @@ const VersionDetailPanel = ({version, previousVersions, isExpandedPreviousVersio
             className="text-gray-600 text-xs"
             disabled={isSubmitting}
           >
-            {isCreatingVersion ? 'Cancel' : 'Create New Version'}
+            {isCreatingVersion ? 'Cancel' : 'Edit'}
           </button>
         </div>
         <h3 className="font-mono text-sm font-medium text-gray-800 mb-1">
@@ -54,7 +54,6 @@ const VersionDetailPanel = ({version, previousVersions, isExpandedPreviousVersio
         />
       ) : (
         <>
-          <VersionMetadata version={version} />
           <PreviousVersionsList
             previousVersions={previousVersions}
             isExpanded={isExpandedPreviousVersions}
@@ -62,6 +61,7 @@ const VersionDetailPanel = ({version, previousVersions, isExpandedPreviousVersio
             onVersionClick={onVersionClick}
           />
           <VersionContent version={version} />
+          <VersionMetadata version={version} />
         </>
       )}
     </div>

@@ -4,7 +4,7 @@ const VersionMetadata = ({version}: {
   version: SongVersion & { songId?: string; nextVersionId?: string | null; originalVersionId?: string | null };
 }) => {
   return (
-    <div className="mb-3 space-y-1 text-xs">
+    <div className="mt-5 space-y-1 text-xs opacity-40">
       <div className="text-gray-600">ID: <span className="font-mono text-gray-800">{version.id}</span></div>
       {version.songId && <div className="text-gray-600">Song ID: <span className="font-mono text-gray-800">{version.songId}</span></div>}
       <div className="text-gray-600">Created: <span className="text-gray-800">{new Date(version.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span></div>

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { findVersionBySongTitleAndLabel, listSongsWithVersions } from '@/lib/songsRepository';
+import { createSong, findVersionBySongTitleAndLabel, listSongsWithVersions } from '@/lib/songsRepository';
 
 export async function GET(request: Request) {
   try {
@@ -30,6 +30,27 @@ export async function GET(request: Request) {
     console.error('Error details:', { errorMessage, errorStack, hasDatabaseUrl: !!process.env.DATABASE_URL });
     return NextResponse.json({ 
       error: 'Failed to load songs',
+      details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+    }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { title } = body;
+    
+    if (!title || typeof title !== 'string' || !title.trim()) {
+      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+    }
+    
+    const song = await createSong(title.trim());
+    return NextResponse.json({ song });
+  } catch (error) {
+    console.error('Failed to create song:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ 
+      error: 'Failed to create song',
       details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
     }, { status: 500 });
   }

@@ -25,7 +25,7 @@ const VersionContent = ({version}: {
         ) : (
           <div 
             className="markdown-content text-gray-800 text-xs"
-            dangerouslySetInnerHTML={{ __html: marked.parse(version.content || '') as string }}
+            dangerouslySetInnerHTML={{ __html: marked.parse(version.content || '', { breaks: true }) as string }}
           />
         )
       )}

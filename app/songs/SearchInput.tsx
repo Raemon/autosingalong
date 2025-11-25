@@ -8,7 +8,7 @@ const SearchInput = ({searchTerm, onSearchChange}: {
       placeholder="Search songs or versions..."
       value={searchTerm}
       onChange={(e) => onSearchChange(e.target.value)}
-      className="mb-3 px-2 py-1 w-full max-w-md"
+      className="px-2 py-1 w-full max-w-md"
     />
   );
 };

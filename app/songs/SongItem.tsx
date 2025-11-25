@@ -25,45 +25,40 @@ const VersionRow = ({version, isSelected, onClick}: {
   );
 };
 
-const SongItem = ({song, renderName, renderFiles, selectedVersionId, onVersionClick}: {
+const SongItem = ({song, selectedVersionId, onVersionClick, onCreateNewVersion}: {
   song: Song;
-  renderName?: boolean;
-  renderFiles?: boolean;
   selectedVersionId?: string;
-  onVersionClick?: (version: SongVersion) => void;
+  onVersionClick: (version: SongVersion) => void;
+  onCreateNewVersion: (song: Song) => void;
 }) => {
-  if (renderName) {
-    return (
-      <div className="px-2 py-1 text-base font-medium border-b border-gray-200 font-georgia">
-        {song.title.replace(/_/g, ' ')}
+  return (
+    <>
+      <div className="group flex items-center justify-between px-2 py-1 text-base font-medium border-b border-gray-200 font-georgia">
+        <span>{song.title.replace(/_/g, ' ')}</span>
+        <button
+          onClick={(e) => { e.stopPropagation(); onCreateNewVersion(song); }}
+          className="opacity-0 bg-gray-200 rounded-full p-1 group-hover:opacity-100 text-gray-400 hover:text-blue-600 text-sm"
+          title="Add new version"
+        >
+          +
+        </button>
       </div>
-    );
-  }
-
-  if (renderFiles) {
-    if (song.versions.length === 0) {
-      return (
-        <div className="border-b border-gray-200">
-          <p className="px-2 py-1 text-xs text-gray-500">No versions stored yet.</p>
-        </div>
-      );
-    }
-
-    return (
       <div className="border-b border-gray-200">
-        {song.versions.map((version) => (
-          <VersionRow
-            key={version.id}
-            version={version}
-            isSelected={selectedVersionId === version.id}
-            onClick={() => onVersionClick?.(version)}
-          />
-        ))}
+        {song.versions.length === 0 ? (
+          <p className="px-2 py-1 text-xs text-gray-500">No versions stored yet.</p>
+        ) : (
+          song.versions.map((version) => (
+            <VersionRow
+              key={version.id}
+              version={version}
+              isSelected={selectedVersionId === version.id}
+              onClick={() => onVersionClick(version)}
+            />
+          ))
+        )}
       </div>
-    );
-  }
-
-  return null;
+    </>
+  );
 };
 
 export default SongItem;

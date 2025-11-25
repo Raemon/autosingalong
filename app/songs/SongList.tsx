@@ -1,27 +1,22 @@
-import { Fragment } from 'react';
 import SongItem from './SongItem';
 import type { Song, SongVersion } from './types';
 
-const SongList = ({songs, selectedVersionId, onVersionClick}: {
+const SongList = ({songs, selectedVersionId, onVersionClick, onCreateNewVersion}: {
   songs: Song[];
   selectedVersionId?: string;
   onVersionClick: (version: SongVersion) => void;
+  onCreateNewVersion: (song: Song) => void;
 }) => {
   return (
-    <div className="grid grid-cols-[200px_1fr] gap-x-4">
+    <div className="grid grid-cols-[300px_1fr] gap-x-4">
       {songs.map((song) => (
-        <Fragment key={song.id}>
-          <SongItem
-            song={song}
-            renderName={true}
-          />
-          <SongItem
-            song={song}
-            renderFiles={true}
-            selectedVersionId={selectedVersionId}
-            onVersionClick={onVersionClick}
-          />
-        </Fragment>
+        <SongItem
+          key={song.id}
+          song={song}
+          selectedVersionId={selectedVersionId}
+          onVersionClick={onVersionClick}
+          onCreateNewVersion={onCreateNewVersion}
+        />
       ))}
     </div>
   );
