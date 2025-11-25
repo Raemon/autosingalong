@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { parseSong, renderSong } from 'chord-mark';
-import { extractTextFromHTML, convertCustomFormatToChordmark, serializeToChordmark, combineChordsAndLyrics } from './utils';
+import { extractTextFromHTML, convertCustomFormatToChordmark, serializeToChordmark, combineChordsAndLyrics, prepareSongForRendering } from './utils';
 
 const ChordmarkConverter = () => {
   const [inputText, setInputText] = useState('');
@@ -42,8 +42,15 @@ const ChordmarkConverter = () => {
     }
   }, [inputText]);
 
-  const renderedOutputs = useMemo(() => {
+  const songForRendering = useMemo(() => {
     if (!parsedSong.song) {
+      return null;
+    }
+    return prepareSongForRendering(parsedSong.song);
+  }, [parsedSong.song]);
+
+  const renderedOutputs = useMemo(() => {
+    if (!songForRendering) {
       return {
         htmlFull: '',
         htmlChordsOnly: '',
@@ -55,16 +62,16 @@ const ChordmarkConverter = () => {
     }
 
     try {
-      const htmlFull = renderSong(parsedSong.song, { chartType: 'all' });
-      const htmlChordsOnly = renderSong(parsedSong.song, { chartType: 'chords' });
-      const htmlLyricsOnly = renderSong(parsedSong.song, { chartType: 'lyrics' });
+      const htmlFull = renderSong(songForRendering, { chartType: 'all' });
+      const htmlChordsOnly = renderSong(songForRendering, { chartType: 'chords', alignChordsWithLyrics: false });
+      const htmlLyricsOnly = renderSong(songForRendering, { chartType: 'lyrics' });
       let htmlChordsFirstLyricLine = '';
       try {
         htmlChordsFirstLyricLine = combineChordsAndLyrics(htmlFull);
       } catch {
         htmlChordsFirstLyricLine = htmlFull;
       }
-      const plainText = serializeToChordmark(parsedSong.song);
+      const plainText = parsedSong.song ? serializeToChordmark(parsedSong.song) : '';
 
       return {
         htmlFull,
@@ -81,11 +88,11 @@ const ChordmarkConverter = () => {
         htmlChordsOnly: '',
         htmlLyricsOnly: '',
         htmlChordsFirstLyricLine: '',
-        plainText: serializeToChordmark(parsedSong.song),
+        plainText: parsedSong.song ? serializeToChordmark(parsedSong.song) : '',
         renderError: errorMsg,
       };
     }
-  }, [parsedSong]);
+  }, [songForRendering, parsedSong.song]);
 
   useEffect(() => {
     setError(parsedSong.error || renderedOutputs.renderError);
@@ -96,6 +103,12 @@ const ChordmarkConverter = () => {
       <style dangerouslySetInnerHTML={{__html: `
         .cmSong {
           font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+          white-space: pre;
+          font-variant-ligatures: none;
+        }
+        .cmSong * {
+          font-family: inherit;
+          white-space: inherit;
         }
         .cmSong p {
           margin: 0;
@@ -104,14 +117,32 @@ const ChordmarkConverter = () => {
         .cmSong p + p {
           margin-top: 0.25em;
         }
+        .cmSong .cmLine,
         .cmSong .cmChordLine,
         .cmSong .cmLyricLine,
-        .cmSong .cmChordLyricLine {
-          white-space: pre;
+        .cmSong .cmChordLyricLine,
+        .cmSong .cmSectionLabel,
+        .cmSong .cmEmptyLine {
           display: block;
         }
         .cmSong .cmChordLyricPair {
-          display: block;
+          display: inline-flex;
+          gap: 1ch;
+        }
+        .cmSong .cmChordLineOffset,
+        .cmSong .cmChordSymbol,
+        .cmSong .cmChordDuration,
+        .cmSong .cmBarSeparator,
+        .cmSong .cmTimeSignature,
+        .cmSong .cmSubBeatGroupOpener,
+        .cmSong .cmSubBeatGroupCloser {
+          white-space: inherit;
+        }
+        .cmSong .cmSectionLabel {
+          font-weight: 600;
+        }
+        .cmSong .cmEmptyLine {
+          min-height: 0.5em;
         }
       `}} />
       <h1 className="text-xl mb-4">Chordmark Converter</h1>

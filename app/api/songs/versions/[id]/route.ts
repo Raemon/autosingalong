@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getVersionById, getPreviousVersionsChain } from '@/lib/songsRepository';
 
-export async function GET(_: Request, context: { params: { id: string } }) {
+export async function GET(_: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const version = await getVersionById(context.params.id);
+    const params = await context.params;
+    const version = await getVersionById(params.id);
     if (!version) {
       return NextResponse.json({ error: 'Version not found' }, { status: 404 });
     }
     
-    const previousVersions = await getPreviousVersionsChain(context.params.id);
+    const previousVersions = await getPreviousVersionsChain(params.id);
     return NextResponse.json({ version, previousVersions });
   } catch (error) {
     console.error('Failed to load version:', error);

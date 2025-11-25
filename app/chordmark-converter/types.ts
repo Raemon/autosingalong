@@ -12,6 +12,6 @@ export type {
   Bar,
   Chord,
   TimeSignature,
-  KeyModel,
+  KeyDeclaration,
 } from 'chord-mark';
 

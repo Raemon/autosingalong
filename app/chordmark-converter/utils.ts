@@ -268,3 +268,100 @@ export const combineChordsAndLyrics = (html: string): string => {
   return songDiv.outerHTML;
 };
 
+const findPreviousNonEmptyLine = (lines: SongLine[], index: number): SongLine | null => {
+  for (let i = index - 1; i >= 0; i--) {
+    if (lines[i].type !== lineTypes.EMPTY_LINE) {
+      return lines[i];
+    }
+  }
+  return null;
+};
+
+const findNextNonEmptyLine = (lines: SongLine[], index: number): SongLine | null => {
+  for (let i = index + 1; i < lines.length; i++) {
+    if (lines[i].type !== lineTypes.EMPTY_LINE) {
+      return lines[i];
+    }
+  }
+  return null;
+};
+
+const shouldRemoveSpacerBetweenChordAndLyric = (lines: SongLine[], index: number): boolean => {
+  if (lines[index].type !== lineTypes.EMPTY_LINE) {
+    return false;
+  }
+  const previous = findPreviousNonEmptyLine(lines, index);
+  const next = findNextNonEmptyLine(lines, index);
+  return (
+    !!previous &&
+    !!next &&
+    isChordLine(previous) &&
+    isLyricLine(next) &&
+    Array.isArray(next.model?.chordPositions) &&
+    next.model.chordPositions.length > 0
+  );
+};
+
+const cloneSong = (song: ParsedSong): ParsedSong => {
+  if (typeof structuredClone === 'function') {
+    return structuredClone(song);
+  }
+  return JSON.parse(JSON.stringify(song));
+};
+
+const hasLyricPositions = (line: LyricLine | null | undefined) => {
+  return (
+    !!line &&
+    Array.isArray(line.model?.chordPositions) &&
+    line.model.chordPositions.length > 0
+  );
+};
+
+const flagChordAlignment = (lines: SongLine[]) => {
+  lines.forEach((line, index) => {
+    if (!isChordLine(line)) {
+      return;
+    }
+    const nextLine = lines[index + 1];
+    if (isLyricLine(nextLine) && hasLyricPositions(nextLine)) {
+      line.model.hasPositionedChords = true;
+      markChordPositions(line, nextLine);
+    } else {
+      line.model.hasPositionedChords = false;
+      clearChordPositions(line);
+    }
+  });
+};
+
+const markChordPositions = (line: ChordLine, lyricLine: LyricLine) => {
+  let chordIndex = 0;
+  const maxPositions = lyricLine.model?.chordPositions?.length || 0;
+  line.model.allBars?.forEach((bar) => {
+    bar.allChords?.forEach((chord) => {
+      chord.isPositioned = chordIndex < maxPositions;
+      chordIndex++;
+    });
+  });
+};
+
+const clearChordPositions = (line: ChordLine) => {
+  line.model.allBars?.forEach((bar) => {
+    bar.allChords?.forEach((chord) => {
+      chord.isPositioned = false;
+    });
+  });
+};
+
+export const prepareSongForRendering = (song: ParsedSong): ParsedSong => {
+  if (!song?.allLines?.length) {
+    return song;
+  }
+  const clonedSong = cloneSong(song);
+  const filteredLines = clonedSong.allLines.filter((line, index, lines) => {
+    return !shouldRemoveSpacerBetweenChordAndLyric(lines, index);
+  });
+  clonedSong.allLines = filteredLines;
+  flagChordAlignment(clonedSong.allLines);
+  return clonedSong;
+};
+

@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getSongWithVersions } from '@/lib/songsRepository';
 
-export async function GET(_: Request, context: { params: { id: string } }) {
+export async function GET(_: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const song = await getSongWithVersions(context.params.id);
+    const params = await context.params;
+    const song = await getSongWithVersions(params.id);
     if (!song) {
       return NextResponse.json({ error: 'Song not found' }, { status: 404 });
     }
