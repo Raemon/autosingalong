@@ -2,12 +2,29 @@
 
 import { useState, useMemo } from 'react';
 import { parseSong, renderSong } from 'chord-mark';
-import { extractTextFromHTML, convertCustomFormatToChordmark, prepareSongForRendering } from './utils';
+import { extractTextFromHTML, convertCustomFormatToChordmark, prepareSongForRendering, prepareSongForChordsWithMeta } from './utils';
 import ChordmarkPlayer from './ChordmarkPlayer';
 
 export type ChordmarkViewMode = 'lyrics+chords' | 'lyrics' | 'chords' | 'one-line' | 'raw';
 
-const CHORDMARK_STYLES = `
+export const CHORDMARK_STYLES = `
+
+  .styled-chords .cmSong {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    white-space: pre;
+    font-variant-ligatures: none;
+  }
+  .styled-chords .cmSong * {
+    font-family: inherit;
+    white-space: inherit;
+  }
+  .styled-chords .cmSong p {
+    margin: 0;
+    line-height: 1.2;
+  }
+  .styled-chords .cmSong p + p {
+    margin-top: 0.25em;
+  }
   .styled-chordmark .cmSong {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     white-space: pre;
@@ -100,6 +117,11 @@ export const useChordmarkRenderer = (parsedSong: ReturnType<typeof parseSong> | 
     return prepareSongForRendering(parsedSong);
   }, [parsedSong]);
 
+  const songForChordsWithMeta = useMemo(() => {
+    if (!parsedSong) return null;
+    return prepareSongForChordsWithMeta(parsedSong);
+  }, [parsedSong]);
+
   return useMemo(() => {
     if (!songForRendering) {
       return { htmlFull: '', htmlChordsOnly: '', htmlLyricsOnly: '', renderError: null };
@@ -107,7 +129,9 @@ export const useChordmarkRenderer = (parsedSong: ReturnType<typeof parseSong> | 
 
     try {
       const htmlFull = renderSong(songForRendering, { chartType: 'all' });
-      const htmlChordsOnly = renderSong(songForRendering, { chartType: 'chords', alignChordsWithLyrics: false });
+      const htmlChordsOnly = songForChordsWithMeta 
+        ? renderSong(songForChordsWithMeta, { chartType: 'all', alignChordsWithLyrics: false })
+        : renderSong(songForRendering, { chartType: 'chords', alignChordsWithLyrics: false });
       const htmlLyricsOnly = renderSong(songForRendering, { chartType: 'lyrics' });
 
       return { htmlFull, htmlChordsOnly, htmlLyricsOnly, renderError: null };
@@ -115,7 +139,7 @@ export const useChordmarkRenderer = (parsedSong: ReturnType<typeof parseSong> | 
       const errorMsg = err instanceof Error ? err.message : 'An error occurred during rendering';
       return { htmlFull: '', htmlChordsOnly: '', htmlLyricsOnly: '', renderError: errorMsg };
     }
-  }, [songForRendering]);
+  }, [songForRendering, songForChordsWithMeta]);
 };
 
 const ChordmarkTabs = ({mode, onModeChange}: {mode: ChordmarkViewMode, onModeChange: (mode: ChordmarkViewMode) => void}) => {
@@ -155,11 +179,11 @@ const ChordmarkRenderer = ({content, defaultMode = 'one-line', showTabs = true}:
   const error = parsedSong.error || renderedOutputs.renderError;
 
   const renderContent = () => {
-    if (mode === 'raw') {
+    if (error) {
       return <pre className="text-xs font-mono whitespace-pre-wrap">{content}</pre>;
     }
-
-    if (error) {
+    
+    if (mode === 'raw') {
       return <pre className="text-xs font-mono whitespace-pre-wrap">{content}</pre>;
     }
 
@@ -171,12 +195,12 @@ const ChordmarkRenderer = ({content, defaultMode = 'one-line', showTabs = true}:
       return (
         <div className="flex gap-4">
           <div className={`flex-0 min-w-0 ${selectedRendering === 'lyrics' && 'opacity-50'}`} onClick={() => setSelectedRendering('chords')}  >
-            <div className="text-[10px] text-gray-400 mb-1">Chords</div>
-            <div className="text-xs font-mono" dangerouslySetInnerHTML={{ __html: renderedOutputs.htmlChordsOnly }} />
+            <div className="text-gray-400 mb-1">Chords</div>
+            <div className="styled-chords text-xs font-mono" dangerouslySetInnerHTML={{ __html: renderedOutputs.htmlChordsOnly }} />
           </div>
           <div className={`flex-1 min-w-0 ${selectedRendering === 'chords' && 'opacity-50'}`} onClick={() => setSelectedRendering('lyrics')} >
-            <div className="text-[10px] text-gray-400 mb-1">Lyrics</div>
-            <div className="styled-chordmark text-xs" dangerouslySetInnerHTML={{ __html: renderedOutputs.htmlLyricsOnly }} />
+            <div className="text-gray-400 mb-1">Lyrics</div>
+            <div className="styled-chordmark font-mono text-xs" dangerouslySetInnerHTML={{ __html: renderedOutputs.htmlLyricsOnly }} />
           </div>
         </div>
       );

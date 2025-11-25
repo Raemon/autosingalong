@@ -15,3 +15,9 @@ export type {
   KeyDeclaration,
 } from 'chord-mark';
 
+export interface ChordEvent {
+  chordSymbol: string;
+  notes: string[];
+  startBeat: number;
+  durationBeats: number;
+}

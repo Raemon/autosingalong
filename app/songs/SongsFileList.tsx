@@ -1,13 +1,18 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import SearchInput from './SearchInput';
 import SongList from './SongList';
 import VersionDetailPanel from './VersionDetailPanel';
 import CreateVersionForm from './CreateVersionForm';
 import type { Song, SongVersion } from './types';
 
-const SongsFileList = () => {
+type SongsFileListProps = {
+  initialVersionId?: string;
+};
+
+const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
   console.log('SongsFileList component rendering');
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +29,7 @@ const SongsFileList = () => {
   const [newSongTitle, setNewSongTitle] = useState('');
   const [isSubmittingSong, setIsSubmittingSong] = useState(false);
   const [creatingVersionForSong, setCreatingVersionForSong] = useState<Song | null>(null);
+  const router = useRouter();
 
   const fetchSongs = async () => {
     console.log('fetchSongs called');
@@ -76,14 +82,7 @@ const SongsFileList = () => {
     );
   });
 
-  const handleVersionClick = async (version: SongVersion) => {
-    if (selectedVersion?.id === version.id) {
-      setSelectedVersion(null);
-      setPreviousVersions([]);
-      setIsExpandedPreviousVersions(false);
-      return;
-    }
-    
+  const applyVersionSelection = useCallback(async (version: SongVersion) => {
     setSelectedVersion(version);
     setIsExpandedPreviousVersions(false);
     setIsCreatingVersion(false);
@@ -102,7 +101,48 @@ const SongsFileList = () => {
       console.error('Error loading version details:', err);
       setPreviousVersions([]);
     }
+  }, []);
+
+  const handleVersionClick = async (version: SongVersion, options?: { skipUrlUpdate?: boolean }) => {
+    if (selectedVersion?.id === version.id) {
+      setSelectedVersion(null);
+      setPreviousVersions([]);
+      setIsExpandedPreviousVersions(false);
+      setIsCreatingVersion(false);
+      if (!options?.skipUrlUpdate) {
+        window.history.pushState(null, '', '/songs');
+      }
+      return;
+    }
+
+    await applyVersionSelection(version);
+    if (!options?.skipUrlUpdate) {
+      window.history.pushState(null, '', `/songs/${version.id}`);
+    }
   };
+
+  useEffect(() => {
+    if (!initialVersionId) {
+      return;
+    }
+    if (!songs.length) {
+      return;
+    }
+    if (selectedVersion?.id === initialVersionId) {
+      return;
+    }
+    const targetSong = songs.find(song =>
+      song.versions.some(version => version.id === initialVersionId)
+    );
+    if (!targetSong) {
+      return;
+    }
+    const targetVersion = targetSong.versions.find(version => version.id === initialVersionId);
+    if (!targetVersion) {
+      return;
+    }
+    applyVersionSelection(targetVersion);
+  }, [initialVersionId, songs, selectedVersion, applyVersionSelection]);
 
   const handleCreateVersionClick = () => {
     setIsCreatingVersion(true);
@@ -136,6 +176,7 @@ const SongsFileList = () => {
     setPreviousVersions([]);
     setIsExpandedPreviousVersions(false);
     setIsCreatingVersion(false);
+    window.history.pushState(null, '', '/songs');
   };
 
   const handleSubmitVersion = async () => {

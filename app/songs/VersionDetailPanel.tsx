@@ -58,6 +58,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
         <>
           <PreviousVersionsList
             previousVersions={previousVersions}
+            currentLabel={version.label}
             isExpanded={isExpandedPreviousVersions}
             onToggle={onTogglePreviousVersions}
             onVersionClick={onVersionClick}

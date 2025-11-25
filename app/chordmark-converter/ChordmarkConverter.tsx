@@ -2,13 +2,38 @@
 
 import { useState, useEffect } from 'react';
 import { serializeToChordmark, combineChordsAndLyrics } from './utils';
-import { useChordmarkParser, useChordmarkRenderer } from './ChordmarkRenderer';
+import { useChordmarkParser, useChordmarkRenderer, CHORDMARK_STYLES } from './ChordmarkRenderer';
 
 const ChordmarkConverter = () => {
   const [inputText, setInputText] = useState('');
+  const [debouncedInputText, setDebouncedInputText] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const parsedSong = useChordmarkParser(inputText);
+  // Load from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('chordmark-converter-input');
+    if (saved) {
+      setInputText(saved);
+      setDebouncedInputText(saved);
+    }
+  }, []);
+
+  // Save to localStorage when inputText changes
+  useEffect(() => {
+    if (inputText) {
+      localStorage.setItem('chordmark-converter-input', inputText);
+    }
+  }, [inputText]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedInputText(inputText);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [inputText]);
+
+  const parsedSong = useChordmarkParser(debouncedInputText);
   const baseOutputs = useChordmarkRenderer(parsedSong.song);
 
   const renderedOutputs = {
@@ -25,51 +50,7 @@ const ChordmarkConverter = () => {
 
   return (
     <div className="p-4">
-      <style dangerouslySetInnerHTML={{__html: `
-        .styled-chordmark .cmSong {
-          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-          white-space: pre;
-          font-variant-ligatures: none;
-        }
-        .styled-chordmark .cmSong * {
-          font-family: inherit;
-          white-space: inherit;
-        }
-        .styled-chordmark .cmSong p {
-          margin: 0;
-          line-height: 1.2;
-        }
-        .styled-chordmark .cmSong p + p {
-          margin-top: 0.25em;
-        }
-        .styled-chordmark .cmSong .cmLine,
-        .styled-chordmark .cmSong .cmChordLine,
-        .styled-chordmark .cmSong .cmLyricLine,
-        .styled-chordmark .cmSong .cmChordLyricLine,
-        .styled-chordmark .cmSong .cmSectionLabel,
-        .styled-chordmark .cmSong .cmEmptyLine {
-          display: block;
-        }
-        .styled-chordmark .cmSong .cmChordLyricPair {
-          display: inline-flex;
-          gap: 1ch;
-        }
-        .styled-chordmark .cmSong .cmChordLineOffset,
-        .styled-chordmark .cmSong .cmChordSymbol,
-        .styled-chordmark .cmSong .cmChordDuration,
-        .styled-chordmark .cmSong .cmBarSeparator,
-        .styled-chordmark .cmSong .cmTimeSignature,
-        .styled-chordmark .cmSong .cmSubBeatGroupOpener,
-        .styled-chordmark .cmSong .cmSubBeatGroupCloser {
-          white-space: inherit;
-        }
-        .styled-chordmark .cmSong .cmSectionLabel {
-          font-weight: 600;
-        }
-        .styled-chordmark .cmSong .cmEmptyLine {
-          min-height: 0.5em;
-        }
-      `}} />
+      <style dangerouslySetInnerHTML={{ __html: CHORDMARK_STYLES }} />
       <h1 className="text-xl mb-4">Chordmark Converter</h1>
       
       <div className="mb-4 p-3 bg-gray-50 text-xs">
@@ -90,8 +71,8 @@ const ChordmarkConverter = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="flex flex-col">
+      <div className="flex gap-4">
+        <div className="flex flex-col flex-1">
           <h2 className="text-sm font-semibold mb-2">Chordmark Input</h2>
           <textarea
             value={inputText}
@@ -100,17 +81,6 @@ const ChordmarkConverter = () => {
             className="flex-1 p-2 border text-xs font-mono"
             rows={20}
           />
-        </div>
-
-        <div className="flex flex-col">
-          <h2 className="text-sm font-semibold mb-2">HTML (Full Chart)</h2>
-          <div className="flex-1 p-2 border overflow-auto text-xs font-mono styled-chordmark">
-            {renderedOutputs.htmlFull ? (
-              <div dangerouslySetInnerHTML={{ __html: renderedOutputs.htmlFull }} />
-            ) : (
-              <div className="text-gray-400">Enter chordmark to see rendered output</div>
-            )}
-          </div>
         </div>
 
         <div className="flex flex-col">
@@ -129,6 +99,17 @@ const ChordmarkConverter = () => {
           <div className="flex-1 p-2 border overflow-auto text-xs font-mono styled-chordmark">
             {renderedOutputs.htmlLyricsOnly ? (
               <div dangerouslySetInnerHTML={{ __html: renderedOutputs.htmlLyricsOnly }} />
+            ) : (
+              <div className="text-gray-400">Enter chordmark to see rendered output</div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col">
+          <h2 className="text-sm font-semibold mb-2">HTML (Full Chart)</h2>
+          <div className="flex-1 p-2 border overflow-auto text-xs font-mono styled-chordmark">
+            {renderedOutputs.htmlFull ? (
+              <div dangerouslySetInnerHTML={{ __html: renderedOutputs.htmlFull }} />
             ) : (
               <div className="text-gray-400">Enter chordmark to see rendered output</div>
             )}

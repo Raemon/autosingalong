@@ -365,3 +365,26 @@ export const prepareSongForRendering = (song: ParsedSong): ParsedSong => {
   return clonedSong;
 };
 
+const isBracketedMetaLine = (line: SongLine): boolean => {
+  if (!isLyricLine(line)) return false;
+  const lyrics = line.lyrics || line.model?.lyrics || '';
+  const trimmed = lyrics.trim();
+  return trimmed.startsWith('[') && trimmed.endsWith(']');
+};
+
+export const prepareSongForChordsWithMeta = (song: ParsedSong): ParsedSong => {
+  if (!song?.allLines?.length) {
+    return song;
+  }
+  const clonedSong = cloneSong(song);
+  const filteredLines = clonedSong.allLines.filter((line) => {
+    if (line.type === lineTypes.CHORD) return true;
+    if (line.type === lineTypes.SECTION_LABEL) return true;
+    if (line.type === lineTypes.EMPTY_LINE) return true;
+    if (isBracketedMetaLine(line)) return true;
+    return false;
+  });
+  clonedSong.allLines = filteredLines;
+  return clonedSong;
+};
+

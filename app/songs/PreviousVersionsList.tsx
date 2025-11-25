@@ -1,7 +1,8 @@
 import type { SongVersion } from './types';
 
-const PreviousVersionsList = ({previousVersions, isExpanded, onToggle, onVersionClick}: {
+const PreviousVersionsList = ({previousVersions, currentLabel, isExpanded, onToggle, onVersionClick}: {
   previousVersions: SongVersion[];
+  currentLabel: string;
   isExpanded: boolean;
   onToggle: () => void;
   onVersionClick: (version: SongVersion) => void;
@@ -9,6 +10,12 @@ const PreviousVersionsList = ({previousVersions, isExpanded, onToggle, onVersion
   if (previousVersions.length === 0) {
     return null;
   }
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) + 
+      ' ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  };
 
   return (
     <div className="mb-4">
@@ -26,10 +33,10 @@ const PreviousVersionsList = ({previousVersions, isExpanded, onToggle, onVersion
               onClick={() => onVersionClick(prevVersion)}
               className="px-2 py-1 cursor-pointer hover:bg-gray-50 text-xs"
             >
-              <div className="font-mono text-gray-800">{prevVersion.label}</div>
-              <div className="text-gray-400">
-                {new Date(prevVersion.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-              </div>
+              {prevVersion.label !== currentLabel && (
+                <div className="font-mono text-gray-800">{prevVersion.label}</div>
+              )}
+              <div className="text-gray-400">{formatDate(prevVersion.createdAt)}</div>
             </div>
           ))}
         </div>
