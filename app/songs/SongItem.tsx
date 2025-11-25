@@ -20,7 +20,7 @@ const VersionRow = ({version, isSelected, onClick}: {
       <span className={`flex-1 font-mono text-sm min-w-0 ${isSelected ? 'font-medium' : ''}`}>
         <span className="text-gray-800">{version.label}</span>
       </span>
-      <span className="text-gray-400 text-xs w-24">{formatDate(version.createdAt)}</span>
+      {/* <span className="text-gray-400 text-xs w-24">{formatDate(version.createdAt)}</span> */}
     </div>
   );
 };

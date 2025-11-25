@@ -8,7 +8,8 @@ const VersionContent = ({version}: {
   const hasAudio = Boolean(version.audioUrl);
   const hasContent = Boolean(version.content);
   const isTxtFile = version.label.toLowerCase().endsWith('.txt');
-  const isChordmarkFile = version.label.toLowerCase().endsWith('.chordmark');
+  const label = version.label.toLowerCase();
+  const isChordmarkFile = label.endsWith('.chordmark') || label.endsWith('.ugc') || label.includes('chord');
 
   if (!hasAudio && !hasContent) {
     return <p className="text-gray-500 text-xs">No stored content for this version.</p>;

@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { parseSong, renderSong, lineTypes } from 'chord-mark';
-import type { SongLine, ChordLine, LyricLine, Bar, Chord } from 'chord-mark';
+import { parseSong, renderSong } from 'chord-mark';
 import { extractTextFromHTML, convertCustomFormatToChordmark, prepareSongForRendering } from './utils';
+import ChordmarkPlayer from './ChordmarkPlayer';
 
-export type ChordmarkViewMode = 'lyrics+chords' | 'one-line' | 'lyrics' | 'chords' | 'raw';
+export type ChordmarkViewMode = 'lyrics+chords' | 'lyrics' | 'chords' | 'one-line' | 'raw';
 
 const CHORDMARK_STYLES = `
   .styled-chordmark .cmSong {
@@ -118,89 +118,12 @@ export const useChordmarkRenderer = (parsedSong: ReturnType<typeof parseSong> | 
   }, [songForRendering]);
 };
 
-const isChordLine = (line: SongLine): line is ChordLine => line.type === lineTypes.CHORD;
-const isLyricLine = (line: SongLine): line is LyricLine => line.type === lineTypes.LYRIC;
-
-const extractChordsFromLine = (line: ChordLine): string[] => {
-  const chords: string[] = [];
-  line.model?.allBars?.forEach((bar: Bar) => {
-    bar.allChords?.forEach((chord: Chord) => {
-      if (chord.string) chords.push(chord.string);
-    });
-  });
-  return chords;
-};
-
-const renderOneLineView = (parsedSong: ReturnType<typeof parseSong> | null): string => {
-  if (!parsedSong?.allLines) return '';
-  
-  const lines = parsedSong.allLines;
-  const outputLines: string[] = [];
-  let currentChords: string[] = [];
-  
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    
-    if (line.type === lineTypes.SECTION_LABEL) {
-      if (outputLines.length > 0) outputLines.push('');
-      const label = (line as { label?: string }).label || '';
-      outputLines.push(`[${label.toUpperCase()}]`);
-      currentChords = [];
-    } else if (line.type === lineTypes.EMPTY_LINE) {
-      if (currentChords.length > 0) {
-        outputLines.push(currentChords.map(c => `[${c}]`).join(' '));
-        currentChords = [];
-      }
-      outputLines.push('');
-    } else if (isChordLine(line)) {
-      currentChords = extractChordsFromLine(line);
-    } else if (isLyricLine(line)) {
-      const lyrics = line.model?.lyrics || '';
-      const positions = line.model?.chordPositions || [];
-      
-      if (positions.length > 0 && currentChords.length > 0) {
-        let result = '';
-        let lastPos = 0;
-        const sortedPositions = [...positions].sort((a, b) => a - b);
-        
-        for (let j = 0; j < sortedPositions.length && j < currentChords.length; j++) {
-          const pos = sortedPositions[j];
-          if (pos > lastPos) {
-            result += lyrics.slice(lastPos, pos);
-          }
-          result += `[${currentChords[j]}]`;
-          lastPos = pos;
-        }
-        result += lyrics.slice(lastPos);
-        
-        if (currentChords.length > sortedPositions.length) {
-          const remaining = currentChords.slice(sortedPositions.length);
-          result += ' ' + remaining.map(c => `[${c}]`).join(' ');
-        }
-        
-        outputLines.push(result);
-      } else if (currentChords.length > 0) {
-        outputLines.push(currentChords.map(c => `[${c}]`).join(' ') + ' ' + lyrics);
-      } else {
-        outputLines.push(lyrics);
-      }
-      currentChords = [];
-    }
-  }
-  
-  if (currentChords.length > 0) {
-    outputLines.push(currentChords.map(c => `[${c}]`).join(' '));
-  }
-  
-  return outputLines.join('\n');
-};
-
 const ChordmarkTabs = ({mode, onModeChange}: {mode: ChordmarkViewMode, onModeChange: (mode: ChordmarkViewMode) => void}) => {
   const tabs: {id: ChordmarkViewMode, label: string}[] = [
     { id: 'lyrics+chords', label: 'Lyrics + Chords' },
-    { id: 'one-line', label: 'One-Line' },
     { id: 'lyrics', label: 'Lyrics' },
     { id: 'chords', label: 'Chords' },
+    { id: 'one-line', label: 'Side-by-Side' },
     { id: 'raw', label: 'Raw' },
   ];
 
@@ -219,7 +142,7 @@ const ChordmarkTabs = ({mode, onModeChange}: {mode: ChordmarkViewMode, onModeCha
   );
 };
 
-const ChordmarkRenderer = ({content, defaultMode = 'lyrics+chords', showTabs = true}: {
+const ChordmarkRenderer = ({content, defaultMode = 'one-line', showTabs = true}: {
   content: string;
   defaultMode?: ChordmarkViewMode;
   showTabs?: boolean;
@@ -227,6 +150,7 @@ const ChordmarkRenderer = ({content, defaultMode = 'lyrics+chords', showTabs = t
   const [mode, setMode] = useState<ChordmarkViewMode>(defaultMode);
   const parsedSong = useChordmarkParser(content);
   const renderedOutputs = useChordmarkRenderer(parsedSong.song);
+  const [selectedRendering, setSelectedRendering] = useState<'chords' | 'lyrics' | null>('lyrics');
 
   const error = parsedSong.error || renderedOutputs.renderError;
 
@@ -237,6 +161,25 @@ const ChordmarkRenderer = ({content, defaultMode = 'lyrics+chords', showTabs = t
 
     if (error) {
       return <pre className="text-xs font-mono whitespace-pre-wrap">{content}</pre>;
+    }
+
+    // Side-by-side view: chords on left, lyrics on right
+    if (mode === 'one-line') {
+      if (!renderedOutputs.htmlChordsOnly && !renderedOutputs.htmlLyricsOnly) {
+        return <pre className="text-xs font-mono whitespace-pre-wrap">{content}</pre>;
+      }
+      return (
+        <div className="flex gap-4">
+          <div className={`flex-0 min-w-0 ${selectedRendering === 'lyrics' && 'opacity-50'}`} onClick={() => setSelectedRendering('chords')}  >
+            <div className="text-[10px] text-gray-400 mb-1">Chords</div>
+            <div className="text-xs font-mono" dangerouslySetInnerHTML={{ __html: renderedOutputs.htmlChordsOnly }} />
+          </div>
+          <div className={`flex-1 min-w-0 ${selectedRendering === 'chords' && 'opacity-50'}`} onClick={() => setSelectedRendering('lyrics')} >
+            <div className="text-[10px] text-gray-400 mb-1">Lyrics</div>
+            <div className="styled-chordmark text-xs" dangerouslySetInnerHTML={{ __html: renderedOutputs.htmlLyricsOnly }} />
+          </div>
+        </div>
+      );
     }
 
     let html = '';
@@ -264,6 +207,7 @@ const ChordmarkRenderer = ({content, defaultMode = 'lyrics+chords', showTabs = t
     <div>
       <style dangerouslySetInnerHTML={{ __html: CHORDMARK_STYLES }} />
       {showTabs && <ChordmarkTabs mode={mode} onModeChange={setMode} />}
+      <ChordmarkPlayer parsedSong={parsedSong.song} />
       {error && mode !== 'raw' && (
         <div className="mb-2 p-1 bg-red-100 text-red-800 text-xs">{error}</div>
       )}
