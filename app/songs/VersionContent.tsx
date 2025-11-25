@@ -1,5 +1,6 @@
 import { marked } from 'marked';
 import type { SongVersion } from './types';
+import ChordmarkRenderer from '../chordmark-converter/ChordmarkRenderer';
 
 const VersionContent = ({version}: {
   version: SongVersion;
@@ -7,6 +8,7 @@ const VersionContent = ({version}: {
   const hasAudio = Boolean(version.audioUrl);
   const hasContent = Boolean(version.content);
   const isTxtFile = version.label.toLowerCase().endsWith('.txt');
+  const isChordmarkFile = version.label.toLowerCase().endsWith('.chordmark');
 
   if (!hasAudio && !hasContent) {
     return <p className="text-gray-500 text-xs">No stored content for this version.</p>;
@@ -20,7 +22,9 @@ const VersionContent = ({version}: {
         </audio>
       )}
       {hasContent && (
-        isTxtFile ? (
+        isChordmarkFile ? (
+          <ChordmarkRenderer content={version.content || ''} />
+        ) : isTxtFile ? (
           <pre className="text-content text-gray-800 text-xs overflow-x-auto">{version.content}</pre>
         ) : (
           <div 

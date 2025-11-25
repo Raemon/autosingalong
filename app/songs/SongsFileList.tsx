@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import SearchInput from './SearchInput';
 import SongList from './SongList';
 import VersionDetailPanel from './VersionDetailPanel';
@@ -14,6 +14,7 @@ const SongsFileList = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVersion, setSelectedVersion] = useState<SongVersion & { songId?: string; nextVersionId?: string | null; originalVersionId?: string | null } | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [previousVersions, setPreviousVersions] = useState<SongVersion[]>([]);
   const [isExpandedPreviousVersions, setIsExpandedPreviousVersions] = useState(false);
   const [isCreatingVersion, setIsCreatingVersion] = useState(false);
@@ -51,6 +52,17 @@ const SongsFileList = () => {
 
   useEffect(() => {
     fetchSongs();
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const filteredSongs = songs.filter(song => {
@@ -244,6 +256,7 @@ const SongsFileList = () => {
         <div className="flex-1 overflow-y-auto max-w-md">
           <div className="flex gap-2 items-center mb-3">
             <SearchInput
+              ref={searchInputRef}
               searchTerm={searchTerm}
               onSearchChange={setSearchTerm}
             />
@@ -283,6 +296,7 @@ const SongsFileList = () => {
         
         {selectedVersion && (
           <VersionDetailPanel
+            songTitle={songs.find(s => s.versions.some(v => v.id === selectedVersion.id))?.title || ''}
             version={selectedVersion}
             previousVersions={previousVersions}
             isExpandedPreviousVersions={isExpandedPreviousVersions}

@@ -1,98 +1,23 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { parseSong, renderSong } from 'chord-mark';
-import { extractTextFromHTML, convertCustomFormatToChordmark, serializeToChordmark, combineChordsAndLyrics, prepareSongForRendering } from './utils';
+import { useState, useEffect } from 'react';
+import { serializeToChordmark, combineChordsAndLyrics } from './utils';
+import { useChordmarkParser, useChordmarkRenderer } from './ChordmarkRenderer';
 
 const ChordmarkConverter = () => {
   const [inputText, setInputText] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const parsedSong = useMemo<{ song: ReturnType<typeof parseSong> | null; error: string | null }>(() => {
-    if (!inputText.trim()) {
-      return { song: null, error: null };
-    }
+  const parsedSong = useChordmarkParser(inputText);
+  const baseOutputs = useChordmarkRenderer(parsedSong.song);
 
-    try {
-      let textToParse = inputText.trim();
-      
-      if (textToParse.startsWith('<') && textToParse.includes('>')) {
-        textToParse = extractTextFromHTML(textToParse);
-      }
-
-      if (!textToParse) {
-        return { song: null, error: null };
-      }
-
-      try {
-        return { song: parseSong(textToParse), error: null };
-      } catch {
-        const customResult = convertCustomFormatToChordmark(textToParse);
-        if (customResult !== textToParse) {
-          try {
-            return { song: parseSong(customResult), error: null };
-          } catch {
-            return { song: null, error: 'Could not parse input as valid chordmark' };
-          }
-        }
-        return { song: null, error: 'Could not parse input as valid chordmark' };
-      }
-    } catch (err) {
-      return { song: null, error: err instanceof Error ? err.message : 'An error occurred during parsing' };
-    }
-  }, [inputText]);
-
-  const songForRendering = useMemo(() => {
-    if (!parsedSong.song) {
-      return null;
-    }
-    return prepareSongForRendering(parsedSong.song);
-  }, [parsedSong.song]);
-
-  const renderedOutputs = useMemo(() => {
-    if (!songForRendering) {
-      return {
-        htmlFull: '',
-        htmlChordsOnly: '',
-        htmlLyricsOnly: '',
-        htmlChordsFirstLyricLine: '',
-        plainText: '',
-        renderError: null,
-      };
-    }
-
-    try {
-      const htmlFull = renderSong(songForRendering, { chartType: 'all' });
-      const htmlChordsOnly = renderSong(songForRendering, { chartType: 'chords', alignChordsWithLyrics: false });
-      const htmlLyricsOnly = renderSong(songForRendering, { chartType: 'lyrics' });
-      let htmlChordsFirstLyricLine = '';
-      try {
-        htmlChordsFirstLyricLine = combineChordsAndLyrics(htmlFull);
-      } catch {
-        htmlChordsFirstLyricLine = htmlFull;
-      }
-      const plainText = parsedSong.song ? serializeToChordmark(parsedSong.song) : '';
-
-      return {
-        htmlFull,
-        htmlChordsOnly,
-        htmlLyricsOnly,
-        htmlChordsFirstLyricLine,
-        plainText,
-        renderError: null,
-      };
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'An error occurred during rendering';
-      return {
-        htmlFull: '',
-        htmlChordsOnly: '',
-        htmlLyricsOnly: '',
-        htmlChordsFirstLyricLine: '',
-        plainText: parsedSong.song ? serializeToChordmark(parsedSong.song) : '',
-        renderError: errorMsg,
-      };
-    }
-  }, [songForRendering, parsedSong.song]);
+  const renderedOutputs = {
+    ...baseOutputs,
+    htmlChordsFirstLyricLine: baseOutputs.htmlFull ? (() => {
+      try { return combineChordsAndLyrics(baseOutputs.htmlFull); } catch { return baseOutputs.htmlFull; }
+    })() : '',
+    plainText: parsedSong.song ? serializeToChordmark(parsedSong.song) : '',
+  };
 
   useEffect(() => {
     setError(parsedSong.error || renderedOutputs.renderError);

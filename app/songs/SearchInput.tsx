@@ -1,9 +1,12 @@
-const SearchInput = ({searchTerm, onSearchChange}: {
+import { forwardRef } from 'react';
+
+const SearchInput = forwardRef<HTMLInputElement, {
   searchTerm: string;
   onSearchChange: (value: string) => void;
-}) => {
+}>(({searchTerm, onSearchChange}, ref) => {
   return (
     <input
+      ref={ref}
       type="text"
       placeholder="Search songs or versions..."
       value={searchTerm}
@@ -11,7 +14,9 @@ const SearchInput = ({searchTerm, onSearchChange}: {
       className="px-2 py-1 w-full max-w-md"
     />
   );
-};
+});
+
+SearchInput.displayName = 'SearchInput';
 
 export default SearchInput;
 
