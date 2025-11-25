@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import SearchInput from './SearchInput';
-import SongList from './SongList';
+import SongItem from './SongItem';
 import VersionDetailPanel from './VersionDetailPanel';
 import CreateVersionForm from './CreateVersionForm';
 import type { Song, SongVersion } from './types';
@@ -327,12 +327,15 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
             </div>
           )}
           
-          <SongList
-            songs={filteredSongs}
-            selectedVersionId={selectedVersion?.id}
-            onVersionClick={handleVersionClick}
-            onCreateNewVersion={handleCreateNewVersionForSong}
-          />
+          {filteredSongs.map((song) => (
+            <SongItem
+              key={song.id}
+              song={song}
+              selectedVersionId={selectedVersion?.id}
+              onVersionClick={handleVersionClick}
+              onCreateNewVersion={handleCreateNewVersionForSong}
+            />
+          ))}
         </div>
         
         {selectedVersion && (
