@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { ChordEvent } from './types';
+import { chordToNotes } from './chordUtils';
 
 type ToneModule = typeof import('tone');
 type SamplerInstance = import('tone').Sampler;
@@ -220,6 +221,25 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
     };
   }, [handleStop]);
   
+  const playSingleChord = useCallback(async (chordSymbol: string) => {
+    const notes = chordToNotes(chordSymbol);
+    console.log('Playing single chord:', chordSymbol, '->', notes);
+    if (notes.length === 0) return;
+    
+    const loaded = await loadPiano();
+    if (!loaded || !synthRef.current || !ToneRef.current) return;
+    
+    const Tone = ToneRef.current;
+    
+    // Start audio context if needed
+    if (Tone.context.state !== 'running') {
+      await Tone.start();
+    }
+    
+    // Play the chord for a fixed duration
+    synthRef.current.triggerAttackRelease(notes, '2n', undefined, 0.7);
+  }, [loadPiano]);
+  
   return {
     isPlaying,
     isLoading,
@@ -228,6 +248,7 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
     loadError,
     handlePlay,
     handleStop,
+    playSingleChord,
   };
 };
 

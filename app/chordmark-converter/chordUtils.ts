@@ -1,6 +1,6 @@
 import { lineTypes } from 'chord-mark';
 import type { ParsedSong, ChordLine } from 'chord-mark';
-import { Chord as TonalChord } from 'tonal';
+import { Chord, Note } from 'tonal';
 import type { ChordEvent } from './types';
 
 const isChordLine = (line: { type: string }): line is ChordLine => line.type === lineTypes.CHORD;
@@ -9,8 +9,11 @@ const isChordLine = (line: { type: string }): line is ChordLine => line.type ===
 export const chordToNotes = (chordSymbol: string): string[] => {
   if (!chordSymbol || chordSymbol === 'NC' || chordSymbol === '%') return [];
   
+  // Strip trailing dots (duration markers in chordmark notation)
+  const cleanedSymbol = chordSymbol.replace(/\.+$/, '');
+  
   // Handle slash chords - use the bass note
-  let symbol = chordSymbol;
+  let symbol = cleanedSymbol;
   let bassNote: string | null = null;
   if (chordSymbol.includes('/')) {
     const parts = chordSymbol.split('/');
@@ -18,14 +21,20 @@ export const chordToNotes = (chordSymbol: string): string[] => {
     bassNote = parts[1];
   }
   
-  const chord = TonalChord.get(symbol);
-  if (!chord.notes || chord.notes.length === 0) {
+  // Use Chord.notes() to get the actual note names for the chord
+  console.log('symbol', symbol);
+  const chordNotes = Chord.notes(symbol);
+  console.log('chordNotes', chordNotes);
+  if (!chordNotes || chordNotes.length === 0) {
     // Try with just the root if chord parsing fails
     const rootMatch = symbol.match(/^([A-G][#b]?)/);
     if (rootMatch) {
-      // Return just the root as a power chord (root + fifth)
+      // Return a proper major triad (root + third + fifth)
       const root = rootMatch[1];
-      return [`${root}3`, `${root}4`];
+      // Use tonal's Note.transpose to get the correct notes
+      const third = Note.transpose(root, '3M'); // Major third
+      const fifth = Note.transpose(root, '5P'); // Perfect fifth
+      return [`${root}3`, `${third}3`, `${fifth}3`];
     }
     return [];
   }
@@ -38,14 +47,12 @@ export const chordToNotes = (chordSymbol: string): string[] => {
     notes.push(`${bassNote}2`);
   }
   
-  // Add chord notes - spread across octaves for nice voicing
-  chord.notes.forEach((note, i) => {
-    if (i === 0) {
-      notes.push(`${note}3`); // Root in lower octave
-    } else if (i < 3) {
-      notes.push(`${note}4`); // First few extensions in middle
+  // Add chord notes - keep main triad in same octave for proper chord voicing
+  chordNotes.forEach((note, i) => {
+    if (i < 3) {
+      notes.push(`${note}3`); // Main triad (root, third, fifth) in same octave
     } else {
-      notes.push(`${note}5`); // Higher extensions
+      notes.push(`${note}4`); // Extensions (7th, 9th, etc.) in higher octave
     }
   });
   
