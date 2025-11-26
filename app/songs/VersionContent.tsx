@@ -9,7 +9,7 @@ const VersionContent = ({version}: {
   const hasContent = Boolean(version.content);
   const isTxtFile = version.label.toLowerCase().endsWith('.txt');
   const label = version.label.toLowerCase();
-  const isChordmarkFile = label.endsWith('.chordmark') || label.endsWith('.ugc') || label.includes('chord');
+  const isChordmarkFile = label.endsWith('.chordmark')
 
   if (!hasAudio && !hasContent) {
     return <p className="text-gray-500 text-xs">No stored content for this version.</p>;
@@ -26,10 +26,10 @@ const VersionContent = ({version}: {
         isChordmarkFile ? (
           <ChordmarkRenderer content={version.content || ''} />
         ) : isTxtFile ? (
-          <pre className="text-content text-gray-800 text-xs overflow-x-auto">{version.content}</pre>
+          <pre className="text-content text-gray-800 text-xs overflow-x-auto max-w-full">{version.content}</pre>
         ) : (
           <div 
-            className="markdown-content text-gray-800 text-xs"
+            className="markdown-content text-gray-800 text-xs whitespace-pre-wrap"
             dangerouslySetInnerHTML={{ __html: marked.parse(version.content || '', { breaks: true }) as string }}
           />
         )

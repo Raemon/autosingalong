@@ -28,6 +28,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
   const [newSongTitle, setNewSongTitle] = useState('');
   const [isSubmittingSong, setIsSubmittingSong] = useState(false);
   const [creatingVersionForSong, setCreatingVersionForSong] = useState<Song | null>(null);
+  const [sortOption, setSortOption] = useState<'alphabetical' | 'recently-updated'>('alphabetical');
 
   const fetchSongs = async () => {
     console.log('fetchSongs called');
@@ -69,6 +70,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  console.log('songs', songs);
   const filteredSongs = songs.filter(song => {
     const searchLower = searchTerm.toLowerCase();
     if (song.title.toLowerCase().includes(searchLower)) {
@@ -78,6 +80,25 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
       version.label.toLowerCase().includes(searchLower) ||
       (version.content && version.content.toLowerCase().includes(searchLower))
     );
+  }).sort((a, b) => {
+    if (sortOption === 'alphabetical') {
+      return a.title.toLowerCase().localeCompare(b.title.toLowerCase());
+    } else if (sortOption === 'recently-updated') {
+      // Find the most recent version for each song
+      // Handle songs with no versions
+      if (a.versions.length === 0 && b.versions.length === 0) return 0;
+      if (a.versions.length === 0) return 1; // a comes after b
+      if (b.versions.length === 0) return -1; // b comes after a
+      
+      const aLatestVersion = a.versions.reduce((latest, version) => {
+        return new Date(version.createdAt) > new Date(latest.createdAt) ? version : latest;
+      }, a.versions[0]);
+      const bLatestVersion = b.versions.reduce((latest, version) => {
+        return new Date(version.createdAt) > new Date(latest.createdAt) ? version : latest;
+      }, b.versions[0]);
+      return new Date(bLatestVersion.createdAt).getTime() - new Date(aLatestVersion.createdAt).getTime();
+    }
+    return 0;
   });
 
   const applyVersionSelection = useCallback(async (version: SongVersion) => {
@@ -292,7 +313,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
 
   return (
     <div className="min-h-screen p-4 relative">
-      <div className="flex gap-4  justify-around">
+      <div className="flex gap-4  justify-center">
         <div className="flex-2 w-full max-w-[650px] overflow-y-auto h-[calc(100vh-2rem)] scrollbar-hide">
           <div className="flex gap-2 items-center mb-3">
             <SearchInput
@@ -300,6 +321,28 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
               searchTerm={searchTerm}
               onSearchChange={setSearchTerm}
             />
+            <div className="flex gap-0 border border-gray-300">
+              <button
+                onClick={() => setSortOption('alphabetical')}
+                className={`text-xs px-2 py-1 whitespace-nowrap ${
+                  sortOption === 'alphabetical' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                A-Z
+              </button>
+              <button
+                onClick={() => setSortOption('recently-updated')}
+                className={`text-xs px-2 py-1 whitespace-nowrap border-l border-gray-300 ${
+                  sortOption === 'recently-updated' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Recent
+              </button>
+            </div>
             <button
               onClick={() => setIsCreatingSong(!isCreatingSong)}
               className="text-xs px-2 py-1 bg-blue-600 text-white whitespace-nowrap"

@@ -1,3 +1,5 @@
+import ChordmarkEditor from '../chordmark-converter/ChordmarkEditor';
+
 const CreateVersionForm = ({form, onFormChange, onSubmit, onCancel, isSubmitting, error}: {
   form: { label: string; content: string; audioUrl: string };
   onFormChange: (updates: Partial<{ label: string; content: string; audioUrl: string }>) => void;
@@ -6,6 +8,9 @@ const CreateVersionForm = ({form, onFormChange, onSubmit, onCancel, isSubmitting
   isSubmitting: boolean;
   error: string | null;
 }) => {
+  const label = form.label.toLowerCase();
+  const isChordmarkFile = label.endsWith('.chordmark') || label.endsWith('.ugc') || label.includes('chord');
+
   return (
     <div className="space-y-2">
       <div>
@@ -20,12 +25,20 @@ const CreateVersionForm = ({form, onFormChange, onSubmit, onCancel, isSubmitting
       </div>
       <div>
         <label className="text-xs text-gray-600">Content</label>
-        <textarea
-          value={form.content}
-          onChange={(e) => onFormChange({ content: e.target.value })}
-          className="w-full h-64 p-2 text-xs font-mono border border-gray-300"
-          placeholder="Version content"
-        />
+        {isChordmarkFile ? (
+          <ChordmarkEditor
+            value={form.content}
+            onChange={(content) => onFormChange({ content })}
+            showSyntaxHelp={true}
+          />
+        ) : (
+          <textarea
+            value={form.content}
+            onChange={(e) => onFormChange({ content: e.target.value })}
+            className="w-full h-64 p-2 text-xs font-mono border border-gray-300"
+            placeholder="Version content"
+          />
+        )}
       </div>
       <div>
         <label className="text-xs text-gray-600">Audio URL (optional)</label>
