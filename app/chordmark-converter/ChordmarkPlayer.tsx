@@ -1,11 +1,19 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { ParsedSong } from 'chord-mark';
 import { extractChordEvents } from './chordUtils';
 import { useChordPlayback } from './useChordPlayback';
 
-const ChordmarkPlayer = ({parsedSong}: {parsedSong: ParsedSong | null}) => {
+interface ChordmarkPlayerProps {
+  parsedSong: ParsedSong | null;
+  onLineChange?: (lineIndex: number | null) => void;
+}
+
+const ChordmarkPlayer = ({
+  parsedSong,
+  onLineChange,
+}: ChordmarkPlayerProps) => {
   const [bpm, setBpm] = useState(90);
   const [bpmInput, setBpmInput] = useState('90');
   
@@ -16,6 +24,7 @@ const ChordmarkPlayer = ({parsedSong}: {parsedSong: ParsedSong | null}) => {
     isPlaying,
     isLoading,
     currentChord,
+    currentLineIndex,
     loadError,
     handlePlay,
     handleStop,
@@ -27,6 +36,13 @@ const ChordmarkPlayer = ({parsedSong}: {parsedSong: ParsedSong | null}) => {
     setBpm(clamped);
     setBpmInput(String(clamped));
   };
+  
+  // Notify parent of line changes
+  useEffect(() => {
+    if (onLineChange) {
+      onLineChange(currentLineIndex);
+    }
+  }, [currentLineIndex, onLineChange]);
   
   if (!hasChords) return null;
   

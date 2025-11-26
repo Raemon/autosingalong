@@ -20,4 +20,5 @@ export interface ChordEvent {
   notes: string[];
   startBeat: number;
   durationBeats: number;
+  lineIndex: number;
 }

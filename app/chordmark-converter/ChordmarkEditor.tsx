@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { serializeToChordmark, combineChordsAndLyrics } from './utils';
 import { useChordmarkParser, useChordmarkRenderer, CHORDMARK_STYLES } from './ChordmarkRenderer';
+import ChordmarkPlayer from './ChordmarkPlayer';
 
 interface ChordmarkEditorProps {
   value: string;
@@ -16,6 +17,8 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false }: ChordmarkE
   const [debouncedValue, setDebouncedValue] = useState(value);
   const [error, setError] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState<PreviewMode>('full');
+  const [currentLineIndex, setCurrentLineIndex] = useState<number | null>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setDebouncedValue(value);
@@ -43,6 +46,25 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false }: ChordmarkE
   useEffect(() => {
     setError(parsedSong.error || renderedOutputs.renderError);
   }, [parsedSong.error, renderedOutputs.renderError]);
+
+  // Update active line highlighting in preview
+  useEffect(() => {
+    if (!previewRef.current) return;
+    
+    const container = previewRef.current;
+    
+    // Remove all existing active markers
+    const allLines = container.querySelectorAll('[data-line-index]');
+    allLines.forEach(line => line.removeAttribute('data-line-active'));
+    
+    // Add active marker to current line (try +1 to fix off-by-one)
+    if (currentLineIndex !== null) {
+      const activeLine = container.querySelector(`[data-line-index="${currentLineIndex + 1}"]`);
+      if (activeLine) {
+        activeLine.setAttribute('data-line-active', 'true');
+      }
+    }
+  }, [currentLineIndex]);
 
   const getPreviewContent = () => {
     if (previewMode === 'side-by-side') {
@@ -82,6 +104,11 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false }: ChordmarkE
           {error}
         </div>
       )}
+
+      <ChordmarkPlayer 
+        parsedSong={parsedSong.song}
+        onLineChange={setCurrentLineIndex}
+      />
 
       <div className="flex gap-2">
         <div className="flex flex-col flex-1">
@@ -124,7 +151,7 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false }: ChordmarkE
               </button>
             </div>
           </div>
-          <div className="flex-1 p-2 border overflow-auto text-xs font-mono">
+          <div ref={previewRef} className="flex-1 p-2 border overflow-auto text-xs font-mono">
             {previewMode === 'side-by-side' ? (
               renderedOutputs.htmlChordsOnly || renderedOutputs.htmlLyricsOnly ? (
                 <div className="flex gap-4 h-full">

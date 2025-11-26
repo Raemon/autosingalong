@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { parseSong, renderSong } from 'chord-mark';
 import { extractTextFromHTML, convertCustomFormatToChordmark, prepareSongForRendering, prepareSongForChordsWithMeta } from './utils';
 import ChordmarkPlayer from './ChordmarkPlayer';
@@ -73,6 +73,24 @@ export const CHORDMARK_STYLES = `
   .styled-chordmark .cmSong .cmEmptyLine {
     min-height: 0.5em;
   }
+  
+  /* Line highlighting for active playback */
+  .styled-chordmark .cmSong .cmLine[data-line-active="true"],
+  .styled-chordmark .cmSong .cmChordLine[data-line-active="true"],
+  .styled-chordmark .cmSong .cmLyricLine[data-line-active="true"],
+  .styled-chordmark .cmSong .cmChordLyricLine[data-line-active="true"] {
+    background-color: #fef3c7;
+    border-radius: 2px;
+    padding: 0 2px;
+    margin: 0 -2px;
+  }
+  .styled-chords .cmSong .cmLine[data-line-active="true"],
+  .styled-chords .cmSong .cmChordLine[data-line-active="true"] {
+    background-color: #fef3c7;
+    border-radius: 2px;
+    padding: 0 2px;
+    margin: 0 -2px;
+  }
 `;
 
 export const useChordmarkParser = (content: string) => {
@@ -111,6 +129,26 @@ export const useChordmarkParser = (content: string) => {
   }, [content]);
 };
 
+// Helper to add line index data attributes to rendered HTML
+const addLineIndexAttributes = (html: string, parsedSong: ReturnType<typeof parseSong> | null): string => {
+  if (!html || !parsedSong?.allLines) return html;
+  
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  
+  // Get all line elements
+  const lineElements = doc.querySelectorAll('.cmLine, .cmChordLine, .cmLyricLine, .cmChordLyricLine, .cmSectionLabel, .cmEmptyLine');
+  
+  // Simply map each rendered element to the corresponding line in allLines
+  lineElements.forEach((element, index) => {
+    if (index < parsedSong.allLines.length) {
+      element.setAttribute('data-line-index', String(index));
+    }
+  });
+  
+  return doc.body.innerHTML;
+};
+
 export const useChordmarkRenderer = (parsedSong: ReturnType<typeof parseSong> | null) => {
   const songForRendering = useMemo(() => {
     if (!parsedSong) return null;
@@ -128,18 +166,23 @@ export const useChordmarkRenderer = (parsedSong: ReturnType<typeof parseSong> | 
     }
 
     try {
-      const htmlFull = renderSong(songForRendering, { chartType: 'all' });
-      const htmlChordsOnly = songForChordsWithMeta 
+      let htmlFull = renderSong(songForRendering, { chartType: 'all' });
+      let htmlChordsOnly = songForChordsWithMeta 
         ? renderSong(songForChordsWithMeta, { chartType: 'all', alignChordsWithLyrics: false })
         : renderSong(songForRendering, { chartType: 'chords', alignChordsWithLyrics: false });
-      const htmlLyricsOnly = renderSong(songForRendering, { chartType: 'lyrics' });
+      let htmlLyricsOnly = renderSong(songForRendering, { chartType: 'lyrics' });
+
+      // Add line index attributes for highlighting
+      htmlFull = addLineIndexAttributes(htmlFull, parsedSong);
+      htmlChordsOnly = addLineIndexAttributes(htmlChordsOnly, parsedSong);
+      htmlLyricsOnly = addLineIndexAttributes(htmlLyricsOnly, parsedSong);
 
       return { htmlFull, htmlChordsOnly, htmlLyricsOnly, renderError: null };
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'An error occurred during rendering';
       return { htmlFull: '', htmlChordsOnly: '', htmlLyricsOnly: '', renderError: errorMsg };
     }
-  }, [songForRendering, songForChordsWithMeta]);
+  }, [songForRendering, songForChordsWithMeta, parsedSong]);
 };
 
 const ChordmarkTabs = ({mode, onModeChange}: {mode: ChordmarkViewMode, onModeChange: (mode: ChordmarkViewMode) => void}) => {
@@ -166,17 +209,46 @@ const ChordmarkTabs = ({mode, onModeChange}: {mode: ChordmarkViewMode, onModeCha
   );
 };
 
-const ChordmarkRenderer = ({content, defaultMode = 'one-line', showTabs = true}: {
+const ChordmarkRenderer = ({
+  content,
+  defaultMode = 'one-line',
+  showTabs = true,
+  activeLineIndex = null,
+}: {
   content: string;
   defaultMode?: ChordmarkViewMode;
   showTabs?: boolean;
+  activeLineIndex?: number | null;
 }) => {
   const [mode, setMode] = useState<ChordmarkViewMode>(defaultMode);
   const parsedSong = useChordmarkParser(content);
   const renderedOutputs = useChordmarkRenderer(parsedSong.song);
   const [selectedRendering, setSelectedRendering] = useState<'chords' | 'lyrics' | null>('lyrics');
+  const [currentLineIndex, setCurrentLineIndex] = useState<number | null>(null);
+
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const error = parsedSong.error || renderedOutputs.renderError;
+
+  // Update active line highlighting
+  useEffect(() => {
+    if (!contentRef.current) return;
+    
+    const container = contentRef.current;
+    const lineToHighlight = activeLineIndex ?? currentLineIndex;
+    
+    // Remove all existing active markers
+    const allLines = container.querySelectorAll('[data-line-index]');
+    allLines.forEach(line => line.removeAttribute('data-line-active'));
+    
+    // Add active marker to current line (try +1 to fix off-by-one)
+    if (lineToHighlight !== null) {
+      const activeLine = container.querySelector(`[data-line-index="${lineToHighlight + 1}"]`);
+      if (activeLine) {
+        activeLine.setAttribute('data-line-active', 'true');
+      }
+    }
+  }, [activeLineIndex, currentLineIndex]);
 
   const renderContent = () => {
     if (error) {
@@ -231,11 +303,16 @@ const ChordmarkRenderer = ({content, defaultMode = 'one-line', showTabs = true}:
     <div>
       <style dangerouslySetInnerHTML={{ __html: CHORDMARK_STYLES }} />
       {showTabs && <ChordmarkTabs mode={mode} onModeChange={setMode} />}
-      <ChordmarkPlayer parsedSong={parsedSong.song} />
+      <ChordmarkPlayer 
+        parsedSong={parsedSong.song} 
+        onLineChange={setCurrentLineIndex}
+      />
       {error && mode !== 'raw' && (
         <div className="mb-2 p-1 bg-red-100 text-red-800 text-xs">{error}</div>
       )}
-      {renderContent()}
+      <div ref={contentRef}>
+        {renderContent()}
+      </div>
     </div>
   );
 };

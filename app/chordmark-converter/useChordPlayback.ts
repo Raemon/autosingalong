@@ -8,6 +8,7 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentChord, setCurrentChord] = useState<string | null>(null);
+  const [currentLineIndex, setCurrentLineIndex] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   
   const synthRef = useRef<PolySynthInstance | null>(null);
@@ -67,6 +68,7 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
     if (!ToneRef.current) {
       setIsPlaying(false);
       setCurrentChord(null);
+      setCurrentLineIndex(null);
       return;
     }
     
@@ -86,6 +88,7 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
     
     setIsPlaying(false);
     setCurrentChord(null);
+    setCurrentLineIndex(null);
   }, [clearScheduledEvents, clearUpdateInterval]);
   
   const scheduleChordEvents = useCallback((Tone: ToneModule, synth: PolySynthInstance, events: ChordEvent[], secondsPerBeat: number) => {
@@ -113,6 +116,7 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
       e => currentBeat >= e.startBeat && currentBeat < e.startBeat + e.durationBeats
     );
     setCurrentChord(current?.chordSymbol || null);
+    setCurrentLineIndex(current?.lineIndex ?? null);
     
     if (events.length > 0) {
       const lastEvent = events[events.length - 1];
@@ -181,6 +185,7 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
     isPlaying,
     isLoading,
     currentChord,
+    currentLineIndex,
     loadError,
     handlePlay,
     handleStop,

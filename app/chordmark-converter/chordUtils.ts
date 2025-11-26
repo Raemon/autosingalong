@@ -59,7 +59,8 @@ export const extractChordEvents = (song: ParsedSong | null): ChordEvent[] => {
   const events: ChordEvent[] = [];
   let currentBeat = 0;
   
-  for (const line of song.allLines) {
+  for (let lineIndex = 0; lineIndex < song.allLines.length; lineIndex++) {
+    const line = song.allLines[lineIndex];
     if (!isChordLine(line)) continue;
     
     const bars = line.model?.allBars || line.allBars || [];
@@ -94,6 +95,7 @@ export const extractChordEvents = (song: ParsedSong | null): ChordEvent[] => {
             notes,
             startBeat: currentBeat,
             durationBeats: chord.duration || 1,
+            lineIndex,
           });
         }
         currentBeat += chord.duration || 1;

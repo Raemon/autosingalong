@@ -2,10 +2,10 @@
 
 import type { Song, SongVersion } from './types';
 
-const formatDate = (isoString: string): string => {
-  const date = new Date(isoString);
-  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-};
+// const formatDate = (isoString: string): string => {
+//   const date = new Date(isoString);
+//   return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+// };
 
 const VersionRow = ({version, isSelected, onClick}: {
   version: SongVersion;

@@ -29,7 +29,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     if (!rawElementIds) {
       return NextResponse.json({ error: 'elementIds must be an array' }, { status: 400 });
     }
-    const elementIds = rawElementIds.map((value) => String(value));
+    const elementIds = rawElementIds.map((value: string) => String(value));
     const program = await updateProgramElementIds(id, elementIds);
     return NextResponse.json({ program });
   } catch (error) {
