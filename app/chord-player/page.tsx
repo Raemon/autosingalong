@@ -1,10 +1,16 @@
-import ChordPlayer from './ChordPlayer';
+'use client';
+
+import { useState } from 'react';
+import ChordmarkEditor from '../chordmark-converter/ChordmarkEditor';
+import ChordButtons from './ChordButtons';
 
 export default function ChordPlayerPage() {
-  return <ChordPlayer />;
+  const [chordmark, setChordmark] = useState('');
+
+  return (
+    <div className="p-4 space-y-4">
+      <ChordButtons />
+      <ChordmarkEditor value={chordmark} onChange={setChordmark} />
+    </div>
+  );
 }
-
-
-
-
-

@@ -1,19 +1,30 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import type { ChordEvent } from './types';
-import { usePianoPlayback } from './usePianoPlayback';
+import { usePianoPlayback } from '../chordmark-converter/usePianoPlayback';
+import { chordToNotes } from '../chordmark-converter/chordUtils';
 
 type ToneModule = typeof import('tone');
 
-export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
+export interface ChordChartEvent {
+  chord: string;
+  startBeat: number;
+  durationBeats: number;
+}
+
+export const useChordChartPlayback = (bpm: number) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentLineIndex, setCurrentLineIndex] = useState<number | null>(null);
   const [currentChordSymbol, setCurrentChordSymbol] = useState<string | null>(null);
   
-  const { isLoading, loadError, loadPiano, getSampler, getTone, playSingleChord } = usePianoPlayback();
+  const { isLoading, loadError, loadPiano, getSampler, getTone, playSingleChord, currentChord: singleChord } = usePianoPlayback();
   
   const scheduledIdsRef = useRef<number[]>([]);
   const updateIntervalRef = useRef<number | null>(null);
-  const chordEventsRef = useRef<ChordEvent[]>([]);
+  const chordEventsRef = useRef<ChordChartEvent[]>([]);
+  const bpmRef = useRef(bpm);
+  
+  // Keep bpm ref in sync
+  useEffect(() => {
+    bpmRef.current = bpm;
+  }, [bpm]);
   
   const clearUpdateInterval = useCallback(() => {
     if (updateIntervalRef.current) {
@@ -38,7 +49,6 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
     if (!Tone) {
       setIsPlaying(false);
       setCurrentChordSymbol(null);
-      setCurrentLineIndex(null);
       return;
     }
     
@@ -53,7 +63,6 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
     
     setIsPlaying(false);
     setCurrentChordSymbol(null);
-    setCurrentLineIndex(null);
   }, [clearScheduledEvents, clearUpdateInterval, getTone, getSampler]);
   
   const updateCurrentChord = useCallback(() => {
@@ -61,13 +70,12 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
     if (!Tone) return;
     
     const events = chordEventsRef.current;
-    const currentBeat = Tone.Transport.seconds * (bpm / 60);
+    const currentBeat = Tone.Transport.seconds * (bpmRef.current / 60);
     
     const current = events.find(
       e => currentBeat >= e.startBeat && currentBeat < e.startBeat + e.durationBeats
     );
-    setCurrentChordSymbol(current?.chordSymbol || null);
-    setCurrentLineIndex(current?.lineIndex ?? null);
+    setCurrentChordSymbol(current?.chord || null);
     
     if (events.length > 0) {
       const lastEvent = events[events.length - 1];
@@ -75,7 +83,7 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
         handleStop();
       }
     }
-  }, [bpm, handleStop, getTone]);
+  }, [handleStop, getTone]);
   
   // Update current chord display during playback
   useEffect(() => {
@@ -91,7 +99,7 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
     };
   }, [isPlaying, updateCurrentChord, clearUpdateInterval]);
   
-  const handlePlay = async () => {
+  const handlePlay = useCallback(async (chordEvents: ChordChartEvent[]) => {
     if (chordEvents.length === 0) return;
     
     const loaded = await loadPiano();
@@ -109,22 +117,24 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
     handleStop();
     
     // Set BPM
-    Tone.Transport.bpm.value = bpm;
+    Tone.Transport.bpm.value = bpmRef.current;
     
     // Store events for current chord tracking
     chordEventsRef.current = chordEvents;
     
     // Calculate timing
-    const secondsPerBeat = 60 / bpm;
+    const secondsPerBeat = 60 / bpmRef.current;
     
     // Schedule all chord events
     for (const event of chordEvents) {
       const startTime = event.startBeat * secondsPerBeat;
       const duration = event.durationBeats * secondsPerBeat * 0.9;
       
+      const notes = chordToNotes(event.chord);
+      if (notes.length === 0) continue;
+      
       const id = Tone.Transport.schedule((time) => {
-        console.log(`Playing chord ${event.chordSymbol}:`, event.notes);
-        synth.triggerAttackRelease(event.notes, duration, time, 0.7);
+        synth.triggerAttackRelease(notes, duration, time, 0.7);
       }, startTime);
       
       scheduledIdsRef.current.push(id);
@@ -133,7 +143,7 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
     // Start transport
     Tone.Transport.start();
     setIsPlaying(true);
-  };
+  }, [loadPiano, handleStop, getSampler, getTone]);
   
   // Cleanup on unmount
   useEffect(() => {
@@ -142,11 +152,13 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
     };
   }, [handleStop]);
   
+  // Use the single chord from piano playback when not playing a sequence
+  const currentChord = isPlaying ? currentChordSymbol : singleChord;
+  
   return {
     isPlaying,
     isLoading,
-    currentChord: currentChordSymbol,
-    currentLineIndex,
+    currentChord,
     loadError,
     handlePlay,
     handleStop,
