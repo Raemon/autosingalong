@@ -7,14 +7,13 @@ const VersionRow = ({version, isSelected, onClick}: {
   isSelected: boolean;
   onClick: () => void;
 }) => {
-  const isReadme = version.label.includes('README.md');
   return (
     <div 
       onClick={onClick}
       className={`flex items-center gap-3 px-2 py-1 cursor-pointer ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
     >
-      <span className={`flex-1 font-mono min-w-0 ${isSelected ? 'font-medium' : ''}`} style={isReadme ? {fontSize: '12px', opacity: 0.7} : {fontSize: '12px'}}>
-        <span className="text-gray-800">{version.label}</span>
+      <span className={`flex-1 font-mono min-w-0 ${isSelected ? 'font-medium' : ''}`} style={{fontSize: '12px'}}>
+        <span className="text-gray-600">{version.label}</span>
       </span>
     </div>
   );

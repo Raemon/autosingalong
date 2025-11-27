@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import type { ParsedSong } from 'chord-mark';
 import { extractChordEvents } from './chordUtils';
 import { useChordPlayback } from './useChordPlayback';
@@ -20,6 +20,17 @@ const ChordmarkPlayer = ({
 }: ChordmarkPlayerProps) => {
   const chordEvents = useMemo(() => extractChordEvents(parsedSong), [parsedSong]);
   const hasChords = chordEvents.length > 0;
+  const [startLine, setStartLine] = useState(0);
+  const filteredChordEvents = useMemo(() => {
+    if (chordEvents.length === 0) return [];
+    const firstIndex = chordEvents.findIndex(event => event.lineIndex >= startLine);
+    if (firstIndex === -1) return [];
+    const startOffset = chordEvents[firstIndex].startBeat;
+    return chordEvents.slice(firstIndex).map(event => ({
+      ...event,
+      startBeat: event.startBeat - startOffset,
+    }));
+  }, [chordEvents, startLine]);
   
   const {
     isPlaying,
@@ -29,7 +40,7 @@ const ChordmarkPlayer = ({
     loadError,
     handlePlay,
     handleStop,
-  } = useChordPlayback(chordEvents, bpm);
+  } = useChordPlayback(filteredChordEvents, bpm);
   
   // Notify parent of line changes
   useEffect(() => {
@@ -65,6 +76,19 @@ const ChordmarkPlayer = ({
         ) : (
           <span className="text-gray-500">BPM: {bpm}</span>
         )}
+        <div className="flex items-center gap-1">
+          <span className="text-gray-500">Start line:</span>
+          <input
+            type="number"
+            value={startLine}
+            onChange={(e) => {
+              const nextLine = Number.parseInt(e.target.value, 10);
+              setStartLine(Number.isNaN(nextLine) ? 0 : Math.max(0, nextLine));
+            }}
+            className="w-16 px-1 border border-gray-300 text-gray-900"
+            min="0"
+          />
+        </div>
         {currentChord && <span className="text-blue-600 font-medium">{currentChord}</span>}
         {loadError && <span className="text-red-600">{loadError}</span>}
       </div>

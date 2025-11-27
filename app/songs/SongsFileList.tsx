@@ -316,7 +316,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
   return (
     <div className="min-h-screen p-4 relative">
       <div className="flex gap-4  justify-center">
-        <div className="flex-2 w-full max-w-[650px] overflow-y-auto h-[calc(100vh-2rem)] scrollbar-hide">
+        <div className="flex-1 w-full max-w-[650px] overflow-y-auto h-[calc(100vh-2rem)] scrollbar-hide">
           <div className="flex gap-2 items-center mb-3">
             <SearchInput
               ref={searchInputRef}
@@ -383,23 +383,26 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
         </div>
         
         {selectedVersion && (
-          <VersionDetailPanel
-            songTitle={songs.find(s => s.versions.some(v => v.id === selectedVersion.id))?.title || ''}
-            version={selectedVersion}
-            previousVersions={previousVersions}
-            isExpandedPreviousVersions={isExpandedPreviousVersions}
-            isCreatingVersion={isCreatingVersion}
-            newVersionForm={newVersionForm}
-            isSubmitting={isSubmitting}
-            error={error}
-            onClose={handleClose}
-            onTogglePreviousVersions={() => setIsExpandedPreviousVersions(!isExpandedPreviousVersions)}
-            onVersionClick={handleVersionClick}
-            onCreateVersionClick={handleCreateVersionClick}
-            onCancelCreateVersion={handleCancelCreateVersion}
-            onFormChange={handleFormChange}
-            onSubmitVersion={handleSubmitVersion}
-          />
+          <div className="flex-3 flex-grow">
+              
+            <VersionDetailPanel
+              songTitle={songs.find(s => s.versions.some(v => v.id === selectedVersion.id))?.title || ''}
+              version={selectedVersion}
+              previousVersions={previousVersions}
+              isExpandedPreviousVersions={isExpandedPreviousVersions}
+              isCreatingVersion={isCreatingVersion}
+              newVersionForm={newVersionForm}
+              isSubmitting={isSubmitting}
+              error={error}
+              onClose={handleClose}
+              onTogglePreviousVersions={() => setIsExpandedPreviousVersions(!isExpandedPreviousVersions)}
+              onVersionClick={handleVersionClick}
+              onCreateVersionClick={handleCreateVersionClick}
+              onCancelCreateVersion={handleCancelCreateVersion}
+              onFormChange={handleFormChange}
+              onSubmitVersion={handleSubmitVersion}
+            />
+          </div>
         )}
         {creatingVersionForSong && !selectedVersion && (
           <div className="border-l border-gray-200 pl-4 w-full max-w-xl">
