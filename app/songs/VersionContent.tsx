@@ -1,6 +1,7 @@
 import { marked } from 'marked';
 import type { SongVersion } from './types';
 import ChordmarkRenderer from '../chordmark-converter/ChordmarkRenderer';
+import LilypondViewer from './LilypondViewer';
 
 const VersionContent = ({version}: {
   version: SongVersion;
@@ -10,6 +11,7 @@ const VersionContent = ({version}: {
   const isTxtFile = version.label.toLowerCase().endsWith('.txt');
   const label = version.label.toLowerCase();
   const isChordmarkFile = label.endsWith('.chordmark')
+  const isLilypondFile = label.endsWith('.ly') || label.endsWith('.lilypond')
 
   if (!hasAudio && !hasContent) {
     return <p className="text-gray-500 text-xs">No stored content for this version.</p>;
@@ -23,7 +25,9 @@ const VersionContent = ({version}: {
         </audio>
       )}
       {hasContent && (
-        isChordmarkFile ? (
+        isLilypondFile ? (
+          <LilypondViewer lilypondContent={version.content || ''} versionId={version.id} renderedContent={version.renderedContent} />
+        ) : isChordmarkFile ? (
           <ChordmarkRenderer content={version.content || ''} />
         ) : isTxtFile ? (
           <pre className="text-content text-gray-800 text-xs overflow-x-auto max-w-full">{version.content}</pre>

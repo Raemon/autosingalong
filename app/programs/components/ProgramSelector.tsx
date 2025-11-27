@@ -1,3 +1,5 @@
+import ChevronDropdown from '@/app/components/ChevronDropdown';
+
 type Program = {
   id: string;
   title: string;
@@ -6,19 +8,23 @@ type Program = {
 };
 
 const ProgramSelector = ({programs, selectedProgramId, onSelect}: {programs: Program[], selectedProgramId: string | null, onSelect: (id: string | null) => void}) => {
+  const selectedProgram = programs.find(p => p.id === selectedProgramId);
+  const options = programs.map(p => ({value: p.id, label: p.title}));
+  
   return (
-    <select
-      value={selectedProgramId ?? ''}
-      onChange={(event) => onSelect(event.target.value || null)}
-      className="text-sm px-2 py-1"
-    >
-      <option value="">Select a program</option>
-      {programs.map((program) => (
-        <option key={program.id} value={program.id}>
-          {program.title}
-        </option>
-      ))}
-    </select>
+    <div className="flex items-center gap-1">
+      {selectedProgram && (
+        <div className="text-2xl mb-1" style={{fontFamily: 'Georgia, serif'}}>
+          {selectedProgram.title}
+        </div>
+      )}
+      <ChevronDropdown
+        value={selectedProgramId}
+        options={options}
+        onChange={onSelect}
+        placeholder="Select a program"
+      />
+    </div>
   );
 };
 

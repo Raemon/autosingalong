@@ -262,6 +262,48 @@ className="px-4 py-2 text-red-600 hover:text-red-800"
 - No background colors or borders
 - Generous gap between nav items (gap-6)
 
+### Hero Sections
+
+#### Cosmic Hero (Homepage style)
+```tsx
+<section className="relative min-h-screen bg-black flex flex-col items-center justify-center text-white">
+  {/* Background image with stars - use CSS background or img with absolute positioning */}
+  <h1 className="font-georgia text-6xl md:text-7xl lg:text-8xl mb-12">Secular Solstice</h1>
+  <div className="flex gap-6">
+    <button className="px-8 py-4 bg-[#3e4a5f] text-white hover:bg-[#4e5a6f] text-lg">
+      Run a Solstice
+    </button>
+    <button className="px-8 py-4 bg-[#9b8061] text-white hover:bg-[#ab9071] text-lg">
+      Music Album
+    </button>
+  </div>
+</section>
+```
+
+**Key characteristics:**
+- Pure black background (#000000) with cosmic/space imagery
+- Large white serif (Georgia) title - very prominent
+- White text throughout
+- Centered content
+- Two large buttons with clear visual hierarchy
+- Generous spacing between elements
+
+#### Top Navigation on Dark
+```tsx
+<header className="absolute top-0 w-full px-8 py-4 flex items-center justify-between text-white">
+  <div className="text-sm tracking-wide">HUMANIST CULTURE</div>
+  <nav className="flex gap-8 text-sm tracking-wide">
+    <Link className="hover:underline">HOME</Link>
+    <Link className="hover:underline">BLOG</Link>
+    <Link className="hover:underline">RESOURCES</Link>
+    <Link className="hover:underline">CONTACT</Link>
+  </nav>
+</header>
+```
+- White text on dark/transparent background
+- Uppercase with slight letter-spacing for navigation
+- Simple hover underline
+
 ### Cards & Panels
 
 #### Standard Card
@@ -377,15 +419,34 @@ className="text-sm px-2 py-1 flex items-center gap-2 hover:bg-gray-50"
 ## Imagery
 
 ### Photography Style
-- Warm, candlelit scenes
-- Intimate group shots
-- Natural, documentary style
-- Slightly warm color grading
+- **Warm, candlelit scenes**: Show people gathered with candles, intimate lighting
+- **Intimate group shots**: Close-ups of faces, expressions, connections
+- **Natural, documentary style**: Authentic moments, not overly posed
+- **Warm color grading**: Slightly warm tones emphasizing golden candlelight
+- **High contrast**: Deep shadows with bright candlelight highlights
+- **Emotional**: Focus on human connection, contemplation, celebration
+
+### Photo Gallery Layout (Homepage style)
+```tsx
+<div className="flex gap-0 overflow-hidden">
+  {/* 5 photos side by side, each taking ~20% width */}
+  <img className="w-1/5 h-64 object-cover" />
+  <img className="w-1/5 h-64 object-cover" />
+  {/* ... */}
+</div>
+```
+- Photos arranged horizontally with no gaps
+- Cropped to similar heights
+- Mix of close-ups and wider shots
+- All featuring candlelit/warm lighting
+- Transitions directly from cosmic section to photos
 
 ### Backgrounds
-- Cosmic/space imagery for hero sections
-- Solid colors (white, gray-50) for content areas
-- Avoid busy backgrounds behind text
+- **Cosmic/space imagery**: Deep space with stars for hero/landing sections
+- **Pure black (#000000)**: For hero sections with cosmic imagery
+- **White/off-white**: For main content areas
+- **Solid colors (white, gray-50)**: For content areas
+- **Avoid**: Busy backgrounds behind text—use solid overlays if needed
 
 ---
 
@@ -394,7 +455,9 @@ className="text-sm px-2 py-1 flex items-center gap-2 hover:bg-gray-50"
 ### Color Contrast
 - Body text: Minimum 4.5:1 contrast ratio
 - Large text (18px+): Minimum 3:1 contrast ratio
-- Test gold (#b8976a) text on light backgrounds—may need darker shade
+- White text on bronze-tan (#9b8061): Good contrast ratio ✓
+- White text on slate-navy (#3e4a5f): Good contrast ratio ✓
+- Test bronze/tan text on light backgrounds—use darker shade if needed
 
 ### Interactive Elements
 - Minimum touch target: 44x44px
@@ -413,8 +476,10 @@ className="text-sm px-2 py-1 flex items-center gap-2 hover:bg-gray-50"
 ### DO
 ✓ Use Georgia for titles and branding  
 ✓ Keep layouts clean and spacious  
-✓ Use gold/bronze for primary actions  
-✓ Use slate/muted colors for secondary actions  
+✓ Use bronze/tan (#9b8061) for primary featured actions  
+✓ Use slate/navy (#3e4a5f) for secondary actions  
+✓ Use pure black (#000000) with cosmic imagery for hero sections  
+✓ Use white text on dark backgrounds, dark gray on light  
 ✓ Maintain vertical rhythm (8px increments)  
 ✓ Keep items on one line when possible (compact design)  
 ✓ Use subtle hover states (bg-gray-50, bg-gray-100)  
@@ -478,8 +543,10 @@ max-w-6xl mx-auto px-4
 1. **Extend Tailwind Config**: Add custom colors to `tailwind.config.ts`:
 ```typescript
 colors: {
-  cosmic: { black: '#0a0a0a', blue: '#1e293b', purple: '#475569' },
-  gold: { primary: '#b8976a', hover: '#c9a678', light: '#d4b792' }
+  space: { black: '#000000', navy: '#0f1419' },
+  bronze: { tan: '#9b8061', hover: '#ab9071', active: '#8b7051' },
+  slate: { navy: '#3e4a5f', hover: '#4e5a6f', active: '#2e3a4f' },
+  warm: { gold: '#c9a678', candlelight: '#d4a574' }
 }
 ```
 

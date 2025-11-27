@@ -23,7 +23,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
 }) => {
   return (
     <div className="border-l border-gray-200 pl-4 w-full h-[calc(100vh-2rem)] overflow-y-auto scrollbar-hide lg:p-20">
-      <h2 className="font-mono text-lg font-semibold text-gray-900 mb-2 flex items-center gap-3">
+      <h2 className="font-mono -ml-8 text-lg font-semibold text-gray-900 mb-2 flex items-center gap-3">
         <button
           onClick={onClose}
           className="text-gray-400 hover:text-gray-600"

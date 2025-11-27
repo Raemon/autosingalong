@@ -1,4 +1,4 @@
-import { useEffect, useRef, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 
 type VersionOption = {
   id: string;
@@ -8,8 +8,13 @@ type VersionOption = {
   createdAt: string;
 };
 
-const VersionSelector = ({searchTerm, onSearchChange, filteredVersions, onAddElement, onKeyDown, disabled}: {searchTerm: string, onSearchChange: (value: string) => void, filteredVersions: VersionOption[], onAddElement: (versionId: string) => void, onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void, disabled: boolean}) => {
+const VersionSelector = ({searchTerm, onSearchChange, filteredVersions, onAddElement, onKeyDown, onCreateVersion, disabled}: {searchTerm: string, onSearchChange: (value: string) => void, filteredVersions: VersionOption[], onAddElement: (versionId: string) => void, onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void, onCreateVersion: (songId: string) => void, disabled: boolean}) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
+
+  useEffect(() => {
+    setSelectedIndex(-1);
+  }, [searchTerm, filteredVersions]);
 
   useEffect(() => {
     if (!searchTerm || disabled) return;
@@ -24,29 +29,58 @@ const VersionSelector = ({searchTerm, onSearchChange, filteredVersions, onAddEle
     };
   }, [searchTerm, disabled, onSearchChange]);
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (!filteredVersions.length) {
+      onKeyDown(event);
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setSelectedIndex(prev => prev < filteredVersions.length - 1 ? prev + 1 : prev);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+    } else if (event.key === 'Enter' && selectedIndex >= 0) {
+      event.preventDefault();
+      onAddElement(filteredVersions[selectedIndex].id);
+    } else {
+      onKeyDown(event);
+    }
+  };
+
   return (
     <div ref={containerRef} className="flex-1 min-w-[280px] flex flex-col gap-1">
       <div className="text-sm font-semibold">Add element</div>
       <input
         value={searchTerm}
         onChange={(event) => onSearchChange(event.target.value)}
-        onKeyDown={onKeyDown}
+        onKeyDown={handleKeyDown}
         placeholder="Type a song or version label"
         disabled={disabled}
         className="text-sm px-2 py-1"
       />
       {!disabled && searchTerm && filteredVersions.length > 0 && (
-        <div className="flex flex-col">
-          {filteredVersions.map((version) => (
+        <div className="flex flex-col border border-gray-300">
+            {filteredVersions.map((version, index) => (
+              <button
+                type="button"
+                key={version.id}
+                onClick={() => onAddElement(version.id)}
+                className={`text-left text-sm px-2 py-1 hover:bg-gray-100 ${index === selectedIndex ? 'bg-blue-100' : ''}`}
+              >
+                <span className="font-semibold">{version.songTitle}</span> <span className="text-gray-600">{version.label}</span>
+              </button>
+            ))}
+          <div className="border-t border-gray-300">
             <button
               type="button"
-              key={version.id}
-              onClick={() => onAddElement(version.id)}
-              className="text-left text-sm px-2 py-1 hover:bg-gray-100"
+              onClick={() => onCreateVersion(filteredVersions[0].songId)}
+              className="w-full text-left px-2 py-1 text-sm text-blue-600 hover:bg-blue-50"
             >
-              <span className="font-semibold">{version.songTitle}</span> <span className="text-gray-600">{version.label}</span>
+              + Create new version
             </button>
-          ))}
+          </div>
         </div>
       )}
     </div>

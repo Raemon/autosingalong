@@ -7,6 +7,7 @@ export type SongVersion = {
   previousVersionId: string | null;
   nextVersionId: string | null;
   originalVersionId: string | null;
+  renderedContent: string | null;
   createdAt: string;
 };
 
