@@ -75,7 +75,7 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm }: Chord
             <div><strong>Lyrics:</strong> Plain text lines. Use <code>_</code> to align chords with lyrics</div>
             <div><strong>Sections:</strong> <code>#v</code> (verse), <code>#c</code> (chorus), <code>#b</code> (bridge), <code>#i</code> (intro), <code>#o</code> (outro)</div>
           </div>
-          <div><Link href="https://github.com/chordmark/chordmark/blob/main/docs/syntax.md">Chordmark Syntax Documentation</Link></div>
+          <div><Link href="https://chordmark.netlify.app/docs/reference/chords">Chordmark Syntax Documentation</Link></div>
         </div>
       )}
 
