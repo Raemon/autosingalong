@@ -12,6 +12,10 @@ const VersionContent = ({version}: {
   const label = version.label.toLowerCase();
   const isChordmarkFile = label.endsWith('.chordmark')
   const isLilypondFile = label.endsWith('.ly') || label.endsWith('.lilypond')
+  const audioUrl = version.audioUrl || '';
+  const normalizedAudioUrl = audioUrl.toLowerCase();
+  const audioExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.flac', '.webm'];
+  const isAudioFile = normalizedAudioUrl ? audioExtensions.some(ext => normalizedAudioUrl.endsWith(ext)) : false;
 
   if (!hasAudio && !hasContent) {
     return <p className="text-gray-500 text-xs">No stored content for this version.</p>;
@@ -20,9 +24,15 @@ const VersionContent = ({version}: {
   return (
     <div className="space-y-2">
       {hasAudio && (
-        <audio controls src={version.audioUrl || undefined} className="w-full">
-          Your browser does not support the audio element.
-        </audio>
+        isAudioFile ? (
+          <audio controls src={version.audioUrl || undefined} className="w-full">
+            Your browser does not support the audio element.
+          </audio>
+        ) : (
+          <a href={version.audioUrl || undefined} target="_blank" rel="noreferrer" className="text-blue-600 underline text-xs">
+            Open audio file
+          </a>
+        )
       )}
       {hasContent && (
         isLilypondFile ? (
