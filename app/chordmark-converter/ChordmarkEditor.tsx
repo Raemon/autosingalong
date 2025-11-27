@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useChordmarkParser, useChordmarkRenderer, CHORDMARK_STYLES } from './ChordmarkRenderer';
 import ChordmarkPlayer from './ChordmarkPlayer';
+import ChordButtons from '../chord-player/ChordButtons';
 import { useLineHighlighting } from './useLineHighlighting';
 import Link from 'next/link';
 
@@ -84,11 +85,15 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm }: Chord
         </div>
       )}
 
-      <ChordmarkPlayer 
-        parsedSong={parsedSong.song}
-        onLineChange={setCurrentLineIndex}
-        bpm={bpm}
-      />
+      <div className="flex gap-4">
+        <ChordmarkPlayer 
+          parsedSong={parsedSong.song}
+          onLineChange={setCurrentLineIndex}
+          bpm={bpm}
+        />
+        <ChordButtons startCollapsed />
+
+      </div>
 
       <div className="flex gap-2">
         <div className="flex flex-col flex-1">

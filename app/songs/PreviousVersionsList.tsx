@@ -1,3 +1,4 @@
+import ChevronArrow from '@/app/components/ChevronArrow';
 import type { SongVersion } from './types';
 
 const PreviousVersionsList = ({previousVersions, currentLabel, isExpanded, onToggle, onVersionClick}: {
@@ -23,7 +24,7 @@ const PreviousVersionsList = ({previousVersions, currentLabel, isExpanded, onTog
         onClick={onToggle}
         className="text-xs text-gray-600 mb-2"
       >
-        {isExpanded ? '▼' : '▶'} Previous Versions ({previousVersions.length})
+        <ChevronArrow isExpanded={isExpanded} className="mr-1" /> Previous Versions ({previousVersions.length})
       </button>
       {isExpanded && (
         <div className="space-y-1 ml-4">
