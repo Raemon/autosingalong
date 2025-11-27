@@ -20,6 +20,14 @@ const ChordmarkPlayer = ({
 }: ChordmarkPlayerProps) => {
   const chordEvents = useMemo(() => extractChordEvents(parsedSong), [parsedSong]);
   const hasChords = chordEvents.length > 0;
+  const lineOptions = useMemo(() => {
+    if (!parsedSong?.allLines) return [];
+    return parsedSong.allLines.map((line, index) => {
+      const trimmed = (line.string || '').trim();
+      const label = trimmed === '' ? `[${line.type}]` : trimmed;
+      return { value: index, label: `${index + 1}: ${label}` };
+    });
+  }, [parsedSong]);
   const [startLine, setStartLine] = useState(0);
   const filteredChordEvents = useMemo(() => {
     if (chordEvents.length === 0) return [];
@@ -78,16 +86,18 @@ const ChordmarkPlayer = ({
         )}
         <div className="flex items-center gap-1">
           <span className="text-gray-500">Start line:</span>
-          <input
-            type="number"
-            value={startLine}
-            onChange={(e) => {
-              const nextLine = Number.parseInt(e.target.value, 10);
-              setStartLine(Number.isNaN(nextLine) ? 0 : Math.max(0, nextLine));
-            }}
-            className="w-16 px-1 border border-gray-300 text-gray-900"
-            min="0"
-          />
+          <select
+            value={String(startLine)}
+            onChange={(e) => setStartLine(Number(e.target.value))}
+            className="px-1 border border-gray-300 text-gray-900 max-w-xs"
+            disabled={lineOptions.length === 0}
+          >
+            {lineOptions.map(option => (
+              <option key={option.value} value={String(option.value)}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
         {currentChord && <span className="text-blue-600 font-medium">{currentChord}</span>}
         {loadError && <span className="text-red-600">{loadError}</span>}
