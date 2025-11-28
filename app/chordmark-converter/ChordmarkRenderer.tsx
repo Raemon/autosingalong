@@ -23,7 +23,6 @@ export const CHORDMARK_STYLES = `
     line-height: 16px;
   }
   .styled-chords .cmSong p + p {
-    margin-top: 0.25em;
   }
   .styled-chordmark .cmSong {
     max-width:  800px;
@@ -40,7 +39,6 @@ export const CHORDMARK_STYLES = `
     line-height: 16px;
   }
   .styled-chordmark .cmSong p + p {
-    margin-top: 0.25em;
   }
   .styled-chordmark .cmSong .cmLine,
   .styled-chordmark .cmSong .cmChordLine,

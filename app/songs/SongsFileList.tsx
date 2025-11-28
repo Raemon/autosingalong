@@ -265,6 +265,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
       
       setSelectedVersion(newVersion);
       setPreviousVersions(oldSelectedVersion ? [oldSelectedVersion, ...previousVersions] : previousVersions);
+      window.history.pushState(null, '', `/songs/${newVersion.id}`);
     } catch (err) {
       console.error('Error creating version:', err);
       setError(err instanceof Error ? err.message : 'Failed to create version');
