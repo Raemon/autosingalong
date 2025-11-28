@@ -1,6 +1,41 @@
 'use client';
 
 import type { Song, SongVersion } from './types';
+import MyTooltip from '@/app/components/Tooltip';
+
+
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) +
+    ' ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+};
+
+const formatRelativeTimestamp = (dateStr: string) => {
+  const date = new Date(dateStr).getTime();
+  const now = Date.now();
+  const diffMs = Math.max(0, now - date);
+  const minuteMs = 60 * 1000;
+  const hourMs = 60 * minuteMs;
+  const dayMs = 24 * hourMs;
+  const monthMs = 30 * dayMs;
+  const minutes = Math.round(diffMs / minuteMs);
+  if (diffMs < hourMs) {
+    return `${Math.max(1, minutes)}m`;
+  }
+  const hours = Math.round(diffMs / hourMs);
+  if (diffMs < dayMs) {
+    return `${Math.max(1, hours)}h`;
+  }
+  const days = Math.round(diffMs / dayMs);
+  if (diffMs < monthMs) {
+    return `${Math.max(1, days)}d`;
+  }
+  const months = Math.round(diffMs / monthMs);
+  if (months < 12) {
+    return `${Math.max(1, months)}mo`;
+  }
+  return new Date(dateStr).getFullYear().toString();
+};
 
 const VersionRow = ({version, isSelected, onClick}: {
   version: SongVersion;
@@ -12,9 +47,12 @@ const VersionRow = ({version, isSelected, onClick}: {
       onClick={onClick}
       className={`flex items-center gap-3 px-2 py-1 cursor-pointer ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
     >
-      <span className={`flex-1 font-mono min-w-0 ${isSelected ? 'font-medium' : ''}`} style={{fontSize: '12px'}}>
+      <span className={`flex-1 font-mono min-w-0 w-[100px] truncate ${isSelected ? 'font-medium' : ''}`} style={{fontSize: '12px'}}>
         <span className="text-gray-600">{version.label}</span>
       </span>
+      <MyTooltip content={formatDate(version.createdAt)} placement="left">
+        <span className="text-gray-400 text-xs">{formatRelativeTimestamp(version.createdAt)}</span>
+      </MyTooltip>
     </div>
   );
 };

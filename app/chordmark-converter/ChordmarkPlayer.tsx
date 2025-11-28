@@ -29,6 +29,7 @@ const ChordmarkPlayer = ({
     });
   }, [parsedSong]);
   const [startLine, setStartLine] = useState(0);
+  const [metronomeEnabled, setMetronomeEnabled] = useState(true);
   const filteredChordEvents = useMemo(() => {
     if (chordEvents.length === 0) return [];
     const firstIndex = chordEvents.findIndex(event => event.lineIndex >= startLine);
@@ -40,6 +41,9 @@ const ChordmarkPlayer = ({
     }));
   }, [chordEvents, startLine]);
   
+  const playbackControls = useChordPlayback(filteredChordEvents, bpm) as ReturnType<typeof useChordPlayback> & {
+    setMetronomeEnabled: (enabled: boolean) => void;
+  };
   const {
     isPlaying,
     isLoading,
@@ -48,7 +52,8 @@ const ChordmarkPlayer = ({
     loadError,
     handlePlay,
     handleStop,
-  } = useChordPlayback(filteredChordEvents, bpm);
+    setMetronomeEnabled: setPlaybackMetronomeEnabled,
+  } = playbackControls;
   
   // Notify parent of line changes
   useEffect(() => {
@@ -56,6 +61,10 @@ const ChordmarkPlayer = ({
       onLineChange(currentLineIndex);
     }
   }, [currentLineIndex, onLineChange]);
+  
+  useEffect(() => {
+    setPlaybackMetronomeEnabled(metronomeEnabled);
+  }, [metronomeEnabled, setPlaybackMetronomeEnabled]);
   
   if (!hasChords) return null;
   
@@ -99,6 +108,14 @@ const ChordmarkPlayer = ({
             ))}
           </select>
         </div>
+        <label className="flex items-center gap-1 text-gray-500">
+          <input
+            type="checkbox"
+            checked={metronomeEnabled}
+            onChange={(e) => setMetronomeEnabled(e.target.checked)}
+          />
+          Tick
+        </label>
         {currentChord && <span className="text-blue-600 font-medium">{currentChord}</span>}
         {loadError && <span className="text-red-600">{loadError}</span>}
       </div>

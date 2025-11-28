@@ -107,6 +107,24 @@ export const serializeToChordmark = (parsed: ParsedSong): string => {
   return lines.join('\n');
 };
 
+export const removeRepeatBarIndicators = (song: ParsedSong | null): ParsedSong | null => {
+  if (!song?.allLines) {
+    return song;
+  }
+  song.allLines.forEach((line) => {
+    if (!isChordLine(line)) {
+      return;
+    }
+    const bars = line.model?.allBars || line.allBars || [];
+    bars.forEach((bar) => {
+      if (bar.isRepeated) {
+        bar.isRepeated = false;
+      }
+    });
+  });
+  return song;
+};
+
 const normalizeChordLine = (line: string): string => {
   return line
     .replace(/G_B/g, 'G/B')

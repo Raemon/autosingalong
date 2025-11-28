@@ -3,17 +3,33 @@ import type { ChordEvent } from './types';
 import { usePianoPlayback } from './usePianoPlayback';
 
 type ToneModule = typeof import('tone');
+type MetronomeSynth = import('tone').MembraneSynth;
 
-export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
+interface ChordPlaybackResult {
+  isPlaying: boolean;
+  isLoading: boolean;
+  currentChord: string | null;
+  currentLineIndex: number | null;
+  loadError: string | null;
+  handlePlay: () => Promise<void>;
+  handleStop: () => void;
+  playSingleChord: (chordSymbol: string) => Promise<void>;
+  setMetronomeEnabled: (enabled: boolean) => void;
+}
+
+export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number): ChordPlaybackResult => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentLineIndex, setCurrentLineIndex] = useState<number | null>(null);
   const [currentChordSymbol, setCurrentChordSymbol] = useState<string | null>(null);
+  const [metronomeEnabled, setMetronomeEnabled] = useState(true);
   
   const { isLoading, loadError, loadPiano, getSampler, getTone, playSingleChord } = usePianoPlayback();
   
   const scheduledIdsRef = useRef<number[]>([]);
   const updateIntervalRef = useRef<number | null>(null);
   const chordEventsRef = useRef<ChordEvent[]>([]);
+  const metronomeIdRef = useRef<number | null>(null);
+  const metronomeSynthRef = useRef<MetronomeSynth | null>(null);
   
   const clearUpdateInterval = useCallback(() => {
     if (updateIntervalRef.current) {
@@ -29,6 +45,42 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
     scheduledIdsRef.current = [];
   }, []);
   
+  const clearMetronome = useCallback((Tone: ToneModule | null) => {
+    if (!Tone) return;
+    if (metronomeIdRef.current !== null) {
+      Tone.Transport.clear(metronomeIdRef.current);
+      metronomeIdRef.current = null;
+    }
+  }, []);
+  
+  const getMetronomeSynth = useCallback((Tone: ToneModule | null) => {
+    if (!Tone) return null;
+    if (!metronomeSynthRef.current) {
+      const synth = new Tone.MembraneSynth({
+        envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.03 },
+        octaves: 2
+      }).toDestination();
+      synth.volume.value = -8;
+      metronomeSynthRef.current = synth;
+    }
+    return metronomeSynthRef.current;
+  }, []);
+  
+  const scheduleMetronome = useCallback((Tone: ToneModule | null) => {
+    if (!Tone) return;
+    const synth = getMetronomeSynth(Tone);
+    if (!synth) return;
+    clearMetronome(Tone);
+    let beatCount = 0;
+    metronomeIdRef.current = Tone.Transport.scheduleRepeat((time) => {
+      const isDownbeat = beatCount % 4 === 0;
+      beatCount += 1;
+      const note = isDownbeat ? 'C6' : 'C5';
+      const velocity = isDownbeat ? 0.6 : 0.4;
+      synth.triggerAttackRelease(note, '32n', time, velocity);
+    }, '4n');
+  }, [clearMetronome, getMetronomeSynth]);
+  
   const handleStop = useCallback(() => {
     clearUpdateInterval();
     
@@ -43,6 +95,7 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
     }
     
     clearScheduledEvents(Tone);
+    clearMetronome(Tone);
     
     Tone.Transport.stop();
     Tone.Transport.position = 0;
@@ -54,7 +107,7 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
     setIsPlaying(false);
     setCurrentChordSymbol(null);
     setCurrentLineIndex(null);
-  }, [clearScheduledEvents, clearUpdateInterval, getTone, getSampler]);
+  }, [clearScheduledEvents, clearUpdateInterval, clearMetronome, getTone, getSampler]);
   
   const updateCurrentChord = useCallback(() => {
     const Tone = getTone();
@@ -130,15 +183,42 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
       scheduledIdsRef.current.push(id);
     }
     
+    if (metronomeEnabled) {
+      scheduleMetronome(Tone);
+    } else {
+      clearMetronome(Tone);
+    }
+    
     // Start transport
     Tone.Transport.start();
     setIsPlaying(true);
   };
   
+  useEffect(() => {
+    if (!isPlaying) return;
+    const Tone = getTone();
+    if (!Tone) return;
+    if (metronomeEnabled) {
+      if (metronomeIdRef.current === null) {
+        scheduleMetronome(Tone);
+      }
+    } else {
+      clearMetronome(Tone);
+    }
+  }, [metronomeEnabled, isPlaying, getTone, scheduleMetronome, clearMetronome]);
+  
+  const updateMetronomeEnabled = useCallback((enabled: boolean) => {
+    setMetronomeEnabled(enabled);
+  }, []);
+  
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       handleStop();
+      if (metronomeSynthRef.current) {
+        metronomeSynthRef.current.dispose();
+        metronomeSynthRef.current = null;
+      }
     };
   }, [handleStop]);
   
@@ -151,5 +231,6 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number) => {
     handlePlay,
     handleStop,
     playSingleChord,
+    setMetronomeEnabled: updateMetronomeEnabled,
   };
 };

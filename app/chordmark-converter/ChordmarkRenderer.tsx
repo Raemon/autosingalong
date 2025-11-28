@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef } from 'react';
 import { parseSong, renderSong } from 'chord-mark';
-import { extractTextFromHTML, convertCustomFormatToChordmark, prepareSongForRendering, prepareSongForChordsWithMeta } from './utils';
+import { extractTextFromHTML, convertCustomFormatToChordmark, prepareSongForRendering, prepareSongForChordsWithMeta, removeRepeatBarIndicators } from './utils';
 import ChordmarkPlayer from './ChordmarkPlayer';
 import { useLineHighlighting } from './useLineHighlighting';
 
@@ -112,12 +112,14 @@ export const useChordmarkParser = (content: string) => {
       }
 
       try {
-        return { song: parseSong(textToParse), error: null };
+        const parsed = parseSong(textToParse);
+        return { song: removeRepeatBarIndicators(parsed), error: null };
       } catch {
         const customResult = convertCustomFormatToChordmark(textToParse);
         if (customResult !== textToParse) {
           try {
-            return { song: parseSong(customResult), error: null };
+            const parsedCustom = parseSong(customResult);
+            return { song: removeRepeatBarIndicators(parsedCustom), error: null };
           } catch {
             return { song: null, error: 'Could not parse input as valid chordmark' };
           }
