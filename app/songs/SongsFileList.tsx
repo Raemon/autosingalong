@@ -1,11 +1,14 @@
 'use client';
 
+import maxBy from 'lodash/maxBy';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import SearchInput from './SearchInput';
 import SongItem from './SongItem';
 import VersionDetailPanel from './VersionDetailPanel';
 import CreateVersionForm from './CreateVersionForm';
 import type { Song, SongVersion } from './types';
+
+const getLatestVersion = (versions: SongVersion[]) => maxBy(versions, (version) => new Date(version.createdAt).getTime());
 
 type SongsFileListProps = {
   initialVersionId?: string;
@@ -91,12 +94,11 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
       if (a.versions.length === 0) return 1; // a comes after b
       if (b.versions.length === 0) return -1; // b comes after a
       
-      const aLatestVersion = a.versions.reduce((latest, version) => {
-        return new Date(version.createdAt) > new Date(latest.createdAt) ? version : latest;
-      }, a.versions[0]);
-      const bLatestVersion = b.versions.reduce((latest, version) => {
-        return new Date(version.createdAt) > new Date(latest.createdAt) ? version : latest;
-      }, b.versions[0]);
+      const aLatestVersion = getLatestVersion(a.versions);
+      const bLatestVersion = getLatestVersion(b.versions);
+      if (!aLatestVersion || !bLatestVersion) {
+        return 0;
+      }
       return new Date(bLatestVersion.createdAt).getTime() - new Date(aLatestVersion.createdAt).getTime();
     }
     return 0;
