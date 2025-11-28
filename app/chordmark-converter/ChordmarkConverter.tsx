@@ -76,6 +76,7 @@ const ChordmarkConverter = () => {
           value={inputText}
           onChange={setInputText}
           showSyntaxHelp={true}
+          autosaveKey="converter"
         />
       ) : (
         <>

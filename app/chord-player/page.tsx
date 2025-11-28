@@ -10,7 +10,7 @@ export default function ChordPlayerPage() {
   return (
     <div className="p-4 space-y-4">
       <ChordButtons />
-      <ChordmarkEditor value={chordmark} onChange={setChordmark} />
+      <ChordmarkEditor value={chordmark} onChange={setChordmark} autosaveKey="chord-player" />
     </div>
   );
 }

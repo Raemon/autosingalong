@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useChordmarkParser, useChordmarkRenderer, CHORDMARK_STYLES } from './ChordmarkRenderer';
 import ChordmarkPlayer from './ChordmarkPlayer';
 import ChordButtons from '../chord-player/ChordButtons';
@@ -12,16 +12,51 @@ interface ChordmarkEditorProps {
   onChange: (value: string) => void;
   showSyntaxHelp?: boolean;
   bpm?: number;
+  autosaveKey?: string;
+  versionCreatedAt?: string;
 }
 
 type PreviewMode = 'full' | 'chords' | 'lyrics' | 'side-by-side';
 
-const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm }: ChordmarkEditorProps) => {
+type AutosaveSnapshot = {
+  value: string;
+  savedAt: string;
+};
+
+const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm, autosaveKey, versionCreatedAt }: ChordmarkEditorProps) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   const [error, setError] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState<PreviewMode>('full');
   const [currentLineIndex, setCurrentLineIndex] = useState<number | null>(null);
+  const [pendingAutosave, setPendingAutosave] = useState<AutosaveSnapshot | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const autosaveStorageKey = `chordmark-editor:${autosaveKey || 'default'}`;
+
+  const persistAutosaveSnapshot = useCallback((snapshot: AutosaveSnapshot) => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      window.localStorage.setItem(autosaveStorageKey, JSON.stringify(snapshot));
+    } catch {
+      // ignore storage errors
+    }
+  }, [autosaveStorageKey]);
+
+  const loadAutosaveSnapshot = useCallback((): AutosaveSnapshot | null => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+    try {
+      const storedValue = window.localStorage.getItem(autosaveStorageKey);
+      if (!storedValue) {
+        return null;
+      }
+      return JSON.parse(storedValue) as AutosaveSnapshot;
+    } catch {
+      return null;
+    }
+  }, [autosaveStorageKey]);
 
   useEffect(() => {
     setDebouncedValue(value);
@@ -30,7 +65,7 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm }: Chord
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedValue(value);
-    }, 500);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [value]);
@@ -41,6 +76,49 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm }: Chord
   useEffect(() => {
     setError(parsedSong.error || renderedOutputs.renderError);
   }, [parsedSong.error, renderedOutputs.renderError]);
+
+  useEffect(() => {
+    const payload: AutosaveSnapshot = {
+      value: debouncedValue,
+      savedAt: new Date().toISOString(),
+    };
+    persistAutosaveSnapshot(payload);
+  }, [debouncedValue, persistAutosaveSnapshot]);
+
+  useEffect(() => {
+    if (!versionCreatedAt) {
+      setPendingAutosave(null);
+      return;
+    }
+    const parsed = loadAutosaveSnapshot();
+    if (!parsed?.savedAt) {
+      setPendingAutosave(null);
+      return;
+    }
+    const savedAtMs = new Date(parsed.savedAt).getTime();
+    const createdAtMs = new Date(versionCreatedAt).getTime();
+    if (Number.isNaN(savedAtMs) || Number.isNaN(createdAtMs)) {
+      setPendingAutosave(null);
+      return;
+    }
+    if (savedAtMs > createdAtMs && parsed.value !== value) {
+      setPendingAutosave(parsed);
+    } else {
+      setPendingAutosave(null);
+    }
+  }, [versionCreatedAt, value, loadAutosaveSnapshot]);
+
+  const handleRestoreAutosave = () => {
+    if (!pendingAutosave) {
+      return;
+    }
+    onChange(pendingAutosave.value);
+    setPendingAutosave(null);
+  };
+
+  const handleDismissAutosave = () => {
+    setPendingAutosave(null);
+  };
 
   // Apply line highlighting to preview
   useLineHighlighting(previewRef, currentLineIndex);
@@ -82,6 +160,15 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm }: Chord
       {error && (
         <div className="p-2 bg-red-100 text-red-800 text-xs">
           {error}
+        </div>
+      )}
+
+      {pendingAutosave && (
+        <div className="flex items-center gap-4 bg-gray-100 p-2 text-xs text-gray-600">
+          <div onClick={handleRestoreAutosave} className="cursor-pointer">
+            Restore changes from {new Date(pendingAutosave.savedAt).toLocaleString()}?
+          </div>
+          <div onClick={handleDismissAutosave} className="cursor-pointer text-gray-500">X</div>
         </div>
       )}
 

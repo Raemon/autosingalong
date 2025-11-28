@@ -1,13 +1,17 @@
 import ChordmarkEditor from '../chordmark-converter/ChordmarkEditor';
 
-const CreateVersionForm = ({form, onFormChange, onSubmit, onCancel, isSubmitting, error}: {
+type CreateVersionFormProps = {
   form: { label: string; content: string; audioUrl: string; bpm: number };
   onFormChange: (updates: Partial<{ label: string; content: string; audioUrl: string; bpm: number }>) => void;
   onSubmit: () => void;
   onCancel: () => void;
   isSubmitting: boolean;
   error: string | null;
-}) => {
+  autosaveKey?: string;
+  versionCreatedAt?: string;
+};
+
+const CreateVersionForm = ({form, onFormChange, onSubmit, onCancel, isSubmitting, error, autosaveKey, versionCreatedAt}: CreateVersionFormProps) => {
   const label = form.label.toLowerCase();
   const isChordmarkFile = label.endsWith('.chordmark')
 
@@ -41,6 +45,8 @@ const CreateVersionForm = ({form, onFormChange, onSubmit, onCancel, isSubmitting
             onChange={(content) => onFormChange({ content })}
             showSyntaxHelp={true}
             bpm={form.bpm || 90}
+            autosaveKey={autosaveKey}
+            versionCreatedAt={versionCreatedAt}
           />
         ) : (
           <textarea

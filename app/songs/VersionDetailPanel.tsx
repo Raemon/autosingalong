@@ -78,6 +78,8 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
           onCancel={onCancelCreateVersion}
           isSubmitting={isSubmitting || isArchiving}
           error={error}
+          autosaveKey={`version-${version.id}`}
+          versionCreatedAt={version.createdAt}
         />
       ) : (
         <>

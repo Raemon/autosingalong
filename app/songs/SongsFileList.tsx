@@ -33,6 +33,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
   const [isSubmittingSong, setIsSubmittingSong] = useState(false);
   const [creatingVersionForSong, setCreatingVersionForSong] = useState<Song | null>(null);
   const [sortOption, setSortOption] = useState<'alphabetical' | 'recently-updated'>('recently-updated');
+  const [isListCollapsed, setIsListCollapsed] = useState(false);
 
   const fetchSongs = async () => {
     console.log('fetchSongs called');
@@ -327,6 +328,14 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
     }
   };
 
+  const handleCollapsedSongClick = async (song: Song) => {
+    setIsListCollapsed(false);
+    const latestVersion = getLatestVersion(song.versions);
+    if (latestVersion) {
+      await handleVersionClick(latestVersion);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen p-4">
@@ -350,71 +359,108 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
   return (
     <div className="min-h-screen p-4 relative">
       <div className="flex gap-4  justify-center">
-        <div className="flex-1 w-full max-w-[650px] overflow-y-auto h-[calc(100vh-2rem)] scrollbar-hide">
-          <div className="flex gap-2 items-center mb-3">
-            <SearchInput
-              ref={searchInputRef}
-              searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
-            />
-            <div className="flex gap-0 border border-gray-300">
-              <button
-                onClick={() => setSortOption('alphabetical')}
-                className={`text-xs px-2 py-1 whitespace-nowrap ${
-                  sortOption === 'alphabetical' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                A-Z
-              </button>
-              <button
-                onClick={() => setSortOption('recently-updated')}
-                className={`text-xs px-2 py-1 whitespace-nowrap border-l border-gray-300 ${
-                  sortOption === 'recently-updated' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                Recent
-              </button>
-            </div>
+        {isListCollapsed ? (
+          <div className="w-[70px] flex flex-col items-center gap-2">
             <button
-              onClick={() => setIsCreatingSong(!isCreatingSong)}
-              className="text-xs px-2 py-1 bg-blue-600 text-white whitespace-nowrap"
+              onClick={() => setIsListCollapsed(false)}
+              className="text-xs px-2 py-1 text-gray-600 whitespace-nowrap"
             >
-              + Song
+              Show
             </button>
+            <div className="flex-1 w-full overflow-y-auto h-[calc(100vh-3rem)] scrollbar-hide space-y-1">
+              {filteredSongs.map((song) => {
+                const abbreviation = song.title.slice(0, 3) || '...';
+                const isSongSelected = selectedVersion ? song.versions.some(v => v.id === selectedVersion.id) : false;
+                return (
+                  <button
+                    key={song.id}
+                    onClick={() => handleCollapsedSongClick(song)}
+                    className={`w-full text-xs py-2 text-center ${
+                      isSongSelected 
+                        ? 'bg-blue-600 text-white' 
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                    title={song.title}
+                  >
+                    {abbreviation}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          {isCreatingSong && (
+        ) : (
+          <div className="flex-1 w-full max-w-[650px] overflow-y-auto h-[calc(100vh-2rem)] scrollbar-hide">
             <div className="flex gap-2 items-center mb-3">
-              <input
-                type="text"
-                value={newSongTitle}
-                onChange={(e) => setNewSongTitle(e.target.value)}
-                placeholder="Song title"
-                className="flex-1 px-2 py-1 text-sm"
-                onKeyDown={(e) => e.key === 'Enter' && handleCreateSong()}
+              <SearchInput
+                ref={searchInputRef}
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
               />
-              <button onClick={handleCreateSong} disabled={isSubmittingSong} className="text-xs px-2 py-1 bg-green-600 text-white disabled:opacity-50">
-                {isSubmittingSong ? '...' : 'Create'}
+              <div className="flex gap-0 border border-gray-300">
+                <button
+                  onClick={() => setSortOption('alphabetical')}
+                  className={`text-xs px-2 py-1 whitespace-nowrap ${
+                    sortOption === 'alphabetical' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  A-Z
+                </button>
+                <button
+                  onClick={() => setSortOption('recently-updated')}
+                  className={`text-xs px-2 py-1 whitespace-nowrap border-l border-gray-300 ${
+                    sortOption === 'recently-updated' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Recent
+                </button>
+              </div>
+              <button
+                onClick={() => setIsCreatingSong(!isCreatingSong)}
+                className="text-xs px-2 py-1 bg-blue-600 text-white whitespace-nowrap"
+              >
+                + Song
               </button>
-              <button onClick={() => { setIsCreatingSong(false); setNewSongTitle(''); }} className="text-xs px-2 py-1 text-gray-600">
-                Cancel
+              <button
+                onClick={() => setIsListCollapsed(true)}
+                className="text-xs px-2 py-1 text-gray-600 whitespace-nowrap"
+              >
+                Hide
               </button>
             </div>
-          )}
-          
-          {filteredSongs.map((song) => (
-            <SongItem
-              key={song.id}
-              song={song}
-              selectedVersionId={selectedVersion?.id}
-              onVersionClick={handleVersionClick}
-              onCreateNewVersion={handleCreateNewVersionForSong}
-            />
-          ))}
-        </div>
+            {isCreatingSong && (
+              <div className="flex gap-2 items-center mb-3">
+                <input
+                  type="text"
+                  value={newSongTitle}
+                  onChange={(e) => setNewSongTitle(e.target.value)}
+                  placeholder="Song title"
+                  className="flex-1 px-2 py-1 text-sm"
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreateSong()}
+                />
+                <button onClick={handleCreateSong} disabled={isSubmittingSong} className="text-xs px-2 py-1 bg-green-600 text-white disabled:opacity-50">
+                  {isSubmittingSong ? '...' : 'Create'}
+                </button>
+                <button onClick={() => { setIsCreatingSong(false); setNewSongTitle(''); }} className="text-xs px-2 py-1 text-gray-600">
+                  Cancel
+                </button>
+              </div>
+            )}
+            
+            {filteredSongs.map((song) => (
+              <SongItem
+                key={song.id}
+                song={song}
+                selectedVersionId={selectedVersion?.id}
+                onVersionClick={handleVersionClick}
+                onCreateNewVersion={handleCreateNewVersionForSong}
+              />
+            ))}
+          </div>
+        )}
         
         {selectedVersion && (
           <div className="flex-3 flex-grow">
@@ -457,6 +503,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
               onCancel={handleCancelCreateVersion}
               isSubmitting={isSubmitting}
               error={error}
+              autosaveKey={`song-${creatingVersionForSong.id}-draft`}
             />
           </div>
         )}
