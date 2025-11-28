@@ -24,6 +24,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
   const [isCreatingVersion, setIsCreatingVersion] = useState(false);
   const [newVersionForm, setNewVersionForm] = useState({ label: '', content: '', audioUrl: '', bpm: 100 });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
   const [isCreatingSong, setIsCreatingSong] = useState(false);
   const [newSongTitle, setNewSongTitle] = useState('');
   const [isSubmittingSong, setIsSubmittingSong] = useState(false);
@@ -261,6 +262,37 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
     }
   };
 
+  const handleArchiveVersion = async () => {
+    if (!selectedVersion || selectedVersion.id === 'new') {
+      return;
+    }
+    if (!window.confirm('Delete this version?')) {
+      return;
+    }
+
+    setIsArchiving(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/songs/versions/${selectedVersion.id}/archive`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to delete version');
+      }
+
+      await fetchSongs();
+      handleClose();
+    } catch (err) {
+      console.error('Error deleting version:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete version');
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
   const handleCreateSong = async () => {
     if (!newSongTitle.trim()) {
       setError('Song title is required');
@@ -393,6 +425,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
               isCreatingVersion={isCreatingVersion}
               newVersionForm={newVersionForm}
               isSubmitting={isSubmitting}
+              isArchiving={isArchiving}
               error={error}
               onClose={handleClose}
               onTogglePreviousVersions={() => setIsExpandedPreviousVersions(!isExpandedPreviousVersions)}
@@ -401,6 +434,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
               onCancelCreateVersion={handleCancelCreateVersion}
               onFormChange={handleFormChange}
               onSubmitVersion={handleSubmitVersion}
+              onArchiveVersion={handleArchiveVersion}
             />
           </div>
         )}

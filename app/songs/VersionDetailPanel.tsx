@@ -4,7 +4,7 @@ import PreviousVersionsList from './PreviousVersionsList';
 import CreateVersionForm from './CreateVersionForm';
 import type { SongVersion } from './types';
 
-const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPreviousVersions, isCreatingVersion, newVersionForm, isSubmitting, error, onClose, onTogglePreviousVersions, onVersionClick, onCreateVersionClick, onCancelCreateVersion, onFormChange, onSubmitVersion}: {
+const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPreviousVersions, isCreatingVersion, newVersionForm, isSubmitting, isArchiving, error, onClose, onTogglePreviousVersions, onVersionClick, onCreateVersionClick, onCancelCreateVersion, onFormChange, onSubmitVersion, onArchiveVersion}: {
   songTitle: string;
   version: SongVersion & { songId?: string; nextVersionId?: string | null; originalVersionId?: string | null };
   previousVersions: SongVersion[];
@@ -12,6 +12,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
   isCreatingVersion: boolean;
   newVersionForm: { label: string; content: string; audioUrl: string; bpm: number };
   isSubmitting: boolean;
+  isArchiving: boolean;
   error: string | null;
   onClose: () => void;
   onTogglePreviousVersions: () => void;
@@ -20,6 +21,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
   onCancelCreateVersion: () => void;
   onFormChange: (updates: Partial<{ label: string; content: string; audioUrl: string; bpm: number }>) => void;
   onSubmitVersion: () => void;
+  onArchiveVersion: () => void;
 }) => {
   return (
     <div className="border-l border-gray-200 pl-4 w-full h-[calc(100vh-2rem)] overflow-y-auto scrollbar-hide lg:p-20">
@@ -44,15 +46,24 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
             <button
               onClick={onSubmitVersion}
               className="text-blue-600 text-xs hover:text-blue-800"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isArchiving}
             >
               Save
+            </button>
+          )}
+          {isCreatingVersion && version.id !== 'new' && (
+            <button
+              onClick={onArchiveVersion}
+              className="text-red-600 text-xs hover:text-red-800"
+              disabled={isSubmitting || isArchiving}
+            >
+              Delete
             </button>
           )}
           <button
             onClick={isCreatingVersion ? onCancelCreateVersion : onCreateVersionClick}
             className="text-gray-600 text-xs hover:text-gray-800"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isArchiving}
           >
             {isCreatingVersion ? 'Cancel' : 'Edit'}
           </button>
@@ -65,7 +76,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
           onFormChange={onFormChange}
           onSubmit={onSubmitVersion}
           onCancel={onCancelCreateVersion}
-          isSubmitting={isSubmitting}
+          isSubmitting={isSubmitting || isArchiving}
           error={error}
         />
       ) : (

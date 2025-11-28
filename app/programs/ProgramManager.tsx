@@ -37,6 +37,7 @@ const ProgramManager = () => {
   const [isCreatingVersion, setIsCreatingVersion] = useState(false);
   const [newVersionForm, setNewVersionForm] = useState({label: '', content: '', audioUrl: '', bpm: 100});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
   const [versionError, setVersionError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -353,6 +354,7 @@ const ProgramManager = () => {
       nextVersionId: null,
       originalVersionId: null,
       renderedContent: null,
+      archived: false,
       createdAt: new Date().toISOString(),
     };
     setSelectedVersion(dummyVersion);
@@ -388,6 +390,53 @@ const ProgramManager = () => {
       setVersionError(err instanceof Error ? err.message : 'Failed to create version');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleArchiveVersion = async () => {
+    if (!selectedVersion || selectedVersion.id === 'new') {
+      return;
+    }
+    if (!window.confirm('Delete this version?')) {
+      return;
+    }
+    setIsArchiving(true);
+    setVersionError(null);
+    const archivedId = selectedVersion.id;
+    try {
+      const response = await fetch(`/api/songs/versions/${archivedId}/archive`, {
+        method: 'POST',
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete version');
+      }
+
+      const programsToUpdate = programs.filter((program) => program.elementIds.includes(archivedId));
+      if (programsToUpdate.length > 0) {
+        await Promise.all(
+          programsToUpdate.map(async (program) => {
+            const nextElementIds = program.elementIds.filter((id) => id !== archivedId);
+            const updateResponse = await fetch(`/api/programs/${program.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ elementIds: nextElementIds }),
+            });
+            const updateData = await updateResponse.json().catch(() => ({}));
+            if (!updateResponse.ok) {
+              throw new Error(updateData.error || 'Failed to update program');
+            }
+            refreshProgram(updateData.program);
+          })
+        );
+      }
+
+      setVersions((prev) => prev.filter((version) => version.id !== archivedId));
+      handleCloseVersionPanel();
+    } catch (err) {
+      setVersionError(err instanceof Error ? err.message : 'Failed to delete version');
+    } finally {
+      setIsArchiving(false);
     }
   };
 
@@ -454,6 +503,7 @@ const ProgramManager = () => {
           isCreatingVersion={isCreatingVersion}
           newVersionForm={newVersionForm}
           isSubmitting={isSubmitting}
+          isArchiving={isArchiving}
           error={versionError}
           onClose={handleCloseVersionPanel}
           onTogglePreviousVersions={() => setIsExpandedPreviousVersions(!isExpandedPreviousVersions)}
@@ -462,6 +512,7 @@ const ProgramManager = () => {
           onCancelCreateVersion={handleCancelCreateVersion}
           onFormChange={handleFormChange}
           onSubmitVersion={handleSubmitVersion}
+          onArchiveVersion={handleArchiveVersion}
         />
       )}
 

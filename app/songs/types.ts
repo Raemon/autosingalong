@@ -9,6 +9,7 @@ export type SongVersion = {
   originalVersionId: string | null;
   renderedContent: string | null;
   bpm: number | null;
+  archived: boolean;
   createdAt: string;
 };
 
