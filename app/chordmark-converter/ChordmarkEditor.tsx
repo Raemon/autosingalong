@@ -59,13 +59,9 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm, autosav
   }, [autosaveStorageKey]);
 
   useEffect(() => {
-    setDebouncedValue(value);
-  }, [value]);
-
-  useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedValue(value);
-    }, 2000);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [value]);

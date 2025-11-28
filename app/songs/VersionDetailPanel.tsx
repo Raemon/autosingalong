@@ -24,7 +24,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
   onArchiveVersion: () => void;
 }) => {
   return (
-    <div className="border-l border-gray-200 pl-4 w-full h-[calc(100vh-2rem)] overflow-y-auto scrollbar-hide lg:p-20">
+    <div className="border-l border-gray-200 pl-4 w-full h-[calc(100vh-2rem)] overflow-y-auto scrollbar-hide lg:p-20 relative">
       <h2 className="font-mono -ml-8 text-lg font-semibold text-gray-900 mb-2 flex items-center gap-3">
         <button
           onClick={() => !isCreatingVersion && onClose()}
@@ -37,7 +37,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
         </button>
         {songTitle.replace(/_/g, ' ')}
       </h2>
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between sticky top-[-80px] bg-white">
         <h3 className="text-sm font-medium text-gray-800 mb-1">
           {version.label}
         </h3>

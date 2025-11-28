@@ -130,23 +130,44 @@ export const useChordmarkParser = (content: string) => {
   }, [content]);
 };
 
+let sharedDomParser: DOMParser | null = null;
+
+const getDomParser = () => {
+  if (sharedDomParser) {
+    return sharedDomParser;
+  }
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  sharedDomParser = new DOMParser();
+  return sharedDomParser;
+};
+
+const buildChordLineIndices = (parsedSong: ReturnType<typeof parseSong> | null): number[] => {
+  if (!parsedSong?.allLines) {
+    return [];
+  }
+  const indices: number[] = [];
+  for (let i = 0; i < parsedSong.allLines.length; i++) {
+    if (parsedSong.allLines[i].type === 'chord') {
+      indices.push(i);
+    }
+  }
+  return indices;
+};
+
 // Helper to add line index data attributes to rendered HTML
-const addLineIndexAttributes = (html: string, parsedSong: ReturnType<typeof parseSong> | null): string => {
-  if (!html || !parsedSong?.allLines) return html;
+const addLineIndexAttributes = (html: string, chordLineIndices: number[]): string => {
+  if (!html || chordLineIndices.length === 0) return html;
   
-  const parser = new DOMParser();
+  const parser = getDomParser();
+  if (!parser) {
+    return html;
+  }
   const doc = parser.parseFromString(html, 'text/html');
   
   // Get chord line elements only - these are the only ones we want to highlight
   const chordLineElements = doc.querySelectorAll('.cmChordLine, .cmChordLyricLine');
-  
-  // Build a list of source line indices that have chords
-  const chordLineIndices: number[] = [];
-  for (let i = 0; i < parsedSong.allLines.length; i++) {
-    if (parsedSong.allLines[i].type === 'chord') {
-      chordLineIndices.push(i);
-    }
-  }
   
   // Map rendered chord elements to their source line indices
   // This assumes chord lines are rendered in order
@@ -170,6 +191,8 @@ export const useChordmarkRenderer = (parsedSong: ReturnType<typeof parseSong> | 
     return prepareSongForChordsWithMeta(parsedSong);
   }, [parsedSong]);
 
+  const chordLineIndices = useMemo(() => buildChordLineIndices(parsedSong), [parsedSong]);
+
   return useMemo(() => {
     if (!songForRendering) {
       return { htmlFull: '', htmlChordsOnly: '', htmlLyricsOnly: '', renderError: null };
@@ -183,16 +206,16 @@ export const useChordmarkRenderer = (parsedSong: ReturnType<typeof parseSong> | 
       let htmlLyricsOnly = renderSong(songForRendering, { chartType: 'lyrics' });
 
       // Add line index attributes for highlighting
-      htmlFull = addLineIndexAttributes(htmlFull, parsedSong);
-      htmlChordsOnly = addLineIndexAttributes(htmlChordsOnly, parsedSong);
-      htmlLyricsOnly = addLineIndexAttributes(htmlLyricsOnly, parsedSong);
+      htmlFull = addLineIndexAttributes(htmlFull, chordLineIndices);
+      htmlChordsOnly = addLineIndexAttributes(htmlChordsOnly, chordLineIndices);
+      htmlLyricsOnly = addLineIndexAttributes(htmlLyricsOnly, chordLineIndices);
 
       return { htmlFull, htmlChordsOnly, htmlLyricsOnly, renderError: null };
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'An error occurred during rendering';
       return { htmlFull: '', htmlChordsOnly: '', htmlLyricsOnly: '', renderError: errorMsg };
     }
-  }, [songForRendering, songForChordsWithMeta, parsedSong]);
+  }, [songForRendering, songForChordsWithMeta, chordLineIndices]);
 };
 
 const ChordmarkTabs = ({mode, onModeChange}: {mode: ChordmarkViewMode, onModeChange: (mode: ChordmarkViewMode) => void}) => {
