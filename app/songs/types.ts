@@ -11,6 +11,7 @@ export type SongVersion = {
   bpm: number | null;
   archived: boolean;
   createdAt: string;
+  createdBy: string | null;
 };
 
 export type Song = {
@@ -19,5 +20,6 @@ export type Song = {
   createdAt: string;
   archived: boolean;
   versions: SongVersion[];
+  createdBy: string | null;
 };
 

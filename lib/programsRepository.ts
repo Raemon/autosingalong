@@ -4,6 +4,7 @@ type ProgramRow = {
   id: string;
   title: string;
   element_ids: string[] | null;
+  created_by: string | null;
   created_at: string;
   archived: boolean;
 };
@@ -12,6 +13,7 @@ export type ProgramRecord = {
   id: string;
   title: string;
   elementIds: string[];
+  createdBy: string | null;
   createdAt: string;
   archived: boolean;
 };
@@ -20,13 +22,14 @@ const mapProgramRow = (row: ProgramRow): ProgramRecord => ({
   id: row.id,
   title: row.title,
   elementIds: row.element_ids ?? [],
+  createdBy: row.created_by,
   createdAt: row.created_at,
   archived: row.archived,
 });
 
 export const listPrograms = async (): Promise<ProgramRecord[]> => {
   const rows = await sql`
-    select id, title, element_ids, created_at, archived
+    select id, title, element_ids, created_by, created_at, archived
     from programs
     where archived = false
     order by created_at asc
@@ -34,18 +37,18 @@ export const listPrograms = async (): Promise<ProgramRecord[]> => {
   return (rows as ProgramRow[]).map(mapProgramRow);
 };
 
-export const createProgram = async (title: string): Promise<ProgramRecord> => {
+export const createProgram = async (title: string, createdBy?: string | null): Promise<ProgramRecord> => {
   const rows = await sql`
-    insert into programs (title)
-    values (${title})
-    returning id, title, element_ids, created_at, archived
+    insert into programs (title, created_by)
+    values (${title}, ${createdBy ?? null})
+    returning id, title, element_ids, created_by, created_at, archived
   `;
   return mapProgramRow((rows as ProgramRow[])[0]!);
 };
 
 export const getProgramById = async (programId: string): Promise<ProgramRecord | null> => {
   const rows = await sql`
-    select id, title, element_ids, created_at, archived
+    select id, title, element_ids, created_by, created_at, archived
     from programs
     where id = ${programId} and archived = false
   `;
@@ -61,7 +64,7 @@ export const updateProgramElementIds = async (programId: string, elementIds: str
     update programs
     set element_ids = ${elementIds}
     where id = ${programId} and archived = false
-    returning id, title, element_ids, created_at, archived
+    returning id, title, element_ids, created_by, created_at, archived
   `;
   const typedRows = rows as ProgramRow[];
   if (typedRows.length === 0) {
@@ -75,7 +78,7 @@ export const archiveProgram = async (programId: string): Promise<ProgramRecord> 
     update programs
     set archived = true
     where id = ${programId} and archived = false
-    returning id, title, element_ids, created_at, archived
+    returning id, title, element_ids, created_by, created_at, archived
   `;
   const typedRows = rows as ProgramRow[];
   if (typedRows.length === 0) {

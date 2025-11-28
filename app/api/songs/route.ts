@@ -38,13 +38,13 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title } = body;
+    const { title, createdBy } = body;
     
     if (!title || typeof title !== 'string' || !title.trim()) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
     
-    const song = await createSong(title.trim());
+    const song = await createSong(title.trim(), createdBy ?? null);
     return NextResponse.json({ song });
   } catch (error) {
     console.error('Failed to create song:', error);

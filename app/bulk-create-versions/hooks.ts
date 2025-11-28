@@ -93,7 +93,8 @@ export const useProcessSections = (
   songs: Song[],
   loadSongs: () => Promise<Song[]>,
   sections: Section[],
-  versionSuffix: string
+  versionSuffix: string,
+  userName: string
 ) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [results, setResults] = useState<ProcessResult[]>([]);
@@ -101,6 +102,11 @@ export const useProcessSections = (
   const processSections = async () => {
     if (!versionSuffix.trim()) {
       alert('Please enter a version suffix');
+      return;
+    }
+
+    if (!userName || userName.trim().length < 3) {
+      alert('Please set your username (at least 3 characters) before creating versions');
       return;
     }
 
@@ -145,6 +151,7 @@ export const useProcessSections = (
             label: versionSuffix.trim(),
             content: section.content,
             previousVersionId,
+            createdBy: userName,
           }),
         });
 

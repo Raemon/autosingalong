@@ -17,7 +17,7 @@ type SongsFileListProps = {
 
 const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
   console.log('SongsFileList component rendering');
-  const { canEdit } = useUser();
+  const { canEdit, userName } = useUser();
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -213,6 +213,11 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
       setError('Label is required');
       return;
     }
+
+    if (!userName || userName.trim().length < 3) {
+      setError('Please set your username (at least 3 characters) before creating versions');
+      return;
+    }
     
     const songId = creatingVersionForSong?.id || (selectedVersion as SongVersion & { songId: string }).songId || songs.find(song => 
       song.versions.some(v => v.id === selectedVersion!.id)
@@ -239,6 +244,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
           audioUrl: newVersionForm.audioUrl || null,
           bpm: newVersionForm.bpm || null,
           previousVersionId: selectedVersion?.id || null,
+          createdBy: userName,
         }),
       });
 
@@ -311,7 +317,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
       const response = await fetch('/api/songs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newSongTitle.trim() }),
+        body: JSON.stringify({ title: newSongTitle.trim(), createdBy: userName }),
       });
 
       if (!response.ok) {

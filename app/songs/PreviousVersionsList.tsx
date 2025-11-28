@@ -38,6 +38,7 @@ const PreviousVersionsList = ({previousVersions, currentLabel, isExpanded, onTog
                 <div className="font-mono text-gray-800">{prevVersion.label}</div>
               )}
               <div className="text-gray-400">{formatDate(prevVersion.createdAt)}</div>
+              <div className="text-gray-400">{prevVersion.createdBy}</div>
             </div>
           ))}
         </div>

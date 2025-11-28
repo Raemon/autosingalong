@@ -4,10 +4,14 @@ import { createVersionWithLineage } from '@/lib/songsRepository';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { songId, label, content, audioUrl, bpm, previousVersionId } = body;
+    const { songId, label, content, audioUrl, bpm, previousVersionId, createdBy } = body;
     
     if (!songId || !label) {
       return NextResponse.json({ error: 'songId and label are required' }, { status: 400 });
+    }
+
+    if (!createdBy || typeof createdBy !== 'string' || createdBy.trim().length < 3) {
+      return NextResponse.json({ error: 'createdBy is required and must be at least 3 characters' }, { status: 400 });
     }
 
     const newVersion = await createVersionWithLineage({
@@ -17,6 +21,7 @@ export async function POST(request: Request) {
       audioUrl: audioUrl ?? null,
       bpm: bpm ?? null,
       previousVersionId: previousVersionId ?? null,
+      createdBy: createdBy.trim(),
     });
 
     return NextResponse.json({ version: newVersion });

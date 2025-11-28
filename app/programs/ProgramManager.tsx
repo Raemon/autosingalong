@@ -27,7 +27,7 @@ type VersionOption = {
 };
 
 const ProgramManager = () => {
-  const { canEdit } = useUser();
+  const { canEdit, userName } = useUser();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
   const [versions, setVersions] = useState<VersionOption[]>([]);
@@ -190,7 +190,7 @@ const ProgramManager = () => {
       const response = await fetch('/api/programs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: trimmed }),
+        body: JSON.stringify({ title: trimmed, createdBy: userName }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -416,7 +416,7 @@ const ProgramManager = () => {
       const response = await fetch('/api/songs/versions', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({songId: selectedVersion.songId, label: newVersionForm.label, content: newVersionForm.content, audioUrl: newVersionForm.audioUrl, bpm: newVersionForm.bpm, previousVersionId: selectedVersion.id === 'new' ? null : selectedVersion.id}),
+        body: JSON.stringify({songId: selectedVersion.songId, label: newVersionForm.label, content: newVersionForm.content, audioUrl: newVersionForm.audioUrl, bpm: newVersionForm.bpm, previousVersionId: selectedVersion.id === 'new' ? null : selectedVersion.id, createdBy: userName}),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {

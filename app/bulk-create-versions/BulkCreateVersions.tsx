@@ -10,14 +10,14 @@ import { useSongs, useSections, useStatus, useProcessSections, usePreviewItems }
 import { useUser } from '../contexts/UserContext';
 
 const BulkCreateVersions = () => {
-  const { canEdit } = useUser();
+  const { canEdit, userName } = useUser();
   const [versionSuffix, setVersionSuffix] = useState('');
   const [htmlContent, setHtmlContent] = useState('');
 
   const { songs, loadSongs } = useSongs();
   const sections = useSections(htmlContent);
   const { statusMessage, statusType, showStatus } = useStatus();
-  const { isProcessing, results, processSections } = useProcessSections(songs, loadSongs, sections, versionSuffix);
+  const { isProcessing, results, processSections } = useProcessSections(songs, loadSongs, sections, versionSuffix, userName);
   const previewItems = usePreviewItems(sections, songs, versionSuffix);
 
   return (
