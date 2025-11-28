@@ -1,15 +1,46 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import ChevronDropdown from '../components/ChevronDropdown';
+import { extractLyricsFromLilypond } from '@/lib/lyricsExtractor';
+
+type ViewMode = 'svg' | 'raw' | 'lyrics' | 'lyrics-chords';
 
 const LilypondViewer = ({lilypondContent, versionId, renderedContent}:{lilypondContent: string | undefined, versionId?: string, renderedContent?: string | null}) => {
   const [svgs, setSvgs] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('svg');
+
+  const extractChordsFromLilypond = (content: string): string[] => {
+    const chords: string[] = [];
+    const chordModeRegex = /\\chordmode\s*\{([^}]+)\}/g;
+    let match;
+    
+    while ((match = chordModeRegex.exec(content)) !== null) {
+      const chordBlock = match[1];
+      const tokens = chordBlock.split(/\s+/).filter(t => t.length > 0);
+      
+      for (const token of tokens) {
+        const cleaned = token
+          .replace(/\\/g, '')
+          .replace(/[{}]/g, '')
+          .replace(/[0-9]+/g, '')
+          .trim();
+        
+        if (cleaned && !cleaned.startsWith('%')) {
+          chords.push(cleaned);
+        }
+      }
+    }
+    
+    return chords;
+  };
 
   useEffect(() => {
     const convertToSvg = async () => {
       if (!lilypondContent || lilypondContent.trim() === '') return;
+      if (viewMode !== 'svg') return; // Only convert for SVG mode
 
       if (renderedContent) {
         console.log('[LilypondViewer] Using cached rendered content');
@@ -81,41 +112,103 @@ const LilypondViewer = ({lilypondContent, versionId, renderedContent}:{lilypondC
     };
 
     convertToSvg();
-  }, [lilypondContent, versionId, renderedContent]);
+  }, [lilypondContent, versionId, renderedContent, viewMode]);
 
   if (!lilypondContent || lilypondContent.trim() === '') {
     return <div className="text-gray-500 text-xs">No LilyPond content available</div>;
   }
 
-  if (isLoading) {
-    return <div className="text-gray-500 text-xs">Converting LilyPond to sheet music...</div>;
-  }
+  const viewModeOptions = [
+    { value: 'svg', label: 'Sheet Music' },
+    { value: 'raw', label: 'Raw Lilypond' },
+    { value: 'lyrics', label: 'Lyrics Only' },
+    { value: 'lyrics-chords', label: 'Lyrics + Chords' },
+  ];
 
-  if (error) {
+  const renderContent = () => {
+    if (viewMode === 'raw') {
+      return (
+        <pre className="text-gray-800 text-xs overflow-x-auto whitespace-pre-wrap break-words font-mono">
+          {lilypondContent}
+        </pre>
+      );
+    }
+
+    if (viewMode === 'lyrics') {
+      const lyrics = extractLyricsFromLilypond(lilypondContent);
+      return (
+        <pre className="text-gray-800 text-sm whitespace-pre-wrap">
+          {lyrics || 'No lyrics found'}
+        </pre>
+      );
+    }
+
+    if (viewMode === 'lyrics-chords') {
+      const lyrics = extractLyricsFromLilypond(lilypondContent);
+      const chords = extractChordsFromLilypond(lilypondContent);
+      return (
+        <div className="space-y-4">
+          {chords.length > 0 && (
+            <div>
+              <div className="text-gray-600 text-xs font-semibold mb-1">Chords:</div>
+              <div className="text-gray-800 text-sm">{chords.join(' | ')}</div>
+            </div>
+          )}
+          <div>
+            <div className="text-gray-600 text-xs font-semibold mb-1">Lyrics:</div>
+            <pre className="text-gray-800 text-sm whitespace-pre-wrap">
+              {lyrics || 'No lyrics found'}
+            </pre>
+          </div>
+        </div>
+      );
+    }
+
+    // SVG mode
+    if (isLoading) {
+      return <div className="text-gray-500 text-xs">Converting LilyPond to sheet music...</div>;
+    }
+
+    if (error) {
+      return (
+        <div className="text-red-600 text-xs">
+          <div>Error rendering sheet music: {error}</div>
+          <details className="mt-2">
+            <summary className="cursor-pointer text-gray-600">Show LilyPond source</summary>
+            <pre className="mt-2 text-gray-800 overflow-x-auto whitespace-pre-wrap break-words">{lilypondContent}</pre>
+          </details>
+        </div>
+      );
+    }
+
+    if (svgs.length === 0) {
+      return <div className="text-gray-500 text-xs">No sheet music generated</div>;
+    }
+
     return (
-      <div className="text-red-600 text-xs">
-        <div>Error rendering sheet music: {error}</div>
-        <details className="mt-2">
-          <summary className="cursor-pointer text-gray-600">Show LilyPond source</summary>
-          <pre className="mt-2 text-gray-800 overflow-x-auto whitespace-pre-wrap break-words">{lilypondContent}</pre>
-        </details>
+      <div className="w-full space-y-4">
+        {svgs.map((svg, index) => (
+          <div 
+            key={index} 
+            className="w-full overflow-x-auto"
+            dangerouslySetInnerHTML={{ __html: svg }}
+          />
+        ))}
       </div>
     );
-  }
-
-  if (svgs.length === 0) {
-    return <div className="text-gray-500 text-xs">No sheet music generated</div>;
-  }
+  };
 
   return (
-    <div className="w-full space-y-4">
-      {svgs.map((svg, index) => (
-        <div 
-          key={index} 
-          className="w-full overflow-x-auto"
-          dangerouslySetInnerHTML={{ __html: svg }}
+    <div className="w-full">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-gray-600 text-xs">View:</span>
+        <ChevronDropdown
+          value={viewMode}
+          options={viewModeOptions}
+          onChange={(value) => setViewMode(value as ViewMode)}
         />
-      ))}
+      </div>
+      {renderContent()}
     </div>
   );
 };

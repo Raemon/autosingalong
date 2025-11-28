@@ -4,8 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { parseHTMLContent, groupIntoSlides } from '../../../src/components/slides/utils';
 import type { Slide, ParsedLine } from '../../../src/components/slides/types';
 import type { SongVersion } from '../../songs/types';
-import { parseSong, renderSong } from 'chord-mark';
-import { prepareSongForRendering } from '../../chordmark-converter/utils';
+import { extractLyrics } from '../../../lib/lyricsExtractor';
 
 type VersionOption = {
   id: string;
@@ -23,19 +22,13 @@ type SongSlideData = {
 };
 
 const convertToLyricsOnly = (content: string, label: string): string => {
-  const isChordmarkFile = label.toLowerCase().endsWith('.chordmark');
-  
-  if (!isChordmarkFile) {
-    return content;
-  }
-  
   try {
-    const parsed = parseSong(content.trim());
-    const songForRendering = prepareSongForRendering(parsed);
-    const htmlLyricsOnly = renderSong(songForRendering, { chartType: 'lyrics' });
-    return htmlLyricsOnly;
+    // Extract lyrics from any supported format (lilypond, chordmark, ultimate guitar)
+    const lyrics = extractLyrics(content, label);
+    // Wrap in minimal HTML for parsing
+    return `<div>${lyrics.split('\n').map(line => `<p>${line || '&nbsp;'}</p>`).join('')}</div>`;
   } catch (err) {
-    console.error('Failed to convert chordmark to lyrics only:', err);
+    console.error('Failed to extract lyrics:', err);
     return content;
   }
 };
@@ -107,8 +100,8 @@ const ProgramSlidesView = ({elementIds, versionMap, linesPerSlide=8}:{elementIds
         try {
           let contentToProcess = '';
           
-          // For chordmark files, convert content to lyrics-only
-          if (fullVersion.content && version.label.toLowerCase().endsWith('.chordmark')) {
+          // Convert all file types to lyrics-only (chordmark, lilypond, ultimate guitar tabs)
+          if (fullVersion.content) {
             contentToProcess = convertToLyricsOnly(fullVersion.content, version.label);
           } else if (fullVersion.renderedContent) {
             contentToProcess = fullVersion.renderedContent;
