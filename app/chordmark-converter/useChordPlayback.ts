@@ -3,7 +3,10 @@ import type { ChordEvent } from './types';
 import { usePianoPlayback } from './usePianoPlayback';
 
 type ToneModule = typeof import('tone');
-type MetronomeSynth = import('tone').MembraneSynth;
+type MetronomePlayer = import('tone').Player & {
+  _highBuffer?: import('tone').ToneAudioBuffer;
+  _lowBuffer?: import('tone').ToneAudioBuffer;
+};
 
 interface ChordPlaybackResult {
   isPlaying: boolean;
@@ -17,6 +20,18 @@ interface ChordPlaybackResult {
   setMetronomeEnabled: (enabled: boolean) => void;
 }
 
+// Metronome audio configuration - adjust these to change the click sound
+const METRONOME_CONFIG = {
+  duration: 0.02,           // Click duration in seconds (0.02 = 20ms)
+  decayRate: 150,           // How fast the sound fades (higher = faster fade)
+  noiseAmount: 0.7,         // Amount of noise/white noise (0-1)
+  bodyFrequency: 200,       // Frequency of the tonal "body" in Hz (lower = deeper)
+  bodyAmount: 0.3,          // Amount of tonal body mixed in (0-1)
+  highAmplitude: 0.8,       // Volume of the high tick (0-1)
+  lowAmplitude: 0.3,        // Volume of the low tick (0-1)
+  volume: -10,              // Overall volume in dB (negative = quieter)
+};
+
 export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number): ChordPlaybackResult => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentLineIndex, setCurrentLineIndex] = useState<number | null>(null);
@@ -29,7 +44,7 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number): ChordP
   const updateIntervalRef = useRef<number | null>(null);
   const chordEventsRef = useRef<ChordEvent[]>([]);
   const metronomeIdRef = useRef<number | null>(null);
-  const metronomeSynthRef = useRef<MetronomeSynth | null>(null);
+  const metronomePlayerRef = useRef<MetronomePlayer | null>(null);
   
   const clearUpdateInterval = useCallback(() => {
     if (updateIntervalRef.current) {
@@ -53,33 +68,54 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number): ChordP
     }
   }, []);
   
-  const getMetronomeSynth = useCallback((Tone: ToneModule | null) => {
-    if (!Tone) return null;
-    if (!metronomeSynthRef.current) {
-      const synth = new Tone.MembraneSynth({
-        envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.03 },
-        octaves: 2
-      }).toDestination();
-      synth.volume.value = -8;
-      metronomeSynthRef.current = synth;
+  const createMetronomeBuffer = useCallback((Tone: ToneModule, isHigh: boolean) => {
+    const sampleRate = Tone.context.sampleRate;
+    const length = Math.floor(sampleRate * METRONOME_CONFIG.duration);
+    const buffer = Tone.context.createBuffer(1, length, sampleRate);
+    const data = buffer.getChannelData(0);
+    
+    const amplitude = isHigh ? METRONOME_CONFIG.highAmplitude : METRONOME_CONFIG.lowAmplitude;
+    for (let i = 0; i < length; i++) {
+      const t = i / sampleRate;
+      const envelope = Math.exp(-t * METRONOME_CONFIG.decayRate);
+      const noise = (Math.random() * 2 - 1) * METRONOME_CONFIG.noiseAmount;
+      const body = Math.sin(2 * Math.PI * METRONOME_CONFIG.bodyFrequency * t) * METRONOME_CONFIG.bodyAmount;
+      data[i] = (noise + body) * envelope * amplitude;
     }
-    return metronomeSynthRef.current;
+    
+    return new Tone.ToneAudioBuffer(buffer);
   }, []);
+
+  const getMetronomePlayer = useCallback((Tone: ToneModule | null) => {
+    if (!Tone) return null;
+    if (!metronomePlayerRef.current) {
+      const highBuffer = createMetronomeBuffer(Tone, true);
+      const lowBuffer = createMetronomeBuffer(Tone, false);
+      
+      const player = new Tone.Player().toDestination() as MetronomePlayer;
+      player.volume.value = METRONOME_CONFIG.volume;
+      player._highBuffer = highBuffer;
+      player._lowBuffer = lowBuffer;
+      metronomePlayerRef.current = player;
+    }
+    return metronomePlayerRef.current;
+  }, [createMetronomeBuffer]);
   
   const scheduleMetronome = useCallback((Tone: ToneModule | null) => {
     if (!Tone) return;
-    const synth = getMetronomeSynth(Tone);
-    if (!synth) return;
+    const player = getMetronomePlayer(Tone);
+    if (!player) return;
     clearMetronome(Tone);
-    let beatCount = 0;
+    let isHighTick = true;
     metronomeIdRef.current = Tone.Transport.scheduleRepeat((time) => {
-      const isDownbeat = beatCount % 4 === 0;
-      beatCount += 1;
-      const note = isDownbeat ? 'C6' : 'C5';
-      const velocity = isDownbeat ? 0.6 : 0.4;
-      synth.triggerAttackRelease(note, '32n', time, velocity);
+      const buffer = isHighTick ? player._highBuffer : player._lowBuffer;
+      if (buffer) {
+        player.buffer = buffer;
+        player.start(time);
+      }
+      isHighTick = !isHighTick;
     }, '4n');
-  }, [clearMetronome, getMetronomeSynth]);
+  }, [clearMetronome, getMetronomePlayer]);
   
   const handleStop = useCallback(() => {
     clearUpdateInterval();
@@ -215,9 +251,9 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number): ChordP
   useEffect(() => {
     return () => {
       handleStop();
-      if (metronomeSynthRef.current) {
-        metronomeSynthRef.current.dispose();
-        metronomeSynthRef.current = null;
+      if (metronomePlayerRef.current) {
+        metronomePlayerRef.current.dispose();
+        metronomePlayerRef.current = null;
       }
     };
   }, [handleStop]);

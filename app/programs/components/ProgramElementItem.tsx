@@ -19,7 +19,7 @@ const ProgramElementItem = ({id, index, version, allVersions, onRemove, onChange
       <span className="font-semibold">{index + 1}.</span>
       <span className="font-georgia w-[200px] truncate hover:text-blue-600">{version?.songTitle.replace(/_/g, ' ')}</span>
       <div className="flex items-center gap-1">
-        <span className="text-gray-600">{version?.label ?? id}</span>
+        <span className="text-gray-600 w-[100px] truncate">{version?.label ?? id}</span>
         <ChevronDropdown
           value={id}
           options={dropdownOptions}

@@ -5,6 +5,7 @@ import DragAndDropList from './components/DragAndDropList';
 import ProgramSelector from './components/ProgramSelector';
 import VersionSelector from './components/VersionSelector';
 import ProgramElementItem from './components/ProgramElementItem';
+import ProgramSlidesView from './components/ProgramSlidesView';
 import VersionDetailPanel from '../songs/VersionDetailPanel';
 import type { SongVersion } from '../songs/types';
 
@@ -533,6 +534,12 @@ const ProgramManager = () => {
           />
         </div>
       </div>
+
+      {selectedProgram && (
+        <div className="w-1/3 overflow-y-auto max-h-screen">
+          <ProgramSlidesView elementIds={selectedProgram.elementIds} versionMap={versionMap} />
+        </div>
+      )}
 
       {selectedVersion && (
         <VersionDetailPanel
