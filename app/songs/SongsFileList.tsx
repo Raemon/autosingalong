@@ -369,7 +369,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
     <div className="min-h-screen p-4 relative">
       <div className="flex gap-4  justify-center">
         {isListCollapsed ? (
-          <div className="w-[70px] flex flex-col items-center gap-2">
+          <div className={`w-[70px] flex flex-col items-center gap-2 ${isCreatingVersion ? 'opacity-50 pointer-events-none' : ''}`}>
             <button
               onClick={() => setIsListCollapsed(false)}
               className="text-xs px-2 py-1 text-gray-600 whitespace-nowrap"
@@ -398,7 +398,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
             </div>
           </div>
         ) : (
-          <div className="flex-1 w-full max-w-[650px] overflow-y-auto h-[calc(100vh-2rem)] scrollbar-hide">
+          <div className={`flex-1 w-full max-w-[650px] overflow-y-auto h-[calc(100vh-2rem)] scrollbar-hide ${isCreatingVersion ? 'opacity-50 pointer-events-none' : ''}`}>
             <div className="flex gap-2 items-center mb-3">
               <SearchInput
                 ref={searchInputRef}
