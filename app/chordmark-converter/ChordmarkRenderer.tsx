@@ -261,10 +261,17 @@ const ChordmarkRenderer = ({
   const renderedOutputs = useChordmarkRenderer(parsedSong.song);
   const [currentLineIndex, setCurrentLineIndex] = useState<number | null>(null);
   const [bpm, setBpm] = useState<number>(initialBpm);
+  const [playerStartLine, setPlayerStartLine] = useState(0);
+  const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
 
   const contentRef = useRef<HTMLDivElement>(null);
 
   const error = parsedSong.error || renderedOutputs.renderError;
+
+  const handlePlayFromLine = (lineIndex: number) => {
+    setPlayerStartLine(lineIndex);
+    setShouldAutoPlay(true);
+  };
 
   // Apply line highlighting
   const lineToHighlight = activeLineIndex ?? currentLineIndex;
@@ -328,12 +335,39 @@ const ChordmarkRenderer = ({
         onLineChange={setCurrentLineIndex}
         bpm={bpm}
         onBpmChange={setBpm}
+        startLine={playerStartLine}
+        onStartLineChange={setPlayerStartLine}
+        autoPlay={shouldAutoPlay}
+        onAutoPlayComplete={() => setShouldAutoPlay(false)}
       />
       {error && mode !== 'raw' && (
         <div className="mb-2 p-1 bg-red-100 text-red-800 text-xs">{error}</div>
       )}
-      <div ref={contentRef} className="text-gray-200">
-        {renderContent()}
+      <div className="flex border relative" style={{ maxWidth: '800px' }}>
+        <div className="flex flex-col bg-gray-900 border-r border-gray-700">
+          {content.split('\n').map((_, index) => (
+            <div
+              key={index}
+              className="relative group flex items-center"
+              style={{ height: '16px', lineHeight: '16px' }}
+            >
+              <button
+                onClick={() => handlePlayFromLine(index)}
+                className="absolute left-0 opacity-0 group-hover:opacity-100 transition-opacity px-1 text-blue-400 hover:text-blue-300 text-xs"
+                title={`Play from line ${index + 1}`}
+                style={{ fontSize: '10px' }}
+              >
+                ▶
+              </button>
+              <span className="text-gray-500 text-xs pr-1 pl-5 select-none" style={{ fontSize: '10px', minWidth: '40px', textAlign: 'right' }}>
+                {index + 1}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div ref={contentRef} className="text-gray-200 p-2 flex-1">
+          {renderContent()}
+        </div>
       </div>
     </div>
   );
