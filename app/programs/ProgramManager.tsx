@@ -9,6 +9,9 @@ import ProgramSlidesView from './components/ProgramSlidesView';
 import VersionDetailPanel from '../songs/VersionDetailPanel';
 import type { SongVersion } from '../songs/types';
 import { useUser } from '../contexts/UserContext';
+import { parseHTMLContent, groupIntoSlides } from '../../src/components/slides/utils';
+import type { Slide } from '../../src/components/slides/types';
+import { extractLyrics } from '../../lib/lyricsExtractor';
 
 type Program = {
   id: string;
@@ -25,6 +28,13 @@ type VersionOption = {
   songTitle: string;
   createdAt: string;
   nextVersionId: string | null;
+};
+
+type SongSlideData = {
+  versionId: string;
+  songTitle: string;
+  versionLabel: string;
+  slides: Slide[];
 };
 
 const ProgramManager = () => {
@@ -46,6 +56,7 @@ const ProgramManager = () => {
   const [versionError, setVersionError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isDeletingProgram, setIsDeletingProgram] = useState(false);
+  const [fullVersions, setFullVersions] = useState<Record<string, SongVersion>>({});
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -119,6 +130,35 @@ const ProgramManager = () => {
     return programs.find((program) => program.id === selectedProgramId) || null;
   }, [programs, selectedProgramId]);
 
+  useEffect(() => {
+    const fetchVersions = async () => {
+      if (!selectedProgram || selectedProgram.elementIds.length === 0) {
+        setFullVersions({});
+        return;
+      }
+      
+      const newFullVersions: Record<string, SongVersion> = {};
+      
+      for (const versionId of selectedProgram.elementIds) {
+        try {
+          const response = await fetch(`/api/songs/versions/${versionId}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.version) {
+              newFullVersions[versionId] = data.version;
+            }
+          }
+        } catch (err) {
+          console.error(`Failed to fetch version ${versionId}:`, err);
+        }
+      }
+      
+      setFullVersions(newFullVersions);
+    };
+    
+    fetchVersions();
+  }, [selectedProgram]);
+
   const versionMap = useMemo(() => {
     const map: Record<string, VersionOption> = {};
     versions.forEach((version) => {
@@ -126,6 +166,61 @@ const ProgramManager = () => {
     });
     return map;
   }, [versions]);
+
+  const allSlides = useMemo(() => {
+    if (!selectedProgram) return [];
+    
+    const convertToLyricsOnly = (content: string, label: string): string => {
+      try {
+        const lyrics = extractLyrics(content, label);
+        return `<div>${lyrics.split('\n').map(line => `<p>${line || '&nbsp;'}</p>`).join('')}</div>`;
+      } catch (err) {
+        console.error('Failed to extract lyrics:', err);
+        return content;
+      }
+    };
+    
+    const result: SongSlideData[] = [];
+    const linesPerSlide = 8;
+    
+    for (const versionId of selectedProgram.elementIds) {
+      const version = versionMap[versionId];
+      const fullVersion = fullVersions[versionId];
+      if (!version) continue;
+      
+      let slides: Slide[] = [];
+      if (fullVersion) {
+        try {
+          let contentToProcess = '';
+          
+          if (fullVersion.content) {
+            contentToProcess = convertToLyricsOnly(fullVersion.content, version.label);
+          } else if (fullVersion.renderedContent) {
+            contentToProcess = fullVersion.renderedContent;
+          }
+          
+          if (contentToProcess) {
+            const lines = parseHTMLContent(contentToProcess);
+            slides = groupIntoSlides(lines, linesPerSlide);
+            
+            const titleSlide: Slide = [{ text: version.songTitle, isHeading: true, level: 1 }];
+            slides.unshift(titleSlide);
+          }
+        } catch (err) {
+          console.error(`Failed to parse content for ${versionId}:`, err);
+        }
+      }
+      
+      result.push({
+        versionId: version.id,
+        songTitle: version.songTitle,
+        versionLabel: version.label,
+        slides: slides,
+      });
+    }
+    
+    return result;
+  }, [selectedProgram, versionMap, fullVersions]);
 
   const filteredVersions = useMemo(() => {
     const trimmed = searchTerm.trim();
@@ -553,9 +648,9 @@ const ProgramManager = () => {
         </div>
       </div>
 
-      {selectedProgram && (
+      {selectedProgram && !selectedVersion && (
         <div className="w-1/3 overflow-y-auto max-h-screen">
-          <ProgramSlidesView elementIds={selectedProgram.elementIds} versionMap={versionMap} />
+          <ProgramSlidesView slides={allSlides} />
         </div>
       )}
 
