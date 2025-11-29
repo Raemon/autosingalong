@@ -3,7 +3,7 @@
 import { useMemo, useEffect, useState } from 'react';
 import type { ParsedSong } from 'chord-mark';
 import { extractChordEvents } from './chordUtils';
-import { useChordPlayback } from './useChordPlayback';
+import { useChordPlayback, type MetronomeMode } from './useChordPlayback';
 
 interface ChordmarkPlayerProps {
   parsedSong: ParsedSong | null;
@@ -29,7 +29,7 @@ const ChordmarkPlayer = ({
     });
   }, [parsedSong]);
   const [startLine, setStartLine] = useState(0);
-  const [metronomeEnabled, setMetronomeEnabled] = useState(true);
+  const [metronomeMode, setMetronomeMode] = useState<MetronomeMode>('4/4');
   const filteredChordEvents = useMemo(() => {
     if (chordEvents.length === 0) return [];
     const firstIndex = chordEvents.findIndex(event => event.lineIndex >= startLine);
@@ -41,9 +41,6 @@ const ChordmarkPlayer = ({
     }));
   }, [chordEvents, startLine]);
   
-  const playbackControls = useChordPlayback(filteredChordEvents, bpm) as ReturnType<typeof useChordPlayback> & {
-    setMetronomeEnabled: (enabled: boolean) => void;
-  };
   const {
     isPlaying,
     isLoading,
@@ -52,8 +49,8 @@ const ChordmarkPlayer = ({
     loadError,
     handlePlay,
     handleStop,
-    setMetronomeEnabled: setPlaybackMetronomeEnabled,
-  } = playbackControls;
+    setMetronomeMode: setPlaybackMetronomeMode,
+  } = useChordPlayback(filteredChordEvents, bpm);
   
   // Notify parent of line changes
   useEffect(() => {
@@ -63,8 +60,8 @@ const ChordmarkPlayer = ({
   }, [currentLineIndex, onLineChange]);
   
   useEffect(() => {
-    setPlaybackMetronomeEnabled(metronomeEnabled);
-  }, [metronomeEnabled, setPlaybackMetronomeEnabled]);
+    setPlaybackMetronomeMode(metronomeMode);
+  }, [metronomeMode, setPlaybackMetronomeMode]);
   
   if (!hasChords) return null;
   
@@ -108,14 +105,22 @@ const ChordmarkPlayer = ({
             ))}
           </select>
         </div>
-        <label className="flex items-center gap-1 text-gray-500">
-          <input
-            type="checkbox"
-            checked={metronomeEnabled}
-            onChange={(e) => setMetronomeEnabled(e.target.checked)}
-          />
-          Tick
-        </label>
+        <div className="flex items-center gap-1">
+          <span className="text-gray-500">Tick:</span>
+          <select
+            value={metronomeMode}
+            onChange={(e) => setMetronomeMode(e.target.value as MetronomeMode)}
+            className="p-1 rounded-sm border border-gray-500 text-gray-200 bg-black"
+          >
+            <option value="off">Off</option>
+            <option value="2/4">2/4</option>
+            <option value="3/4">3/4</option>
+            <option value="4/4">4/4</option>
+            <option value="6/4">6/4</option>
+            <option value="quarter">Quarter</option>
+            <option value="triplet">Triplet</option>
+          </select>
+        </div>
         {currentChord && <span className="text-blue-400 font-medium">{currentChord}</span>}
         {loadError && <span className="text-red-600">{loadError}</span>}
       </div>

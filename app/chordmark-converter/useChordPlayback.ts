@@ -8,6 +8,8 @@ type MetronomePlayer = import('tone').Player & {
   _lowBuffer?: import('tone').ToneAudioBuffer;
 };
 
+export type MetronomeMode = 'off' | '2/4' | '3/4' | '4/4' | '6/4';
+
 interface ChordPlaybackResult {
   isPlaying: boolean;
   isLoading: boolean;
@@ -18,6 +20,7 @@ interface ChordPlaybackResult {
   handleStop: () => void;
   playSingleChord: (chordSymbol: string) => Promise<void>;
   setMetronomeEnabled: (enabled: boolean) => void;
+  setMetronomeMode: (mode: MetronomeMode) => void;
 }
 
 // Metronome audio configuration - adjust these to change the click sound
@@ -36,7 +39,7 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number): ChordP
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentLineIndex, setCurrentLineIndex] = useState<number | null>(null);
   const [currentChordSymbol, setCurrentChordSymbol] = useState<string | null>(null);
-  const [metronomeEnabled, setMetronomeEnabled] = useState(true);
+  const [metronomeMode, setMetronomeMode] = useState<MetronomeMode>('4/4');
   
   const { isLoading, loadError, loadPiano, getSampler, getTone, playSingleChord } = usePianoPlayback();
   
@@ -101,20 +104,43 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number): ChordP
     return metronomePlayerRef.current;
   }, [createMetronomeBuffer]);
   
-  const scheduleMetronome = useCallback((Tone: ToneModule | null) => {
-    if (!Tone) return;
+  const scheduleMetronome = useCallback((Tone: ToneModule | null, mode: MetronomeMode) => {
+    if (!Tone || mode === 'off') return;
     const player = getMetronomePlayer(Tone);
     if (!player) return;
     clearMetronome(Tone);
-    let isHighTick = true;
+    
+    // Determine interval and beats per measure based on mode
+    let interval: string;
+    let beatsPerMeasure: number | null = null;
+    
+    if (mode === '2/4') {
+      interval = '2n';
+      beatsPerMeasure = 2;
+    } else if (mode === '3/4') {
+      interval = '3n';
+      beatsPerMeasure = 3;
+    } else if (mode === '4/4') {
+      interval = '4n';
+      beatsPerMeasure = 4;
+    } else if (mode === '6/4') {
+      interval = '6n';
+      beatsPerMeasure = 6;
+    } else {
+      interval = '2n';
+      beatsPerMeasure = 2;
+    }
+    
+    let beatInMeasure = 0;
     metronomeIdRef.current = Tone.Transport.scheduleRepeat((time) => {
-      const buffer = isHighTick ? player._highBuffer : player._lowBuffer;
+      const isDownbeat = beatInMeasure === 0;
+      const buffer = isDownbeat ? player._highBuffer : player._lowBuffer;
       if (buffer) {
         player.buffer = buffer;
         player.start(time);
       }
-      isHighTick = !isHighTick;
-    }, '4n');
+      beatInMeasure = (beatInMeasure + 1) % beatsPerMeasure!;
+    }, interval);
   }, [clearMetronome, getMetronomePlayer]);
   
   const handleStop = useCallback(() => {
@@ -219,11 +245,7 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number): ChordP
       scheduledIdsRef.current.push(id);
     }
     
-    if (metronomeEnabled) {
-      scheduleMetronome(Tone);
-    } else {
-      clearMetronome(Tone);
-    }
+    scheduleMetronome(Tone, metronomeMode);
     
     // Start transport
     Tone.Transport.start();
@@ -234,17 +256,18 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number): ChordP
     if (!isPlaying) return;
     const Tone = getTone();
     if (!Tone) return;
-    if (metronomeEnabled) {
-      if (metronomeIdRef.current === null) {
-        scheduleMetronome(Tone);
-      }
-    } else {
-      clearMetronome(Tone);
+    clearMetronome(Tone);
+    if (metronomeMode !== 'off') {
+      scheduleMetronome(Tone, metronomeMode);
     }
-  }, [metronomeEnabled, isPlaying, getTone, scheduleMetronome, clearMetronome]);
+  }, [metronomeMode, isPlaying, getTone, scheduleMetronome, clearMetronome]);
   
   const updateMetronomeEnabled = useCallback((enabled: boolean) => {
-    setMetronomeEnabled(enabled);
+    setMetronomeMode(enabled ? '4/4' : 'off');
+  }, []);
+  
+  const updateMetronomeMode = useCallback((mode: MetronomeMode) => {
+    setMetronomeMode(mode);
   }, []);
   
   // Cleanup on unmount
@@ -268,5 +291,6 @@ export const useChordPlayback = (chordEvents: ChordEvent[], bpm: number): ChordP
     handleStop,
     playSingleChord,
     setMetronomeEnabled: updateMetronomeEnabled,
+    setMetronomeMode: updateMetronomeMode,
   };
 };

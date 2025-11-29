@@ -52,7 +52,7 @@ const CreateVersionForm = ({form, onFormChange, onSubmit, onCancel, isSubmitting
           <textarea
             value={form.content}
             onChange={(e) => onFormChange({ content: e.target.value })}
-            className="w-full h-64 p-2 text-xs font-mono border border-gray-300"
+            className="w-full h-64 p-2 text-xs font-mono border border-gray-300 bg-black/80"
             placeholder="Version content"
           />
         )}
@@ -63,7 +63,7 @@ const CreateVersionForm = ({form, onFormChange, onSubmit, onCancel, isSubmitting
           type="text"
           value={form.audioUrl}
           onChange={(e) => onFormChange({ audioUrl: e.target.value })}
-          className="w-full px-2 py-1 text-xs border border-gray-300"
+          className="w-full px-2 py-1 text-xs border border-gray-300 bg-black"
           placeholder="Audio URL"
         />
       </div>

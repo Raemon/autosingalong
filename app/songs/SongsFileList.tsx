@@ -449,7 +449,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
                   value={newSongTitle}
                   onChange={(e) => setNewSongTitle(e.target.value)}
                   placeholder="Song title"
-                  className="flex-1 px-2 py-1 text-sm"
+                  className="flex-1 px-2 py-1 text-sm bg-black border border-gray-300"
                   onKeyDown={(e) => e.key === 'Enter' && handleCreateSong()}
                 />
                 <button onClick={handleCreateSong} disabled={isSubmittingSong} className="text-xs px-2 py-1 bg-green-600 text-white disabled:opacity-50">
