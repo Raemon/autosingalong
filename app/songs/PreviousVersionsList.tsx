@@ -32,7 +32,7 @@ const PreviousVersionsList = ({previousVersions, currentLabel, isExpanded, onTog
             <div
               key={prevVersion.id}
               onClick={() => onVersionClick(prevVersion)}
-              className="px-2 py-1 cursor-pointer hover:bg-gray-50 text-xs"
+              className="px-2 py-1 cursor-pointer hover:bg-black text-xs"
             >
               {prevVersion.label !== currentLabel && (
                 <div className="font-mono text-gray-300">{prevVersion.label}</div>

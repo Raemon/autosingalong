@@ -60,7 +60,7 @@ const ChevronDropdown = ({value, options, onChange, placeholder, footer}: {value
             ))}
           </div>
           {footer && (
-            <div className="border-t border-gray-300 w-full text-left px-2 py-1 text-sm text-blue-600 hover:bg-blue-50 cursor-pointer">
+            <div className="border-t border-gray-300 w-full text-left px-2 py-1 text-sm text-blue-400 hover:bg-blue-50 cursor-pointer">
               {footer}
             </div>
           )}

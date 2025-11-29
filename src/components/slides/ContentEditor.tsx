@@ -41,7 +41,7 @@ const ContentEditor = ({htmlContent, setHtmlContent, rawHtml, slides, extractedF
             <h3 className="text-xs m-0">Raw HTML</h3>
             <span className="text-xs">{rawHtml.split('\n').length} lines</span>
           </div>
-          <div ref={rawRef} onFocus={() => setRawHtmlExpanded(true)} onBlur={() => setRawHtmlExpanded(false)} tabIndex={0} className="flex-1 min-h-0 p-2 border text-xs font-mono overflow-y-auto overflow-x-hidden bg-gray-50 resize-y w-full box-border break-all whitespace-pre-wrap cursor-pointer focus:outline-none" data-placeholder="HTML will appear here..." />
+          <div ref={rawRef} onFocus={() => setRawHtmlExpanded(true)} onBlur={() => setRawHtmlExpanded(false)} tabIndex={0} className="flex-1 min-h-0 p-2 border text-xs font-mono overflow-y-auto overflow-x-hidden bg-black resize-y w-full box-border break-all whitespace-pre-wrap cursor-pointer focus:outline-none" data-placeholder="HTML will appear here..." />
         </div>
         <div className={`flex flex-col flex-grow min-w-0 w-full h-full overflow-y-scroll ${rawHtmlExpanded ? 'order-2' : 'order-2'}`}>
           <div className="flex items-center justify-between mb-1 px-2 py-1">

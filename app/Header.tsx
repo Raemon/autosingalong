@@ -8,7 +8,7 @@ const Header = () => {
 
   return (
     <header className="px-4 py-3 flex items-center justify-between">
-      <h1 className="font-georgia font-semibold text-3xl"><Link href="/">Secular Solstice</Link></h1>
+      <h1 className="font-georgia text-4xl"><Link href="/">Secular Solstice</Link></h1>
       <nav className="flex gap-6 items-center">
         <Link href="/songs" className="hover:underline">Songs</Link>
         <Link href="/programs" className="hover:underline">Programs</Link>

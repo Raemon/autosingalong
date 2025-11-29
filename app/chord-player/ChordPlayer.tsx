@@ -502,7 +502,7 @@ C . Am . | F | C | %`}
         )}
         {isPlaying && currentChord && (
           <div className="ml-4 text-lg font-semibold">
-            Current chord: <span className="text-blue-600">{currentChord}</span>
+            Current chord: <span className="text-blue-400">{currentChord}</span>
           </div>
         )}
       </div>
@@ -518,7 +518,7 @@ C . Am . | F | C | %`}
           <a
             href={audioUrl}
             download="chord-chart.mid"
-            className="text-blue-600 hover:underline text-sm"
+            className="text-blue-400 hover:underline text-sm"
           >
             Download MIDI file
           </a>

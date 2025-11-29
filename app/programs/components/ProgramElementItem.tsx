@@ -15,9 +15,9 @@ const ProgramElementItem = ({id, index, version, allVersions, onRemove, onChange
   const dropdownOptions = songVersions.map(v => ({value: v.id, label: v.label}));
 
   return (
-    <div className="text-sm px-2 py-1 flex items-center gap-2 hover:bg-gray-50 cursor-pointer" onClick={() => onClick?.(id)}>
+    <div className="text-sm px-2 py-1 flex items-center gap-2 hover:bg-black cursor-pointer" onClick={() => onClick?.(id)}>
       <span className="font-semibold">{index + 1}.</span>
-      <span className="font-georgia w-[200px] truncate hover:text-blue-600">{version?.songTitle.replace(/_/g, ' ')}</span>
+      <span className="font-georgia w-[200px] truncate hover:text-blue-400">{version?.songTitle.replace(/_/g, ' ')}</span>
       <div className="flex items-center gap-1">
         <span className="text-gray-400 w-[100px] truncate">{version?.label ?? id}</span>
         <ChevronDropdown

@@ -35,7 +35,7 @@ const convertToLyricsOnly = (content: string, label: string): string => {
 
 const SlideItem = ({slide, slideIndex, songIndex}:{slide: Slide, slideIndex: number, songIndex: number}) => {
   return (
-    <div className="bg-gray-50 p-2 text-sm">
+    <div className="bg-black p-2 text-sm">
       <div className="text-xs text-gray-500 mb-1">Song {songIndex + 1} - Slide {slideIndex + 1}</div>
       <div className="space-y-1">
         {slide.map((line: ParsedLine, lineIndex: number) => {

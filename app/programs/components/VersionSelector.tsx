@@ -76,7 +76,7 @@ const VersionSelector = ({searchTerm, onSearchChange, filteredVersions, onAddEle
             <button
               type="button"
               onClick={() => onCreateVersion(filteredVersions[0].songId)}
-              className="w-full text-left px-2 py-1 text-sm text-blue-600 hover:bg-blue-50"
+              className="w-full text-left px-2 py-1 text-sm text-blue-400 hover:bg-blue-50"
             >
               + Create new version
             </button>

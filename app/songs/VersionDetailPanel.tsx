@@ -51,7 +51,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
             {isCreatingVersion && (
               <button
                 onClick={onSubmitVersion}
-                className="text-blue-600 text-xs hover:text-blue-800"
+                className="text-blue-400 text-xs hover:text-blue-800"
                 disabled={isSubmitting || isArchiving}
               >
                 Save

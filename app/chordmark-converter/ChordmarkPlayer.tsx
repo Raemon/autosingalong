@@ -116,7 +116,7 @@ const ChordmarkPlayer = ({
           />
           Tick
         </label>
-        {currentChord && <span className="text-blue-600 font-medium">{currentChord}</span>}
+        {currentChord && <span className="text-blue-400 font-medium">{currentChord}</span>}
         {loadError && <span className="text-red-600">{loadError}</span>}
       </div>
     </div>

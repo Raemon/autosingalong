@@ -9,7 +9,7 @@ const StatusMessage = ({ message, type }: Props) => {
   if (!message) return null;
   
   return (
-    <div className={`text-xs ${type === 'error' ? 'text-red-600' : type === 'success' ? 'text-green-600' : 'text-blue-600'}`}>
+    <div className={`text-xs ${type === 'error' ? 'text-red-600' : type === 'success' ? 'text-green-600' : 'text-blue-400'}`}>
       {message}
     </div>
   );

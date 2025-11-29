@@ -29,7 +29,7 @@ const VersionContent = ({version}: {
             Your browser does not support the audio element.
           </audio>
         ) : (
-          <a href={version.audioUrl || undefined} target="_blank" rel="noreferrer" className="text-blue-600 underline text-xs">
+          <a href={version.audioUrl || undefined} target="_blank" rel="noreferrer" className="text-blue-400 underline text-xs">
             Open audio file
           </a>
         )
