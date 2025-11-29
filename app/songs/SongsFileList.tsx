@@ -378,7 +378,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
             </button>
             <div className="flex-1 w-full overflow-y-auto h-[calc(100vh-3rem)] scrollbar-hide space-y-1">
               {filteredSongs.map((song) => {
-                const abbreviation = song.title.slice(0, 3) || '...';
+                const abbreviation = song.title.replace(/The/g, ' ').replace(/An/g, ' ').replace(/A/g, ' ').slice(0, 6) || '...';
                 const isSongSelected = selectedVersion ? song.versions.some(v => v.id === selectedVersion.id) : false;
                 return (
                   <button
