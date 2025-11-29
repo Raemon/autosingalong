@@ -341,7 +341,7 @@ const flagChordAlignment = (lines: SongLine[]) => {
       return;
     }
     const nextLine = lines[index + 1];
-    if (isLyricLine(nextLine) && hasLyricPositions(nextLine)) {
+    if (nextLine && isLyricLine(nextLine) && hasLyricPositions(nextLine)) {
       line.model.hasPositionedChords = true;
       markChordPositions(line, nextLine);
     } else {

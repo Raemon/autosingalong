@@ -25,20 +25,3 @@ const ResultsList = ({ results }: Props) => {
 };
 
 export default ResultsList;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

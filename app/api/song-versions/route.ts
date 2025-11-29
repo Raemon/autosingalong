@@ -17,20 +17,3 @@ export async function GET() {
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
