@@ -69,7 +69,7 @@ const VersionSelector = ({searchTerm, onSearchChange, filteredVersions, onAddEle
                 onClick={() => onAddElement(version.id)}
                 className={`text-left text-sm px-2 py-1 hover:bg-gray-100 ${index === selectedIndex ? 'bg-blue-100' : ''}`}
               >
-                <span className="font-semibold">{version.songTitle}</span> <span className="text-gray-600">{version.label}</span>
+                <span className="font-semibold">{version.songTitle}</span> <span className="text-gray-400">{version.label}</span>
               </button>
             ))}
           <div className="border-t border-gray-300">

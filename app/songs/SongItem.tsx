@@ -49,7 +49,7 @@ const VersionRow = ({version, isSelected, onClick}: {
       className={`flex items-center gap-3 px-2 py-1 cursor-pointer ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
     >
       <span className={`flex-1 font-mono min-w-0 w-[100px] truncate ${isSelected ? 'font-medium' : ''}`} style={{fontSize: '12px'}}>
-        <span className="text-gray-600">{version.label}</span>
+        <span className="text-gray-400">{version.label}</span>
       </span>
       <MyTooltip content={<div>{formatDate(version.createdAt)}{version.createdBy && ` - ${version.createdBy}`}</div>} placement="left">
         <span className="text-gray-400 text-xs">{formatRelativeTimestamp(version.createdAt)}</span>

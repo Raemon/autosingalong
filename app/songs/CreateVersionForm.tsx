@@ -23,22 +23,22 @@ const CreateVersionForm = ({form, onFormChange, onSubmit, onCancel, isSubmitting
           type="text"
           value={form.label}
           onChange={(e) => onFormChange({ label: e.target.value })}
-          className="w-full px-2 py-1 text-sm border border-gray-300 bg-gray-800"
+          className="w-full px-2 py-1 text-sm border border-gray-300 bg-black"
           placeholder="Version label"
         />
       </div>
       <div>
-        <label className="text-xs text-gray-600">BPM (optional)</label>
+        <label className="text-xs text-gray-400">BPM (optional)</label>
         <input
           type="number"
           value={form.bpm}
           onChange={(e) => onFormChange({ bpm: parseInt(e.target.value) || 100 })}
-          className="w-full px-2 py-1 text-xs border border-gray-300 bg-gray-800"
+          className="w-full px-2 py-1 text-xs border border-gray-300 bg-black"
           placeholder="BPM"
         />
       </div>
       <div>
-        <label className="text-xs text-gray-600">Content</label>
+        <label className="text-xs text-gray-400">Content</label>
         {isChordmarkFile ? (
           <ChordmarkEditor
             value={form.content}
@@ -58,7 +58,7 @@ const CreateVersionForm = ({form, onFormChange, onSubmit, onCancel, isSubmitting
         )}
       </div>
       <div>
-        <label className="text-xs text-gray-600">Audio URL (optional)</label>
+        <label className="text-xs text-gray-400">Audio URL (optional)</label>
         <input
           type="text"
           value={form.audioUrl}
@@ -79,7 +79,7 @@ const CreateVersionForm = ({form, onFormChange, onSubmit, onCancel, isSubmitting
           type="button"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="text-xs px-2 py-1 border border-gray-300 text-gray-700 disabled:opacity-50"
+          className="text-xs px-2 py-1 border border-gray-300 text-gray-300 disabled:opacity-50"
         >
           Cancel
         </button>

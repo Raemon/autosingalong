@@ -22,7 +22,7 @@ const ContentEditor = ({ onContentChange, showStatus }: Props) => {
 
   return (
     <div>
-      <label className="text-xs text-gray-600">Paste from Google Docs (uses heading elements to split sections)</label>
+      <label className="text-xs text-gray-400">Paste from Google Docs (uses heading elements to split sections)</label>
       <div
         ref={contentEditorRef}
         contentEditable

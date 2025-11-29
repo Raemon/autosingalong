@@ -196,7 +196,7 @@ const TestLilypondPage = () => {
       {lyContent && (
         <div className="mt-8 border-t pt-4">
           <h2 className="text-xl font-bold mb-4">LilypondViewer Component Test</h2>
-          <p className="text-sm text-gray-600 mb-2">This uses the same component as the songs page. Check browser console for [LilypondViewer] logs.</p>
+          <p className="text-sm text-gray-400 mb-2">This uses the same component as the songs page. Check browser console for [LilypondViewer] logs.</p>
           <div className="border p-4 bg-gray-50">
             <LilypondViewer lilypondContent={lyContent} />
           </div>

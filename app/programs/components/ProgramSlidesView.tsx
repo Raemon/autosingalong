@@ -133,7 +133,7 @@ const ProgramSlidesView = ({elementIds, versionMap, linesPerSlide=8}:{elementIds
   
   if (elementIds.length === 0) {
     return (
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-gray-400">
         No songs in program yet.
       </div>
     );

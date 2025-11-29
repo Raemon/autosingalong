@@ -174,7 +174,7 @@ const LilypondViewer = ({lilypondContent, versionId, renderedContent}:{lilypondC
         <div className="text-red-600 text-xs">
           <div>Error rendering sheet music: {error}</div>
           <details className="mt-2">
-            <summary className="cursor-pointer text-gray-600">Show LilyPond source</summary>
+            <summary className="cursor-pointer text-gray-400">Show LilyPond source</summary>
             <pre className="mt-2 text-gray-300 overflow-x-auto whitespace-pre-wrap break-words">{lilypondContent}</pre>
           </details>
         </div>
@@ -201,7 +201,7 @@ const LilypondViewer = ({lilypondContent, versionId, renderedContent}:{lilypondC
   return (
     <div className="w-full">
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-gray-600 text-xs">View:</span>
+        <span className="text-gray-400 text-xs">View:</span>
         <ChevronDropdown
           value={viewMode}
           options={viewModeOptions}

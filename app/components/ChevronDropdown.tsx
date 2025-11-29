@@ -27,7 +27,7 @@ const ChevronDropdown = ({value, options, onChange, placeholder, footer}: {value
 
   return (
     <div className="relative flex items-center gap-1" ref={dropdownRef}>
-      <button type="button" onClick={() => setIsOpen(!isOpen)} className="text-gray-600 hover:text-gray-900 text-xs">
+      <button type="button" onClick={() => setIsOpen(!isOpen)} className="text-gray-400 hover:text-gray-100 text-xs">
         ▼
       </button>
       {isOpen && (

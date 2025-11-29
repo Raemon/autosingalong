@@ -21,7 +21,7 @@ const Header = () => {
           value={userName}
           onChange={(e) => setUserName(e.target.value)}
           placeholder="Your name"
-          className="px-2 py-1 w-32 bg-gray-800 rounded-sm"
+          className="px-2 py-1 w-32 bg-black rounded-sm"
         />
       </nav>
     </header>

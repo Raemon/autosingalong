@@ -480,7 +480,7 @@ C | G | Am | F |
 C | Am | F | G . F . |
 
 C . Am . | F | C | %`}
-          className="w-full h-64 p-2 border border-gray-300 rounded font-mono text-sm dark:bg-gray-800"
+          className="w-full h-64 p-2 border border-gray-300 rounded font-mono text-sm dark:bg-black"
         />
       </div>
 

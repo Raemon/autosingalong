@@ -33,7 +33,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
       <h2 className="font-mono -ml-8 text-lg font-semibold mb-2 flex items-center gap-3">
         <button
           onClick={() => !isCreatingVersion && onClose()}
-          className="text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-400"
+          className="text-gray-400 hover:text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-400"
           disabled={isCreatingVersion}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -68,7 +68,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
             )}
             <button
               onClick={isCreatingVersion ? onCancelCreateVersion : onCreateVersionClick}
-              className="text-gray-600 text-xs hover:text-gray-200"
+              className="text-gray-400 text-xs hover:text-gray-200"
               disabled={isSubmitting || isArchiving}
             >
               {isCreatingVersion ? 'Cancel' : 'Edit'}

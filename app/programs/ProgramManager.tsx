@@ -514,10 +514,10 @@ const ProgramManager = () => {
 
         <div className="flex flex-col gap-1 w-1/3">
           {!selectedProgram && (
-            <p className="text-sm text-gray-600">Create or select a program to begin.</p>
+            <p className="text-sm text-gray-400">Create or select a program to begin.</p>
           )}
           {selectedProgram && selectedProgram.elementIds.length === 0 && (
-            <p className="text-sm text-gray-600">No elements yet.</p>
+            <p className="text-sm text-gray-400">No elements yet.</p>
           )}
           {selectedProgram && selectedProgram.elementIds.length > 0 && (
             <DragAndDropList

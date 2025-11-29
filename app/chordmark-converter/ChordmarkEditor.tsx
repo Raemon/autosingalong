@@ -183,7 +183,7 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm, autosav
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder="Enter chordmark notation..."
-            className="flex-1 p-2 border bg-gray-800 text-sm font-mono min-h-[300px] whitespace-pre flex-grow flex-2"
+            className="flex-1 p-2 border bg-black text-sm font-mono min-h-[300px] whitespace-pre flex-grow flex-2"
             style={{ lineHeight: '16px', maxWidth: '800px' }}
           />
         </div>
@@ -206,7 +206,7 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm, autosav
               </button>
               <button
                 onClick={() => setPreviewMode('chords')}
-                className={`px-2 py-0.5 text-xs ${previewMode === 'chords' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                className={`px-2 py-0.5 text-xs ${previewMode === 'chords' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-300'}`}
               >
                 Chords
               </button>

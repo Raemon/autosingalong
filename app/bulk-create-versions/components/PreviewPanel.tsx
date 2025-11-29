@@ -17,9 +17,9 @@ const PreviewPanel = ({ previewItems }: Props) => (
               {item.song ? '✓' : '✗'} {item.sectionTitle}
             </div>
             {item.song && (
-              <div className="mt-1 text-gray-600">Song: {item.song.title}</div>
+              <div className="mt-1 text-gray-400">Song: {item.song.title}</div>
             )}
-            <div className="mt-1 text-gray-600">Version: {item.versionName}</div>
+            <div className="mt-1 text-gray-400">Version: {item.versionName}</div>
             {item.contentPreview && (
               <div className="mt-1 text-gray-400 truncate">{item.contentPreview}</div>
             )}

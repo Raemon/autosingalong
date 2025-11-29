@@ -98,7 +98,7 @@ const ChordmarkPlayer = ({
           <select
             value={String(startLine)}
             onChange={(e) => setStartLine(Number(e.target.value))}
-            className="p-1 rounded-sm border border-gray-500 text-gray-200 bg-gray-800 max-w-xs"
+            className="p-1 rounded-sm border border-gray-500 text-gray-200 bg-black max-w-xs"
             disabled={lineOptions.length === 0}
           >
             {lineOptions.map(option => (

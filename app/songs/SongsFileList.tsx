@@ -349,7 +349,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
     return (
       <div className="min-h-screen p-4">
         <div className="max-w-5xl mx-auto">
-          <p className="text-gray-600">Loading songs...</p>
+          <p className="text-gray-400">Loading songs...</p>
         </div>
       </div>
     );
@@ -372,7 +372,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
           <div className={`w-[70px] flex flex-col items-center gap-2 ${isCreatingVersion ? 'opacity-50 pointer-events-none' : ''}`}>
             <button
               onClick={() => setIsListCollapsed(false)}
-              className="text-xs px-2 py-1 text-gray-600 whitespace-nowrap"
+              className="text-xs px-2 py-1 text-gray-400 whitespace-nowrap"
             >
               Show
             </button>
@@ -437,7 +437,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
               )}
               <button
                 onClick={() => setIsListCollapsed(true)}
-                className="text-xs px-2 py-1 text-gray-600 whitespace-nowrap"
+                className="text-xs px-2 py-1 text-gray-400 whitespace-nowrap"
               >
                 Hide
               </button>
@@ -455,7 +455,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
                 <button onClick={handleCreateSong} disabled={isSubmittingSong} className="text-xs px-2 py-1 bg-green-600 text-white disabled:opacity-50">
                   {isSubmittingSong ? '...' : 'Create'}
                 </button>
-                <button onClick={() => { setIsCreatingSong(false); setNewSongTitle(''); }} className="text-xs px-2 py-1 text-gray-600">
+                <button onClick={() => { setIsCreatingSong(false); setNewSongTitle(''); }} className="text-xs px-2 py-1 text-gray-400">
                   Cancel
                 </button>
               </div>
