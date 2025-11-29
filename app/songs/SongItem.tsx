@@ -68,12 +68,12 @@ const SongItem = ({song, selectedVersionId, onVersionClick, onCreateNewVersion}:
 
   return (
     <div className="flex">
-      <div className="group flex items-center w-2/3 justify-between px-2 py-1 text-base font-medium border-b border-gray-200 font-georgia">
+      <div className="group flex items-center w-2/3 justify-between px-2 py-1 text-lg font-medium border-b border-gray-200 font-georgia">
         <span>{song.title.replace(/_/g, ' ')}</span>
         {canEdit && (
           <button
             onClick={(e) => { e.stopPropagation(); onCreateNewVersion(song); }}
-            className="opacity-0 bg-gray-800 rounded-full p-1 group-hover:opacity-100 text-gray-400 hover:text-blue-400 text-sm"
+            className="opacity-0 bg-gray-800 font-bold rounded-lg p-1 group-hover:opacity-100 text-white hover:bg-gray-700 px-2 text-sm"
             title="Add new version"
           >
             +
