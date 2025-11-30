@@ -299,12 +299,14 @@ const ChordmarkRenderer = ({
   showTabs = true,
   activeLineIndex = null,
   initialBpm = 90,
+  print = false,
 }: {
   content: string;
   defaultMode?: ChordmarkViewMode;
   showTabs?: boolean;
   activeLineIndex?: number | null;
   initialBpm?: number;
+  print?: boolean;
 }) => {
   const [mode, setMode] = useState<ChordmarkViewMode>(defaultMode);
   const parsedSong = useChordmarkParser(content);
@@ -379,8 +381,8 @@ const ChordmarkRenderer = ({
   return (
     <div>
       <style dangerouslySetInnerHTML={{ __html: CHORDMARK_STYLES }} />
-      {showTabs && <ChordmarkTabs mode={mode} onModeChange={setMode} />}
-      <ChordmarkPlayer 
+      {!print && showTabs && <ChordmarkTabs mode={mode} onModeChange={setMode} />}
+      {!print && <ChordmarkPlayer 
         parsedSong={parsedSong.song} 
         onLineChange={setCurrentLineIndex}
         bpm={bpm}
@@ -389,12 +391,12 @@ const ChordmarkRenderer = ({
         onStartLineChange={setPlayerStartLine}
         autoPlay={shouldAutoPlay}
         onAutoPlayComplete={() => setShouldAutoPlay(false)}
-      />
+      />}
       {error && mode !== 'raw' && (
         <div className="mb-2 p-1 bg-red-100 text-red-800 text-xs">{error}</div>
       )}
       <div className="flex relative" style={{ maxWidth: '800px' }}>
-        <div className="flex flex-col bg-gray-900 border-r border-gray-700">
+        {!print && <div className="flex flex-col bg-gray-900 border-r border-gray-700">
           {content.split('\n').map((_, index) => (
             <div
               key={index}
@@ -414,7 +416,7 @@ const ChordmarkRenderer = ({
               </span>
             </div>
           ))}
-        </div>
+        </div>}
         <div ref={contentRef} className="text-gray-200 p-2 flex-1">
           {renderContent()}
         </div>

@@ -39,7 +39,7 @@ const VersionContent = ({version, print}: {
         isLilypondFile ? (
           <LilypondViewer lilypondContent={version.content || ''} versionId={version.id} renderedContent={version.renderedContent} />
         ) : isChordmarkFile ? (
-          <ChordmarkRenderer content={version.content || ''} initialBpm={version.bpm || 90} />
+          <ChordmarkRenderer content={version.content || ''} initialBpm={version.bpm || 90} print={print} />
         ) : isTxtFile ? (
           <pre className="text-content text-xs overflow-x-auto max-w-full">{version.content}</pre>
         ) : (

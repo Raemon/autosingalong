@@ -18,7 +18,7 @@ const PrintPage = async ({ params }: PrintPageProps) => {
 
   return (
     <div className="p-8">
-      <VersionContent version={version} />
+      <VersionContent version={version} print />
     </div>
   );
 };
