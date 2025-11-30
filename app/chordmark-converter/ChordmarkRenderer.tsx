@@ -256,9 +256,9 @@ export const useChordmarkRenderer = (parsedSong: ReturnType<typeof parseSong> | 
       htmlChordsOnly = addLineIndexAttributes(htmlChordsOnly, chordLineIndices);
       htmlLyricsOnly = addLineIndexAttributes(htmlLyricsOnly, chordLineIndices);
 
-      // Add bracket meta classes
+      // Add bracket meta classes - use the correct source song for each render
       htmlFull = addBracketMetaClasses(htmlFull, parsedSong);
-      htmlChordsOnly = addBracketMetaClasses(htmlChordsOnly, parsedSong);
+      htmlChordsOnly = addBracketMetaClasses(htmlChordsOnly, songForChordsWithMeta || parsedSong);
       htmlLyricsOnly = addBracketMetaClasses(htmlLyricsOnly, parsedSong);
 
       return { htmlFull, htmlChordsOnly, htmlLyricsOnly, renderError: null };

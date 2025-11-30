@@ -2,9 +2,15 @@
 
 import Link from 'next/link';
 import { useUser } from './contexts/UserContext';
+import { usePathname } from 'next/navigation';
 
 const Header = () => {
   const { userName, setUserName } = useUser();
+  const pathname = usePathname();
+  
+  if (pathname?.includes('/print')) {
+    return null;
+  }
 
   return (
     <header className="px-4 py-3 flex items-center justify-between">
