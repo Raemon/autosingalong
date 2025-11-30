@@ -11,11 +11,11 @@
   --primary: rgb(255, 226, 64);
 }
 
-text-primary {
+.text-primary {
   color: var(--primary) !important;
 }
 
-bg-primary {
+.bg-primary {
   background-color: var(--primary) !important;
 }
 
