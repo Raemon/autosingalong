@@ -79,11 +79,15 @@ export const CHORDMARK_STYLES = `
     color: #888;
     font-style: italic;
     white-space: pre-wrap;
+    display: inline-block;
+    max-width: 400px;
   }
   .styled-chords .cmSong .cmBracketMeta {
     color: #888;
     font-style: italic;
     white-space: pre-wrap;
+    display: inline-block;
+    max-width: 400px;
   }
   
   /* Line highlighting for active playback - only chord lines get data-line-index */
