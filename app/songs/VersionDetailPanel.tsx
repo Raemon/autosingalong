@@ -99,6 +99,16 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
           />
           <VersionContent version={version} />
           <VersionMetadata version={version} />
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <a
+              href={`/songs/${version.id}/print`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 text-xs hover:text-blue-600 underline"
+            >
+              Print View
+            </a>
+          </div>
         </>
       )}
     </div>

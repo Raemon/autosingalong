@@ -4,8 +4,9 @@ import ChordmarkRenderer from '../chordmark-converter/ChordmarkRenderer';
 import LilypondViewer from './LilypondViewer';
 import { AUDIO_EXTENSIONS } from '../../lib/audioExtensions';
 
-const VersionContent = ({version}: {
+const VersionContent = ({version, print}: {
   version: SongVersion;
+  print?: boolean;
 }) => {
   const hasAudio = Boolean(version.audioUrl);
   const hasContent = Boolean(version.content);

@@ -352,6 +352,50 @@ const clearChordPositions = (line: ChordLine) => {
   });
 };
 
+export const removeRepeatBarIndicators = (song: ParsedSong | null): ParsedSong | null => {
+  if (!song?.allLines) {
+    return song;
+  }
+  song.allLines.forEach((line) => {
+    if (!isChordLine(line)) {
+      return;
+    }
+    const bars = line.model?.allBars || line.allBars || [];
+    bars.forEach((bar) => {
+      if (bar.isRepeated) {
+        bar.isRepeated = false;
+      }
+    });
+  });
+  return song;
+};
+
+export const isBracketedMetaLine = (line: LyricLine | SongLine): boolean => {
+  if (!isLyricLine(line)) {
+    return false;
+  }
+  const lyrics = line.lyrics || line.model?.lyrics || '';
+  const trimmed = lyrics.trim();
+  return trimmed.startsWith('[') && trimmed.endsWith(']');
+};
+
+export const prepareSongForChordsWithMeta = (song: ParsedSong): ParsedSong => {
+  if (!song?.allLines?.length) {
+    return song;
+  }
+  const clonedSong = cloneSong(song);
+  const filteredLines = clonedSong.allLines.filter((line) => {
+    if (line.type === lineTypes.CHORD) return true;
+    if (line.type === lineTypes.SECTION_LABEL) return true;
+    if (line.type === lineTypes.TIME_SIGNATURE) return true;
+    if (line.type === lineTypes.EMPTY_LINE) return true;
+    if (isBracketedMetaLine(line)) return true;
+    return false;
+  });
+  clonedSong.allLines = filteredLines;
+  return clonedSong;
+};
+
 export const prepareSongForRendering = (song: ParsedSong): ParsedSong => {
   if (!song?.allLines?.length) {
     return song;
