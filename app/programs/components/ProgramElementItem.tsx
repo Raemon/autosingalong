@@ -11,12 +11,25 @@ type VersionOption = {
   createdAt: string;
 };
 
-const ProgramElementItem = ({id, index, version, allVersions, onRemove, onChangeVersion, onClick, onCreateNewVersion, canEdit}: {id: string, index: number, version?: VersionOption, allVersions: VersionOption[], onRemove: (id: string) => void, onChangeVersion: (oldId: string, newId: string) => void, onClick?: (versionId: string) => void, onCreateNewVersion?: (songId: string) => void, canEdit: boolean}) => {
+type ProgramElementItemProps = {
+  id: string;
+  index: number;
+  version?: VersionOption;
+  allVersions: VersionOption[];
+  onRemove: (id: string) => void;
+  onChangeVersion: (oldId: string, newId: string) => void;
+  onClick?: (versionId: string) => void;
+  onCreateNewVersion?: (songId: string) => void;  
+  canEdit: boolean;
+  selectedVersionId?: string;
+};
+
+const ProgramElementItem = ({id, index, version, allVersions, onRemove, onChangeVersion, onClick, onCreateNewVersion, canEdit, selectedVersionId}: ProgramElementItemProps) => {
   const songVersions = version ? allVersions.filter(v => v.songId === version.songId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [];
   const dropdownOptions = songVersions.map(v => ({value: v.id, label: `${v.label} - ${formatRelativeTimestamp(v.createdAt)}`}));
 
   return (
-    <div className="text-sm px-2 py-1 flex items-center gap-2 hover:bg-black cursor-pointer group" onClick={() => onClick?.(id)}>
+    <div className={`text-sm px-2 py-1 flex items-center gap-2 hover:bg-black cursor-pointer group ${selectedVersionId === id ? 'text-primary' : ''}`} onClick={() => onClick?.(id)}>
       <span className="font-semibold w-[20px] text-center text-gray-400">{index + 1}.</span>
       <span className="font-georgia text-base w-[250px] truncate hover:text-blue-400">{version?.songTitle.replace(/_/g, ' ')}</span>
       <div className="flex items-center gap-1">

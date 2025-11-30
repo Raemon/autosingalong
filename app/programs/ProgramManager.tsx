@@ -632,7 +632,18 @@ const ProgramManager = () => {
               keyExtractor={(id) => id}
               renderItem={(id, index) => {
                 const version = versionMap[id];
-                return <ProgramElementItem id={id} index={index} version={version} allVersions={versions} onRemove={handleRemoveElement} onChangeVersion={handleChangeVersion} onClick={handleElementClick} onCreateNewVersion={handleCreateNewVersion} canEdit={canEdit} />;
+                return <ProgramElementItem 
+                  id={id} 
+                  index={index} 
+                  version={version} 
+                  allVersions={versions} 
+                  onRemove={handleRemoveElement} 
+                  onChangeVersion={handleChangeVersion} 
+                  onClick={handleElementClick} 
+                  onCreateNewVersion={handleCreateNewVersion} 
+                  canEdit={canEdit} 
+                  selectedVersionId={selectedVersion?.id} 
+                />;
               }}
             />
           )}
