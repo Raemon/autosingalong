@@ -1,32 +1,10 @@
 import { NextResponse } from 'next/server';
-import { createVersionWithLineage, updateVersionRenderedContent, SongVersionRecord } from '@/lib/songsRepository';
-import { detectFileType } from '@/lib/lyricsExtractor';
-import { generateAllChordmarkRenderTypes } from '@/lib/chordmarkRenderer';
-
-async function handleChordmarkRendering(version: SongVersionRecord, label: string, content: string | null): Promise<SongVersionRecord> {
-  if (!content) return version;
-  
-  const fileType = detectFileType(label, content);
-  if (fileType === 'chordmark') {
-    try {
-      const renderedContent = generateAllChordmarkRenderTypes(content);
-      if (Object.keys(renderedContent).length > 0) {
-        await updateVersionRenderedContent(version.id, renderedContent);
-        // Refresh the version to get the updated rendered content
-        return { ...version, renderedContent };
-      }
-    } catch (renderError) {
-      // Log the error but don't fail the version creation
-      console.error('Failed to generate rendered content:', renderError);
-    }
-  }
-  return version;
-}
+import { createVersionWithLineage, updateVersionRenderedContent } from '@/lib/songsRepository';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { songId, label, content, audioUrl, bpm, previousVersionId, createdBy } = body;
+    const { songId, label, content, audioUrl, bpm, previousVersionId, createdBy, renderedContent } = body;
     
     if (!songId || !label) {
       return NextResponse.json({ error: 'songId and label are required' }, { status: 400 });
@@ -46,10 +24,13 @@ export async function POST(request: Request) {
       createdBy: createdBy.trim(),
     });
 
-    // If this is a chordmark file, automatically generate rendered content
-    const versionWithRendering = await handleChordmarkRendering(newVersion, label, content ?? null);
+    // If client provided pre-rendered content, save it
+    if (renderedContent && Object.keys(renderedContent).length > 0) {
+      await updateVersionRenderedContent(newVersion.id, renderedContent);
+      return NextResponse.json({ version: { ...newVersion, renderedContent } });
+    }
 
-    return NextResponse.json({ version: versionWithRendering });
+    return NextResponse.json({ version: newVersion });
   } catch (error) {
     console.error('Failed to create version:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);

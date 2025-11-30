@@ -12,7 +12,8 @@ import type { SongVersion } from '../songs/types';
 import { useUser } from '../contexts/UserContext';
 import { generateSlidesFromHtml } from '../../src/components/slides/slideGenerators';
 import type { Slide } from '../../src/components/slides/types';
-import { extractLyrics } from '../../lib/lyricsExtractor';
+import { extractLyrics, detectFileType } from '../../lib/lyricsExtractor';
+import { generateChordmarkRenderedContent } from '../chordmark-converter/clientRenderUtils';
 
 type Program = {
   id: string;
@@ -544,10 +545,16 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
     setIsSubmitting(true);
     setVersionError(null);
     try {
+      // Generate rendered content if this is a chordmark file
+      const fileType = detectFileType(newVersionForm.label, newVersionForm.content);
+      const renderedContent = fileType === 'chordmark' && newVersionForm.content
+        ? generateChordmarkRenderedContent(newVersionForm.content)
+        : undefined;
+      
       const response = await fetch('/api/songs/versions', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({songId: selectedVersion.songId, label: newVersionForm.label, content: newVersionForm.content, audioUrl: newVersionForm.audioUrl, bpm: newVersionForm.bpm, previousVersionId: selectedVersion.id === 'new' ? null : selectedVersion.id, createdBy: userName}),
+        body: JSON.stringify({songId: selectedVersion.songId, label: newVersionForm.label, content: newVersionForm.content, audioUrl: newVersionForm.audioUrl, bpm: newVersionForm.bpm, previousVersionId: selectedVersion.id === 'new' ? null : selectedVersion.id, createdBy: userName, renderedContent}),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {

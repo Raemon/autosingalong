@@ -24,7 +24,7 @@ const ChordButtons = ({ startCollapsed = false }: ChordButtonsProps) => {
   const getButtonClass = (isActive: boolean, position: 'left' | 'center' | 'right') => {
     const base = 'font-mono text-xs py-0.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
     const state = isActive ? 'bg-gray-700 text-white border-gray-600' : 'bg-gray-500 hover:bg-black/80 border-gray-300 text-gray-300';
-    const variant = position === 'center' ? 'border px-2 w-8 text-gray-800 bg-gray-400 ' : position === 'left' ? 'border-l border-t border-b px-1 w-5' : 'border-r border-t border-b px-1 w-5';
+    const variant = position === 'center' ? 'border px-2 w-8 text-gray-800 bg-gray-100 ' : position === 'left' ? 'border-l border-t border-b px-1 w-5' : 'border-r border-t border-b px-1 w-5';
     return `${base} ${state} ${variant}`;
   };
 

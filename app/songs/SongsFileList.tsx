@@ -8,6 +8,8 @@ import VersionDetailPanel from './VersionDetailPanel';
 import CreateVersionForm from './CreateVersionForm';
 import type { Song, SongVersion } from './types';
 import { useUser } from '../contexts/UserContext';
+import { detectFileType } from '@/lib/lyricsExtractor';
+import { generateChordmarkRenderedContent } from '../chordmark-converter/clientRenderUtils';
 
 const getLatestVersion = (versions: SongVersion[]) => maxBy(versions, (version) => new Date(version.createdAt).getTime());
 
@@ -225,85 +227,58 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
     setError(null);
     
     try {
-      // Check if we're editing an existing version or creating a new one
-      const isEditingExisting = selectedVersion && !creatingVersionForSong;
+      // Always create a new version (even when "editing")
+      const songId = creatingVersionForSong?.id || (selectedVersion as SongVersion & { songId: string }).songId || songs.find(song => 
+        song.versions.some(v => v.id === selectedVersion!.id)
+      )?.id;
       
-      if (isEditingExisting) {
-        // Update existing version
-        const response = await fetch(`/api/songs/versions/${selectedVersion.id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            label: newVersionForm.label,
-            content: newVersionForm.content || null,
-            audioUrl: newVersionForm.audioUrl || null,
-            bpm: newVersionForm.bpm || null,
-            previousVersionId: newVersionForm.previousVersionId || null,
-            nextVersionId: newVersionForm.nextVersionId || null,
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to update version');
-        }
-
-        const data = await response.json();
-        setIsCreatingVersion(false);
-        
-        await fetchSongs();
-        
-        setSelectedVersion(data.version);
-        window.history.pushState(null, '', `/songs/${data.version.id}`);
-      } else {
-        // Create new version
-        const songId = creatingVersionForSong?.id || (selectedVersion as SongVersion & { songId: string }).songId || songs.find(song => 
-          song.versions.some(v => v.id === selectedVersion!.id)
-        )?.id;
-        
-        if (!songId) {
-          setError('Could not determine song ID');
-          setIsSubmitting(false);
-          return;
-        }
-        
-        const response = await fetch('/api/songs/versions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            songId: songId,
-            label: newVersionForm.label,
-            content: newVersionForm.content || null,
-            audioUrl: newVersionForm.audioUrl || null,
-            bpm: newVersionForm.bpm || null,
-            previousVersionId: selectedVersion?.id || null,
-            createdBy: userName,
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create version');
-        }
-
-        const data = await response.json();
-        setIsCreatingVersion(false);
-        setCreatingVersionForSong(null);
-        setNewVersionForm({ label: '', content: '', audioUrl: '', bpm: 100, previousVersionId: '', nextVersionId: '' });
-        
-        const oldSelectedVersion = selectedVersion;
-        const newVersion = data.version;
-        
-        await fetchSongs();
-        
-        setSelectedVersion(newVersion);
-        setPreviousVersions(oldSelectedVersion ? [oldSelectedVersion, ...previousVersions] : previousVersions);
-        window.history.pushState(null, '', `/songs/${newVersion.id}`);
+      if (!songId) {
+        setError('Could not determine song ID');
+        setIsSubmitting(false);
+        return;
       }
+      
+      // Generate rendered content if this is a chordmark file
+      const fileType = detectFileType(newVersionForm.label, newVersionForm.content);
+      const renderedContent = fileType === 'chordmark' && newVersionForm.content
+        ? generateChordmarkRenderedContent(newVersionForm.content)
+        : undefined;
+      
+      const response = await fetch('/api/songs/versions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          songId: songId,
+          label: newVersionForm.label,
+          content: newVersionForm.content || null,
+          audioUrl: newVersionForm.audioUrl || null,
+          bpm: newVersionForm.bpm || null,
+          previousVersionId: selectedVersion?.id || null,
+          createdBy: userName,
+          renderedContent,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create version');
+      }
+
+      const data = await response.json();
+      setIsCreatingVersion(false);
+      setCreatingVersionForSong(null);
+      setNewVersionForm({ label: '', content: '', audioUrl: '', bpm: 100, previousVersionId: '', nextVersionId: '' });
+      
+      const oldSelectedVersion = selectedVersion;
+      const newVersion = data.version;
+      
+      await fetchSongs();
+      
+      setSelectedVersion(newVersion);
+      setPreviousVersions(oldSelectedVersion ? [oldSelectedVersion, ...previousVersions] : previousVersions);
+      window.history.pushState(null, '', `/songs/${newVersion.id}`);
     } catch (err) {
       console.error('Error creating version:', err);
       setError(err instanceof Error ? err.message : 'Failed to create version');

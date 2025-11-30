@@ -12,6 +12,11 @@ import type {
 } from 'chord-mark';
 
 export const extractTextFromHTML = (html: string): string => {
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
+    // Server-side: simple regex-based HTML tag stripping
+    return html.replace(/<[^>]*>/g, '').trim();
+  }
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
   const textContent = doc.body.textContent || '';
@@ -199,6 +204,11 @@ export const convertCustomFormatToChordmark = (text: string): string => {
 };
 
 export const combineChordsAndLyrics = (html: string): string => {
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
+    // Server-side: return html as-is since DOM manipulation isn't available
+    return html;
+  }
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
   const songDiv = doc.querySelector('.cmSong');
