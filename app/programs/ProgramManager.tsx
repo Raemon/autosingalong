@@ -618,7 +618,7 @@ const ProgramManager = () => {
           </div>
         )}
 
-        <div className="flex flex-col gap-1 w-1/3">
+        <div className="flex flex-col gap-1 w-1/2">
           {!selectedProgram && (
             <p className="text-sm text-gray-400">Create or select a program to begin.</p>
           )}

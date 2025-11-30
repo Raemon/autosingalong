@@ -16,11 +16,14 @@ const ProgramElementItem = ({id, index, version, allVersions, onRemove, onChange
   const dropdownOptions = songVersions.map(v => ({value: v.id, label: `${v.label} - ${formatRelativeTimestamp(v.createdAt)}`}));
 
   return (
-    <div className="text-sm px-2 py-1 flex items-center gap-2 hover:bg-black cursor-pointer" onClick={() => onClick?.(id)}>
-      <span className="font-semibold">{index + 1}.</span>
-      <span className="font-georgia text-base w-[200px] truncate hover:text-blue-400">{version?.songTitle.replace(/_/g, ' ')}</span>
+    <div className="text-sm px-2 py-1 flex items-center gap-2 hover:bg-black cursor-pointer group" onClick={() => onClick?.(id)}>
+      <span className="font-semibold w-[20px] text-center text-gray-400">{index + 1}.</span>
+      <span className="font-georgia text-base w-[250px] truncate hover:text-blue-400">{version?.songTitle.replace(/_/g, ' ')}</span>
       <div className="flex items-center gap-1">
-        <span className="text-gray-400 w-[100px] truncate">{version?.label ?? id}</span>
+        <div className="text-gray-400 w-[180px] truncate flex items-center justify-between gap-1">
+          <span className="text-gray-300 w-[180px] truncate">{version?.label ?? id}</span>
+          <span className="text-gray-400 text-xs">{formatRelativeTimestamp(version?.createdAt ?? '')}</span>
+        </div>
         <ChevronDropdown
           value={id}
           options={dropdownOptions}
@@ -44,7 +47,7 @@ const ProgramElementItem = ({id, index, version, allVersions, onRemove, onChange
         />
       </div>
       {canEdit && (
-        <button type="button" onClick={(e) => { e.stopPropagation(); onRemove(id); }} draggable={false} className="text-xs px-2 py-0.5 ml-auto text-red-600 hover:text-red-800">X</button>
+        <button type="button" onClick={(e) => { e.stopPropagation(); onRemove(id); }} draggable={false} className="text-xs px-2 py-0.5 ml-auto text-red-600 hover:text-red-800 opacity-0 group-hover:opacity-100">X</button>
       )}
     </div>
   );
