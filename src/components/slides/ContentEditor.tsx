@@ -64,9 +64,9 @@ const ContentEditor = ({htmlContent, setHtmlContent, rawHtml, slides, extractedF
                 const backgroundStyle = backgroundFrame ? {backgroundImage: `url('${backgroundFrame}')`, backgroundSize: 'cover', backgroundPosition: 'center'} : {background: 'var(--background-light)'};
                 
                 return (
-                  <div key={index} className="mb-2 p-2 border last:mb-0 relative overflow-hidden min-h-[200px]" style={backgroundStyle}>
-                    <div className="absolute inset-0 bg-black/40 p-2 flex flex-col">
-                      <div className="flex flex-col flex-1 justify-center text-center">
+                  <div key={index} className="mb-2 border last:mb-0 relative overflow-hidden aspect-[16/9]" style={backgroundStyle}>
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-2">
+                      <div className="text-center">
                         {slide.map((line: ParsedLine, lineIndex: number) => {
                           if (line.isImage) {
                             return <div key={lineIndex} className="text-white/80 italic bg-black/30 px-1 py-0.5 text-center my-0.5">📷 Image{line.isSvg ? ' (SVG)' : ''}</div>;
