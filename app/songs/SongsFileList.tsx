@@ -1,7 +1,7 @@
 'use client';
 
 import maxBy from 'lodash/maxBy';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import SearchInput from './SearchInput';
 import SongItem from './SongItem';
 import VersionDetailPanel from './VersionDetailPanel';
@@ -10,6 +10,7 @@ import type { Song, SongVersion } from './types';
 import { useUser } from '../contexts/UserContext';
 import { detectFileType } from '@/lib/lyricsExtractor';
 import { generateChordmarkRenderedContent } from '../chordmark-converter/clientRenderUtils';
+import useSongVersionPanel from '../hooks/useSongVersionPanel';
 
 const getLatestVersion = (versions: SongVersion[]) => maxBy(versions, (version) => new Date(version.createdAt).getTime());
 
@@ -24,12 +25,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedVersion, setSelectedVersion] = useState<SongVersion & { songId?: string; nextVersionId?: string | null; originalVersionId?: string | null } | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [previousVersions, setPreviousVersions] = useState<SongVersion[]>([]);
-  const [isExpandedPreviousVersions, setIsExpandedPreviousVersions] = useState(false);
-  const [isCreatingVersion, setIsCreatingVersion] = useState(false);
-  const [newVersionForm, setNewVersionForm] = useState({ label: '', content: '', audioUrl: '', bpm: 100, previousVersionId: '', nextVersionId: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
   const [isCreatingSong, setIsCreatingSong] = useState(false);
@@ -38,6 +34,21 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
   const [creatingVersionForSong, setCreatingVersionForSong] = useState<Song | null>(null);
   const [sortOption, setSortOption] = useState<'alphabetical' | 'recently-updated'>('recently-updated');
   const [isListCollapsed, setIsListCollapsed] = useState(false);
+  const {
+    selectedVersion,
+    previousVersions,
+    isExpandedPreviousVersions,
+    isCreatingVersion,
+    newVersionForm,
+    selectVersionById,
+    clearSelection,
+    togglePreviousVersions,
+    startEditingVersion,
+    cancelEditing,
+    updateForm,
+    setSelectedVersion,
+    setPreviousVersions,
+  } = useSongVersionPanel();
 
   const fetchSongs = async () => {
     console.log('fetchSongs called');
@@ -109,40 +120,16 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
     return 0;
   });
 
-  const applyVersionSelection = useCallback(async (version: SongVersion) => {
-    setSelectedVersion(version);
-    setIsExpandedPreviousVersions(false);
-    setIsCreatingVersion(false);
-    
-    try {
-      const response = await fetch(`/api/songs/versions/${version.id}`);
-      if (!response.ok) {
-        throw new Error('Failed to load version details');
-      }
-      const data = await response.json();
-      setPreviousVersions(data.previousVersions || []);
-      if (data.version) {
-        setSelectedVersion(data.version as SongVersion);
-      }
-    } catch (err) {
-      console.error('Error loading version details:', err);
-      setPreviousVersions([]);
-    }
-  }, []);
-
   const handleVersionClick = async (version: SongVersion, options?: { skipUrlUpdate?: boolean }) => {
     if (selectedVersion?.id === version.id) {
-      setSelectedVersion(null);
-      setPreviousVersions([]);
-      setIsExpandedPreviousVersions(false);
-      setIsCreatingVersion(false);
+      clearSelection();
       if (!options?.skipUrlUpdate) {
         window.history.pushState(null, '', '/songs');
       }
       return;
     }
 
-    await applyVersionSelection(version);
+    await selectVersionById(version.id, { initialVersion: version });
     if (!options?.skipUrlUpdate) {
       window.history.pushState(null, '', `/songs/${version.id}`);
     }
@@ -168,45 +155,32 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
     if (!targetVersion) {
       return;
     }
-    applyVersionSelection(targetVersion);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialVersionId, songs, applyVersionSelection]);
+    selectVersionById(targetVersion.id, { initialVersion: targetVersion });
+  }, [initialVersionId, songs, selectVersionById, selectedVersion?.id]);
 
   const handleCreateVersionClick = () => {
-    setIsCreatingVersion(true);
-    setNewVersionForm({
-      label: selectedVersion?.label || '',
-      content: selectedVersion?.content || '',
-      audioUrl: selectedVersion?.audioUrl || '',
-      bpm: selectedVersion?.bpm || 100,
-      previousVersionId: selectedVersion?.previousVersionId || '',
-      nextVersionId: selectedVersion?.nextVersionId || '',
-    });
+    if (selectedVersion) {
+      startEditingVersion(selectedVersion);
+    }
   };
 
   const handleCreateNewVersionForSong = (song: Song) => {
     setCreatingVersionForSong(song);
-    setSelectedVersion(null);
-    setPreviousVersions([]);
-    setIsCreatingVersion(true);
-    setNewVersionForm({ label: '', content: '', audioUrl: '', bpm: 100, previousVersionId: '', nextVersionId: '' });
+    clearSelection();
+    startEditingVersion();
   };
 
   const handleCancelCreateVersion = () => {
-    setIsCreatingVersion(false);
+    cancelEditing();
     setCreatingVersionForSong(null);
-    setNewVersionForm({ label: '', content: '', audioUrl: '', bpm: 100, previousVersionId: '', nextVersionId: '' });
   };
 
   const handleFormChange = (updates: Partial<{ label: string; content: string; audioUrl: string; bpm: number; previousVersionId: string; nextVersionId: string }>) => {
-    setNewVersionForm({ ...newVersionForm, ...updates });
+    updateForm(updates);
   };
 
   const handleClose = () => {
-    setSelectedVersion(null);
-    setPreviousVersions([]);
-    setIsExpandedPreviousVersions(false);
-    setIsCreatingVersion(false);
+    clearSelection();
     window.history.pushState(null, '', '/songs');
   };
 
@@ -267,9 +241,8 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
       }
 
       const data = await response.json();
-      setIsCreatingVersion(false);
+      cancelEditing();
       setCreatingVersionForSong(null);
-      setNewVersionForm({ label: '', content: '', audioUrl: '', bpm: 100, previousVersionId: '', nextVersionId: '' });
       
       const oldSelectedVersion = selectedVersion;
       const newVersion = data.version;
@@ -500,7 +473,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
               isArchiving={isArchiving}
               error={error}
               onClose={handleClose}
-              onTogglePreviousVersions={() => setIsExpandedPreviousVersions(!isExpandedPreviousVersions)}
+              onTogglePreviousVersions={togglePreviousVersions}
               onVersionClick={handleVersionClick}
               onCreateVersionClick={handleCreateVersionClick}
               onCancelCreateVersion={handleCancelCreateVersion}

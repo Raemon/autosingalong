@@ -13,6 +13,7 @@ import type { Slide } from '../../src/components/slides/types';
 import { extractLyrics, detectFileType } from '../../lib/lyricsExtractor';
 import { generateChordmarkRenderedContent } from '../chordmark-converter/clientRenderUtils';
 import type { Program, VersionOption, SongSlideData } from './types';
+import useSongVersionPanel from '../hooks/useSongVersionPanel';
 
 type ProgramManagerProps = {
   initialProgramId?: string;
@@ -29,11 +30,21 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [newProgramTitle, setNewProgramTitle] = useState('');
-  const [selectedVersion, setSelectedVersion] = useState<SongVersion | null>(null);
-  const [previousVersions, setPreviousVersions] = useState<SongVersion[]>([]);
-  const [isExpandedPreviousVersions, setIsExpandedPreviousVersions] = useState(false);
-  const [isCreatingVersion, setIsCreatingVersion] = useState(false);
-  const [newVersionForm, setNewVersionForm] = useState({label: '', content: '', audioUrl: '', bpm: 100, previousVersionId: '', nextVersionId: ''});
+  const {
+    selectedVersion,
+    previousVersions,
+    isExpandedPreviousVersions,
+    isCreatingVersion,
+    newVersionForm,
+    selectVersionById,
+    clearSelection,
+    togglePreviousVersions,
+    startEditingVersion,
+    cancelEditing,
+    updateForm,
+    setSelectedVersion,
+    setPreviousVersions,
+  } = useSongVersionPanel();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
   const [versionError, setVersionError] = useState<string | null>(null);
@@ -47,6 +58,19 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
     });
     return map;
   }, [programs]);
+  const collectProgramTree = useCallback((program: Program | null, visited: Set<string> = new Set()): Program[] => {
+    if (!program || visited.has(program.id)) {
+      return [];
+    }
+    visited.add(program.id);
+    let result: Program[] = [program];
+    for (const childId of program.programIds) {
+      const childProgram = programMap[childId] || null;
+      result = result.concat(collectProgramTree(childProgram, visited));
+    }
+    visited.delete(program.id);
+    return result;
+  }, [programMap]);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -313,11 +337,37 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
       .slice(0, 8);
   }, [searchTerm, versions]);
 
-  const refreshProgram = (updatedProgram: Program) => {
+  const refreshProgram = useCallback((updatedProgram: Program) => {
     setPrograms((prev) =>
       prev.map((program) => (program.id === updatedProgram.id ? updatedProgram : program))
     );
-  };
+  }, []);
+  const updateProgramElementReferences = useCallback(async (oldVersionId: string, newVersionId: string) => {
+    if (!selectedProgram) {
+      return;
+    }
+    const relatedPrograms = collectProgramTree(selectedProgram);
+    if (relatedPrograms.length === 0) {
+      return;
+    }
+    const programsToUpdate = relatedPrograms.filter((program) => program.elementIds.includes(oldVersionId));
+    if (programsToUpdate.length === 0) {
+      return;
+    }
+    await Promise.all(programsToUpdate.map(async (program) => {
+      const nextElementIds = program.elementIds.map((id) => id === oldVersionId ? newVersionId : id);
+      const response = await fetch(`/api/programs/${program.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ elementIds: nextElementIds, programIds: program.programIds }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update program');
+      }
+      refreshProgram(data.program);
+    }));
+  }, [selectedProgram, collectProgramTree, refreshProgram]);
 
   const handleArchiveProgram = async () => {
     if (!selectedProgram) {
@@ -594,38 +644,21 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
   };
 
   const handleElementClick = useCallback(async (versionId: string) => {
-    try {
-      const response = await fetch(`/api/songs/versions/${versionId}`);
-      if (!response.ok) {
-        throw new Error('Failed to load version details');
-      }
-      const data = await response.json();
-      setPreviousVersions(data.previousVersions || []);
-      if (data.version) {
-        setSelectedVersion(data.version as SongVersion);
-      }
-      setIsExpandedPreviousVersions(false);
-      setIsCreatingVersion(false);
-      setVersionError(null);
-      if (selectedProgramId) {
-        router.push(`/programs/${selectedProgramId}/${versionId}`);
-      }
-    } catch (err) {
-      console.error('Error loading version details:', err);
-      setVersionError(err instanceof Error ? err.message : 'Failed to load version');
-      setPreviousVersions([]);
+    setVersionError(null);
+    const version = await selectVersionById(versionId, {
+      onError: (message) => setVersionError(message),
+    });
+    if (version && selectedProgramId) {
+      router.push(`/programs/${selectedProgramId}/${version.id}`);
     }
-  }, [selectedProgramId, router]);
+  }, [selectVersionById, selectedProgramId, router]);
 
   const handleTogglePreviousVersions = () => {
-    setIsExpandedPreviousVersions(prev => !prev);
+    togglePreviousVersions();
   };
 
   const handleCloseVersionPanel = () => {
-    setSelectedVersion(null);
-    setPreviousVersions([]);
-    setIsExpandedPreviousVersions(false);
-    setIsCreatingVersion(false);
+    clearSelection();
     setVersionError(null);
     if (selectedProgramId) {
       router.push(`/programs/${selectedProgramId}`);
@@ -644,14 +677,12 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
 
   const handleCreateVersionClick = () => {
     if (selectedVersion) {
-      setNewVersionForm({label: selectedVersion.label || '', content: selectedVersion.content || '', audioUrl: selectedVersion.audioUrl || '', bpm: selectedVersion.bpm || 100, previousVersionId: '', nextVersionId: ''});
-      setIsCreatingVersion(true);
+      startEditingVersion(selectedVersion);
     }
   };
 
   const handleCancelCreateVersion = () => {
-    setIsCreatingVersion(false);
-    setNewVersionForm({label: '', content: '', audioUrl: '', bpm: 100, previousVersionId: '', nextVersionId: ''});
+    cancelEditing();
     setVersionError(null);
   };
 
@@ -673,13 +704,12 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
     };
     setSelectedVersion(dummyVersion);
     setPreviousVersions([]);
-    setNewVersionForm({label: '', content: '', audioUrl: '', bpm: 100, previousVersionId: '', nextVersionId: ''});
-    setIsCreatingVersion(true);
+    startEditingVersion();
     setSearchTerm('');
   };
 
   const handleFormChange = (updates: Partial<{label: string; content: string; audioUrl: string; bpm: number}>) => {
-    setNewVersionForm(prev => ({...prev, ...updates}));
+    updateForm(updates);
   };
 
   const handleSubmitVersion = async () => {
@@ -687,6 +717,7 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
     setIsSubmitting(true);
     setVersionError(null);
     try {
+      const previousVersionId = selectedVersion.id === 'new' ? null : selectedVersion.id;
       // Generate rendered content if this is a chordmark file
       const fileType = detectFileType(newVersionForm.label, newVersionForm.content);
       const renderedContent = fileType === 'chordmark' && newVersionForm.content
@@ -696,7 +727,7 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
       const response = await fetch('/api/songs/versions', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({songId: selectedVersion.songId, label: newVersionForm.label, content: newVersionForm.content, audioUrl: newVersionForm.audioUrl, bpm: newVersionForm.bpm, previousVersionId: selectedVersion.id === 'new' ? null : selectedVersion.id, createdBy: userName, renderedContent}),
+        body: JSON.stringify({songId: selectedVersion.songId, label: newVersionForm.label, content: newVersionForm.content, audioUrl: newVersionForm.audioUrl, bpm: newVersionForm.bpm, previousVersionId, createdBy: userName, renderedContent}),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -710,8 +741,10 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
         createdAt: data.version.createdAt, 
         nextVersionId: data.version.nextVersionId || null
       }]);
-      setIsCreatingVersion(false);
-      setNewVersionForm({label: '', content: '', audioUrl: '', bpm: 100, previousVersionId: '', nextVersionId: ''});
+      if (previousVersionId) {
+        await updateProgramElementReferences(previousVersionId, data.version.id);
+      }
+      cancelEditing();
       await handleElementClick(data.version.id);
     } catch (err) {
       setVersionError(err instanceof Error ? err.message : 'Failed to create version');
