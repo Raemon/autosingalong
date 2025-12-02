@@ -3,13 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import VersionDetailPanel from '../../songs/VersionDetailPanel';
 import { useUser } from '../../contexts/UserContext';
-import useSongVersionPanel from '../../hooks/useSongVersionPanel';
 import type { Program, VersionOption } from '../types';
 import type { SongVersion } from '../../songs/types';
-import { detectFileType } from '@/lib/lyricsExtractor';
-import { generateChordmarkRenderedContent } from '../../chordmark-converter/clientRenderUtils';
 import ProgramSelector from './components/ProgramSelector';
 import ProgramStructurePanel from './ProgramStructurePanel';
+import useVersionPanelManager from '../../hooks/useVersionPanelManager';
 
 type ProgramBrowserProps = {
   initialProgramId?: string;
@@ -23,26 +21,19 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
   const [isLoadingPrograms, setIsLoadingPrograms] = useState(true);
   const [isLoadingVersions, setIsLoadingVersions] = useState(true);
   const [dataError, setDataError] = useState<string | null>(null);
-  const [panelError, setPanelError] = useState<string | null>(null);
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(initialProgramId ?? null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isArchiving, setIsArchiving] = useState(false);
   const hasHydratedInitialVersion = useRef(false);
-
-  const {
-    selectedVersion,
-    previousVersions,
-    isExpandedPreviousVersions,
-    isCreatingVersion,
-    newVersionForm,
-    selectVersionById,
-    clearSelection,
-    togglePreviousVersions,
-    startEditingVersion,
-    cancelEditing,
-    updateForm,
-  } = useSongVersionPanel();
-
+  const getBasePath = useCallback(
+    () => (selectedProgramId ? `/programs/${selectedProgramId}` : '/programs'),
+    [selectedProgramId],
+  );
+  const resolveSongContext = useCallback(
+    (selectedVersion: SongVersion | null) => ({
+      songId: selectedVersion?.songId ?? null,
+      previousVersionId: selectedVersion?.id ?? null,
+    }),
+    [],
+  );
   const loadPrograms = useCallback(async () => {
     setIsLoadingPrograms(true);
     try {
@@ -89,6 +80,33 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
     loadVersionOptions();
   }, [loadVersionOptions]);
 
+  const {
+    selectedVersion,
+    previousVersions,
+    isExpandedPreviousVersions,
+    isCreatingVersion,
+    newVersionForm,
+    clearSelection,
+    togglePreviousVersions,
+    handleVersionClick,
+    handleClosePanel,
+    handleCreateVersionClick,
+    handleCancelCreateVersion,
+    handleFormChange,
+    handleSubmitVersion,
+    handleArchiveVersion,
+    panelError,
+    isSubmitting,
+    isArchiving,
+    resetPanelError,
+  } = useVersionPanelManager({
+    userName,
+    getBasePath,
+    resolveSongContext,
+    onVersionCreated: loadVersionOptions,
+    onVersionArchived: loadVersionOptions,
+  });
+
   const loading = isLoadingPrograms || isLoadingVersions;
 
   const programMap = useMemo(() => {
@@ -121,168 +139,13 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
     }
     setSelectedProgramId(programId);
     clearSelection();
-    setPanelError(null);
+    resetPanelError();
     if (typeof window !== 'undefined') {
       if (programId) {
         window.history.pushState(null, '', `/programs/${programId}`);
       } else {
         window.history.pushState(null, '', '/programs');
       }
-    }
-  };
-
-  const handleVersionClick = useCallback(
-    async (versionId: string, options?: { skipUrlUpdate?: boolean }) => {
-      if (!versionId) {
-        return;
-      }
-
-      if (selectedVersion?.id === versionId) {
-        clearSelection();
-        setPanelError(null);
-        if (!options?.skipUrlUpdate && typeof window !== 'undefined') {
-          const basePath = selectedProgramId ? `/programs/${selectedProgramId}` : '/programs';
-          window.history.pushState(null, '', basePath);
-        }
-        return;
-      }
-
-      setPanelError(null);
-      await selectVersionById(versionId, {
-        onError: (message) => setPanelError(message),
-      });
-
-      if (!options?.skipUrlUpdate && typeof window !== 'undefined') {
-        const basePath = selectedProgramId ? `/programs/${selectedProgramId}` : '/programs';
-        window.history.pushState(null, '', `${basePath}/${versionId}`);
-      }
-    },
-    [clearSelection, selectVersionById, selectedProgramId, selectedVersion?.id],
-  );
-
-  const handleClosePanel = () => {
-    clearSelection();
-    setPanelError(null);
-    if (typeof window !== 'undefined') {
-      const basePath = selectedProgramId ? `/programs/${selectedProgramId}` : '/programs';
-      window.history.pushState(null, '', basePath);
-    }
-  };
-
-  const handleCreateVersionClick = () => {
-    if (selectedVersion) {
-      startEditingVersion(selectedVersion);
-    }
-  };
-
-  const handleCancelCreateVersion = () => {
-    cancelEditing();
-    setPanelError(null);
-  };
-
-  const handleFormChange = (updates: Partial<typeof newVersionForm>) => {
-    setPanelError(null);
-    updateForm(updates);
-  };
-
-  const handleSubmitVersion = async () => {
-    if (!selectedVersion) {
-      return;
-    }
-
-    if (!newVersionForm.label.trim()) {
-      setPanelError('Label is required');
-      return;
-    }
-
-    if (!userName || userName.trim().length < 3) {
-      setPanelError('Please set your username (at least 3 characters) before creating versions');
-      return;
-    }
-
-    setIsSubmitting(true);
-    setPanelError(null);
-
-    try {
-      const songId = selectedVersion.songId;
-      if (!songId) {
-        throw new Error('Could not determine song ID for this version');
-      }
-
-      const fileType = detectFileType(newVersionForm.label, newVersionForm.content);
-      const renderedContent =
-        fileType === 'chordmark' && newVersionForm.content
-          ? generateChordmarkRenderedContent(newVersionForm.content)
-          : undefined;
-
-      const response = await fetch('/api/songs/versions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          songId,
-          label: newVersionForm.label,
-          content: newVersionForm.content || null,
-          audioUrl: newVersionForm.audioUrl || null,
-          bpm: newVersionForm.bpm || null,
-          previousVersionId: selectedVersion.id,
-          createdBy: userName,
-          renderedContent,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to create version');
-      }
-
-      const data = await response.json();
-      cancelEditing();
-      await loadVersionOptions();
-      await selectVersionById(data.version.id as string);
-
-      if (typeof window !== 'undefined') {
-        const basePath = selectedProgramId ? `/programs/${selectedProgramId}` : '/programs';
-        window.history.pushState(null, '', `${basePath}/${data.version.id}`);
-      }
-    } catch (err) {
-      console.error('Error creating version:', err);
-      setPanelError(err instanceof Error ? err.message : 'Failed to create version');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleArchiveVersion = async () => {
-    if (!selectedVersion) {
-      return;
-    }
-
-    if (typeof window !== 'undefined' && !window.confirm('Delete this version?')) {
-      return;
-    }
-
-    setIsArchiving(true);
-    setPanelError(null);
-
-    try {
-      const response = await fetch(`/api/songs/versions/${selectedVersion.id}/archive`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to delete version');
-      }
-
-      await loadVersionOptions();
-      handleClosePanel();
-    } catch (err) {
-      console.error('Error deleting version:', err);
-      setPanelError(err instanceof Error ? err.message : 'Failed to delete version');
-    } finally {
-      setIsArchiving(false);
     }
   };
 
@@ -370,7 +233,7 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
     (selectedVersion && versionMap[selectedVersion.id]?.songTitle) || selectedVersion?.label || '';
 
   return (
-    <div className="min-h-screen p-4">
+    <div className="p-4">
       <div className="flex flex-col gap-4">
         <div className="flex gap-4 justify-center">
           <div>
@@ -385,7 +248,7 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
               versions={versions}
               versionMap={versionMap}
               selectedVersionId={selectedVersion?.id}
-              onVersionClick={(versionId) => handleVersionClick(versionId)}
+              onVersionClick={handleVersionClick}
             />
           </div>  
           {selectedVersion && (

@@ -1,16 +1,14 @@
 'use client';
 
 import maxBy from 'lodash/maxBy';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import SearchInput from './SearchInput';
 import SongItem from './SongItem';
 import VersionDetailPanel from './VersionDetailPanel';
 import CreateVersionForm from './CreateVersionForm';
 import type { Song, SongVersion } from './types';
 import { useUser } from '../contexts/UserContext';
-import { detectFileType } from '@/lib/lyricsExtractor';
-import { generateChordmarkRenderedContent } from '../chordmark-converter/clientRenderUtils';
-import useSongVersionPanel from '../hooks/useSongVersionPanel';
+import useVersionPanelManager from '../hooks/useVersionPanelManager';
 
 const getLatestVersion = (versions: SongVersion[]) => maxBy(versions, (version) => new Date(version.createdAt).getTime());
 
@@ -23,34 +21,16 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
   const { canEdit, userName } = useUser();
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isArchiving, setIsArchiving] = useState(false);
   const [isCreatingSong, setIsCreatingSong] = useState(false);
   const [newSongTitle, setNewSongTitle] = useState('');
   const [isSubmittingSong, setIsSubmittingSong] = useState(false);
   const [creatingVersionForSong, setCreatingVersionForSong] = useState<Song | null>(null);
   const [sortOption, setSortOption] = useState<'alphabetical' | 'recently-updated'>('recently-updated');
   const [isListCollapsed, setIsListCollapsed] = useState(false);
-  const {
-    selectedVersion,
-    previousVersions,
-    isExpandedPreviousVersions,
-    isCreatingVersion,
-    newVersionForm,
-    selectVersionById,
-    clearSelection,
-    togglePreviousVersions,
-    startEditingVersion,
-    cancelEditing,
-    updateForm,
-    setSelectedVersion,
-    setPreviousVersions,
-  } = useSongVersionPanel();
-
-  const fetchSongs = async () => {
+  const fetchSongs = useCallback(async () => {
     console.log('fetchSongs called');
     try {
       setLoading(true);
@@ -65,19 +45,19 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
       const data = await response.json();
       console.log('Parsed data:', data);
       setSongs(data.songs);
-      setError(null);
+      setListError(null);
     } catch (err) {
       console.error('Fetch error:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setListError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       console.log('Setting loading to false');
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchSongs();
-  }, []);
+  }, [fetchSongs]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -120,20 +100,63 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
     return 0;
   });
 
-  const handleVersionClick = async (version: SongVersion, options?: { skipUrlUpdate?: boolean }) => {
-    if (selectedVersion?.id === version.id) {
-      clearSelection();
-      if (!options?.skipUrlUpdate) {
-        window.history.pushState(null, '', '/songs');
+  const getBasePath = useCallback(() => '/songs', []);
+  const resolveSongContext = useCallback(
+    (selectedVersion: SongVersion | null) => {
+      if (creatingVersionForSong) {
+        return { songId: creatingVersionForSong.id, previousVersionId: null };
       }
-      return;
-    }
 
-    await selectVersionById(version.id, { initialVersion: version });
-    if (!options?.skipUrlUpdate) {
-      window.history.pushState(null, '', `/songs/${version.id}`);
-    }
-  };
+      if (!selectedVersion) {
+        return { songId: null, previousVersionId: null };
+      }
+
+      const selectedSongFromList = songs.find((song) => song.versions.some((version) => version.id === selectedVersion.id));
+      const inferredSongId =
+        (selectedVersion as SongVersion & { songId?: string }).songId || selectedSongFromList?.id || null;
+
+      return {
+        songId: inferredSongId,
+        previousVersionId: selectedVersion.id,
+      };
+    },
+    [creatingVersionForSong, songs],
+  );
+  const {
+    selectedVersion,
+    previousVersions,
+    isExpandedPreviousVersions,
+    isCreatingVersion,
+    newVersionForm,
+    togglePreviousVersions,
+    startEditingVersion,
+    clearSelection,
+    handleVersionClick,
+    handleClosePanel,
+    handleCreateVersionClick,
+    handleCancelCreateVersion: cancelVersionCreation,
+    handleFormChange,
+    handleSubmitVersion,
+    handleArchiveVersion,
+    panelError,
+    isSubmitting,
+    isArchiving,
+    resetPanelError,
+  } = useVersionPanelManager({
+    userName,
+    getBasePath,
+    resolveSongContext,
+    onVersionCreated: async () => {
+      await fetchSongs();
+      setCreatingVersionForSong(null);
+    },
+    onVersionArchived: fetchSongs,
+  });
+  const handleSongVersionClick = useCallback(
+    (version: SongVersion, options?: { skipUrlUpdate?: boolean }) =>
+      handleVersionClick(version.id, { initialVersion: version, skipUrlUpdate: options?.skipUrlUpdate }),
+    [handleVersionClick],
+  );
 
   useEffect(() => {
     if (!initialVersionId) {
@@ -155,150 +178,29 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
     if (!targetVersion) {
       return;
     }
-    selectVersionById(targetVersion.id, { initialVersion: targetVersion });
-  }, [initialVersionId, songs, selectVersionById, selectedVersion?.id]);
-
-  const handleCreateVersionClick = () => {
-    if (selectedVersion) {
-      startEditingVersion(selectedVersion);
-    }
-  };
+    handleSongVersionClick(targetVersion, { skipUrlUpdate: true });
+  }, [handleSongVersionClick, initialVersionId, selectedVersion?.id, songs]);
 
   const handleCreateNewVersionForSong = (song: Song) => {
     setCreatingVersionForSong(song);
     clearSelection();
+    resetPanelError();
     startEditingVersion();
   };
 
-  const handleCancelCreateVersion = () => {
-    cancelEditing();
+  const handleCancelNewVersionForSong = () => {
     setCreatingVersionForSong(null);
-  };
-
-  const handleFormChange = (updates: Partial<{ label: string; content: string; audioUrl: string; bpm: number; previousVersionId: string; nextVersionId: string }>) => {
-    updateForm(updates);
-  };
-
-  const handleClose = () => {
-    clearSelection();
-    window.history.pushState(null, '', '/songs');
-  };
-
-  const handleSubmitVersion = async () => {
-    if (!selectedVersion && !creatingVersionForSong) return;
-    
-    if (!newVersionForm.label.trim()) {
-      setError('Label is required');
-      return;
-    }
-
-    if (!userName || userName.trim().length < 3) {
-      setError('Please set your username (at least 3 characters) before creating versions');
-      return;
-    }
-    
-    setIsSubmitting(true);
-    setError(null);
-    
-    try {
-      // Always create a new version (even when "editing")
-      const songId = creatingVersionForSong?.id || (selectedVersion as SongVersion & { songId: string }).songId || songs.find(song => 
-        song.versions.some(v => v.id === selectedVersion!.id)
-      )?.id;
-      
-      if (!songId) {
-        setError('Could not determine song ID');
-        setIsSubmitting(false);
-        return;
-      }
-      
-      // Generate rendered content if this is a chordmark file
-      const fileType = detectFileType(newVersionForm.label, newVersionForm.content);
-      const renderedContent = fileType === 'chordmark' && newVersionForm.content
-        ? generateChordmarkRenderedContent(newVersionForm.content)
-        : undefined;
-      
-      const response = await fetch('/api/songs/versions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          songId: songId,
-          label: newVersionForm.label,
-          content: newVersionForm.content || null,
-          audioUrl: newVersionForm.audioUrl || null,
-          bpm: newVersionForm.bpm || null,
-          previousVersionId: selectedVersion?.id || null,
-          createdBy: userName,
-          renderedContent,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create version');
-      }
-
-      const data = await response.json();
-      cancelEditing();
-      setCreatingVersionForSong(null);
-      
-      const oldSelectedVersion = selectedVersion;
-      const newVersion = data.version;
-      
-      await fetchSongs();
-      
-      setSelectedVersion(newVersion);
-      setPreviousVersions(oldSelectedVersion ? [oldSelectedVersion, ...previousVersions] : previousVersions);
-      window.history.pushState(null, '', `/songs/${newVersion.id}`);
-    } catch (err) {
-      console.error('Error creating version:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create version');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleArchiveVersion = async () => {
-    if (!selectedVersion || selectedVersion.id === 'new') {
-      return;
-    }
-    if (!window.confirm('Delete this version?')) {
-      return;
-    }
-
-    setIsArchiving(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`/api/songs/versions/${selectedVersion.id}/archive`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to delete version');
-      }
-
-      await fetchSongs();
-      handleClose();
-    } catch (err) {
-      console.error('Error deleting version:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete version');
-    } finally {
-      setIsArchiving(false);
-    }
+    cancelVersionCreation();
   };
 
   const handleCreateSong = async () => {
     if (!newSongTitle.trim()) {
-      setError('Song title is required');
+      setListError('Song title is required');
       return;
     }
     
     setIsSubmittingSong(true);
-    setError(null);
+    setListError(null);
     
     try {
       const response = await fetch('/api/songs', {
@@ -317,7 +219,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
       await fetchSongs();
     } catch (err) {
       console.error('Error creating song:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create song');
+      setListError(err instanceof Error ? err.message : 'Failed to create song');
     } finally {
       setIsSubmittingSong(false);
     }
@@ -327,7 +229,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
     setIsListCollapsed(false);
     const latestVersion = getLatestVersion(song.versions);
     if (latestVersion) {
-      await handleVersionClick(latestVersion);
+      await handleSongVersionClick(latestVersion);
     }
   };
 
@@ -341,11 +243,11 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
     );
   }
 
-  if (error) {
+  if (listError) {
     return (
       <div className="min-h-screen p-4">
         <div className="max-w-5xl mx-auto">
-          <p className="text-red-600">Error: {error}</p>
+          <p className="text-red-600">Error: {listError}</p>
         </div>
       </div>
     );
@@ -452,7 +354,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
                 key={song.id}
                 song={song}
                 selectedVersionId={selectedVersion?.id}
-                onVersionClick={handleVersionClick}
+                onVersionClick={handleSongVersionClick}
                 onCreateNewVersion={handleCreateNewVersionForSong}
               />
             ))}
@@ -471,12 +373,12 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
               newVersionForm={newVersionForm}
               isSubmitting={isSubmitting}
               isArchiving={isArchiving}
-              error={error}
-              onClose={handleClose}
+              error={panelError}
+              onClose={handleClosePanel}
               onTogglePreviousVersions={togglePreviousVersions}
-              onVersionClick={handleVersionClick}
+              onVersionClick={handleSongVersionClick}
               onCreateVersionClick={handleCreateVersionClick}
-              onCancelCreateVersion={handleCancelCreateVersion}
+              onCancelCreateVersion={cancelVersionCreation}
               onFormChange={handleFormChange}
               onSubmitVersion={handleSubmitVersion}
               onArchiveVersion={handleArchiveVersion}
@@ -487,7 +389,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
           <div className="border-l border-gray-200 pl-4 w-full max-w-xl">
             <div className="mb-2">
               <div className="flex items-start justify-between mb-2">
-                <button onClick={handleCancelCreateVersion} className="text-gray-400 text-xs">× Close</button>
+                <button onClick={handleCancelNewVersionForSong} className="text-gray-400 text-xs">× Close</button>
               </div>
               <h3 className="font-mono text-sm font-medium text-gray-200 mb-1">
                 New version for: {creatingVersionForSong.title.replace(/_/g, ' ')}
@@ -497,9 +399,9 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
               form={newVersionForm}
               onFormChange={handleFormChange}
               onSubmit={handleSubmitVersion}
-              onCancel={handleCancelCreateVersion}
+              onCancel={handleCancelNewVersionForSong}
               isSubmitting={isSubmitting}
-              error={error}
+              error={panelError}
               autosaveKey={`song-${creatingVersionForSong.id}-draft`}
             />
           </div>
