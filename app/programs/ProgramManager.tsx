@@ -26,7 +26,6 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
   const [programs, setPrograms] = useState<Program[]>([]);
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
   const [versions, setVersions] = useState<VersionOption[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [newProgramTitle, setNewProgramTitle] = useState('');
@@ -114,8 +113,6 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load data');
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -845,15 +842,7 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
       setIsArchiving(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="p-4">
-        <p>Loading programs...</p>
-      </div>
-    );
-  }
-
+  
   return (
     <div className="p-4 flex gap-3">
       <div className="flex-1 flex flex-col gap-3">

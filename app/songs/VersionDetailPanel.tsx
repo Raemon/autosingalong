@@ -8,7 +8,7 @@ import VersionHeader from './VersionHeader';
 import type { SongVersion } from './types';
 import { useUser } from '../contexts/UserContext';
 
-const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPreviousVersions, isCreatingVersion, newVersionForm, isSubmitting, isArchiving, error, onClose, onTogglePreviousVersions, onVersionClick, onCreateVersionClick, onCancelCreateVersion, onFormChange, onSubmitVersion, onArchiveVersion}: {
+const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPreviousVersions, isCreatingVersion, newVersionForm, isSubmitting, isArchiving, error, isLoadingVersion = false, onClose, onTogglePreviousVersions, onVersionClick, onCreateVersionClick, onCancelCreateVersion, onFormChange, onSubmitVersion, onArchiveVersion}: {
   songTitle: string;
   version: SongVersion & { songId?: string; nextVersionId?: string | null; originalVersionId?: string | null };
   previousVersions: SongVersion[];
@@ -18,6 +18,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
   isSubmitting: boolean;
   isArchiving: boolean;
   error: string | null;
+  isLoadingVersion?: boolean;
   onClose: () => void;
   onTogglePreviousVersions: () => void;
   onVersionClick: (version: SongVersion) => void;
@@ -28,6 +29,14 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
   onArchiveVersion: () => void;
 }) => {
   const { canEdit } = useUser();
+
+  if (isLoadingVersion) {
+    return (
+      <div className="border-l border-gray-200 pl-4 w-full h-[calc(100vh-2rem)] overflow-y-auto scrollbar-hide lg:p-20 relative flex items-center justify-center text-gray-400">
+        Loading version...
+      </div>
+    );
+  }
 
   return (
     <div className="border-l border-gray-200 pl-4 w-full h-[calc(100vh-2rem)] overflow-y-auto scrollbar-hide lg:p-20 relative">
