@@ -287,6 +287,8 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
                 isSubmitting={isSubmitting}
                 isArchiving={isArchiving}
                 error={panelError}
+                songId={selectedVersion.songId}
+                tags={[]}
                 onClose={handleClosePanel}
                 onTogglePreviousVersions={togglePreviousVersions}
                 onVersionClick={(version: SongVersion) => handleVersionClick(version.id)}

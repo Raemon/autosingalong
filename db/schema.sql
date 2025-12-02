@@ -4,10 +4,10 @@ create table if not exists programs (
   id uuid not null default gen_random_uuid(),
   title text not null,
   element_ids uuid[] not null default '{}'::uuid[],
-  program_ids uuid[] not null default '{}'::uuid[],
   created_at timestamptz not null default now(),
   archived boolean not null default false,
   created_by text,
+  program_ids uuid[] not null default '{}'::uuid[],
   constraint programs_pkey PRIMARY KEY (id)
 );
 
@@ -47,6 +47,7 @@ create table if not exists songs (
   created_at timestamptz not null default now(),
   archived boolean not null default false,
   created_by text,
+  tags text[] not null default '{}'::text[],
   constraint songs_pkey PRIMARY KEY (id)
 );
 

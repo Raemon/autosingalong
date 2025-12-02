@@ -2,7 +2,6 @@
 
 import type { Song, SongVersion } from './types';
 import MyTooltip from '@/app/components/Tooltip';
-import { useUser } from '../contexts/UserContext';
 import { formatRelativeTimestamp } from '@/lib/dateUtils';
 
 
@@ -32,27 +31,21 @@ const VersionRow = ({version, isSelected, onClick}: {
   );
 };
 
-const SongItem = ({song, selectedVersionId, onVersionClick, onCreateNewVersion}: {
+const SongItem = ({song, selectedVersionId, onVersionClick}: {
   song: Song;
   selectedVersionId?: string;
   onVersionClick: (version: SongVersion) => void;
-  onCreateNewVersion: (song: Song) => void;
 }) => {
-  const { canEdit } = useUser();
+
+  const tagsMinusSong = song.tags.filter(tag => tag !== 'song');
 
   return (
     <div className="flex">
       <div className="group flex items-center w-2/3 justify-between px-2 py-1 text-lg font-medium border-b border-gray-200 font-georgia">
-        <span>{song.title.replace(/_/g, ' ')}</span>
-        {canEdit && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onCreateNewVersion(song); }}
-            className="opacity-0 bg-gray-800 font-bold rounded-lg p-1 group-hover:opacity-100 text-white hover:bg-gray-700 px-2 text-sm"
-            title="Add new version"
-          >
-            +
-          </button>
-        )}
+        <div className="flex flex-col">
+          <span>{song.title.replace(/_/g, ' ')}</span>
+          <span className="text-xs text-gray-500">{tagsMinusSong.join(', ')}</span>
+          </div>
       </div>
       <div className="border-b border-gray-200 w-1/3">
         {song.versions.length === 0 ? (

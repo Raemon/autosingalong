@@ -32,5 +32,6 @@ export type Song = {
   archived: boolean;
   versions: SongVersion[];
   createdBy: string | null;
+  tags: string[];
 };
 

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSongWithVersions } from '@/lib/songsRepository';
+import { getSongWithVersions, updateSongTags } from '@/lib/songsRepository';
 
 export async function GET(_: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -16,6 +16,28 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
     console.error('Error details:', { errorMessage, errorStack, hasDatabaseUrl: !!process.env.DATABASE_URL });
     return NextResponse.json({ 
       error: 'Failed to load song',
+      details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+    }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+  try {
+    const params = await context.params;
+    const body = await request.json();
+    const { tags } = body;
+    
+    if (!Array.isArray(tags)) {
+      return NextResponse.json({ error: 'tags must be an array' }, { status: 400 });
+    }
+    
+    const updatedSong = await updateSongTags(params.id, tags);
+    return NextResponse.json({ song: updatedSong });
+  } catch (error) {
+    console.error('Failed to update song tags:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ 
+      error: 'Failed to update song tags',
       details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
     }, { status: 500 });
   }

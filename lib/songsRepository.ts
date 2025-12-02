@@ -18,6 +18,7 @@ export type SongRecord = {
   createdBy: string | null;
   createdAt: string;
   archived: boolean;
+  tags: string[];
 };
 
 export type SongVersionRecord = {
@@ -47,6 +48,7 @@ type SongVersionQueryRow = {
   song_created_by: string | null;
   song_created_at: string;
   song_archived: boolean | null;
+  song_tags: string[] | null;
   version_id: string | null;
   label: string | null;
   content: string | null;
@@ -67,6 +69,7 @@ type SongRowResult = {
   createdBy: string | null;
   createdAt: string;
   archived: boolean;
+  tags: string[];
 };
 
 type SongVersionResult = {
@@ -92,6 +95,7 @@ const mapSongRow = (row: SongVersionQueryRow): SongRecord => ({
   createdBy: row.song_created_by,
   createdAt: row.song_created_at,
   archived: Boolean(row.song_archived),
+  tags: row.song_tags || [],
 });
 
 const mapVersionRow = (row: SongVersionQueryRow): SongVersionRecord => ({
@@ -120,6 +124,7 @@ export const listSongsWithVersions = async (): Promise<SongWithVersions[]> => {
       s.created_by as song_created_by,
       s.created_at as song_created_at,
       s.archived as song_archived,
+      s.tags as song_tags,
       v.id as version_id,
       v.label,
       v.content,
@@ -156,6 +161,7 @@ export const getSongWithVersions = async (songId: string): Promise<SongWithVersi
       s.created_by as song_created_by,
       s.created_at as song_created_at,
       s.archived as song_archived,
+      s.tags as song_tags,
       v.id as version_id,
       v.label,
       v.content,
@@ -192,7 +198,7 @@ export const createSong = async (title: string, createdBy?: string | null): Prom
   const rows = await sql`
     insert into songs (title, created_by)
     values (${title}, ${createdBy ?? null})
-    returning id, title, created_by as "createdBy", created_at as "createdAt", archived
+    returning id, title, created_by as "createdBy", created_at as "createdAt", archived, tags
   `;
   return (rows as SongRowResult[])[0];
 };
@@ -443,4 +449,18 @@ export const listAllVersionsWithSongTitles = async () => {
     order by s.title asc, v.label asc
   `;
   return rows as { id: string; songId: string; label: string; songTitle: string; createdAt: string; nextVersionId: string | null; }[];
+};
+
+export const updateSongTags = async (songId: string, tags: string[]): Promise<SongRecord> => {
+  const rows = await sql`
+    update songs
+    set tags = ${tags}::text[]
+    where id = ${songId}
+    returning id, title, created_by as "createdBy", created_at as "createdAt", archived, tags
+  `;
+  const typedRows = rows as SongRowResult[];
+  if (typedRows.length === 0) {
+    throw new Error(`Song ${songId} not found`);
+  }
+  return typedRows[0];
 };

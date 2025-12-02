@@ -361,30 +361,34 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
           </div>
         )}
         
-        {selectedVersion && (
-          <div className="flex-3 flex-grow">
-              
-            <VersionDetailPanel
-              songTitle={songs.find(s => s.versions.some(v => v.id === selectedVersion.id))?.title || ''}
-              version={selectedVersion}
-              previousVersions={previousVersions}
-              isExpandedPreviousVersions={isExpandedPreviousVersions}
-              isCreatingVersion={isCreatingVersion}
-              newVersionForm={newVersionForm}
-              isSubmitting={isSubmitting}
-              isArchiving={isArchiving}
-              error={panelError}
-              onClose={handleClosePanel}
-              onTogglePreviousVersions={togglePreviousVersions}
-              onVersionClick={handleSongVersionClick}
-              onCreateVersionClick={handleCreateVersionClick}
-              onCancelCreateVersion={cancelVersionCreation}
-              onFormChange={handleFormChange}
-              onSubmitVersion={handleSubmitVersion}
-              onArchiveVersion={handleArchiveVersion}
-            />
-          </div>
-        )}
+        {selectedVersion && (() => {
+          const song = songs.find(s => s.versions.some(v => v.id === selectedVersion.id));
+          return (
+            <div className="flex-3 flex-grow">
+              <VersionDetailPanel
+                songTitle={song?.title || ''}
+                version={selectedVersion}
+                previousVersions={previousVersions}
+                isExpandedPreviousVersions={isExpandedPreviousVersions}
+                isCreatingVersion={isCreatingVersion}
+                newVersionForm={newVersionForm}
+                isSubmitting={isSubmitting}
+                isArchiving={isArchiving}
+                error={panelError}
+                songId={song?.id}
+                tags={song?.tags || []}
+                onClose={handleClosePanel}
+                onTogglePreviousVersions={togglePreviousVersions}
+                onVersionClick={handleSongVersionClick}
+                onCreateVersionClick={handleCreateVersionClick}
+                onCancelCreateVersion={cancelVersionCreation}
+                onFormChange={handleFormChange}
+                onSubmitVersion={handleSubmitVersion}
+                onArchiveVersion={handleArchiveVersion}
+              />
+            </div>
+          );
+        })()}
         {creatingVersionForSong && !selectedVersion && (
           <div className="border-l border-gray-200 pl-4 w-full max-w-xl">
             <div className="mb-2">

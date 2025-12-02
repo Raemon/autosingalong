@@ -5,10 +5,11 @@ import VersionMetadata from './VersionMetadata';
 import PreviousVersionsList from './PreviousVersionsList';
 import CreateVersionForm from './CreateVersionForm';
 import VersionHeader from './VersionHeader';
+import SongTags from './SongTags';
 import type { SongVersion } from './types';
 import { useUser } from '../contexts/UserContext';
 
-const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPreviousVersions, isCreatingVersion, newVersionForm, isSubmitting, isArchiving, error, isLoadingVersion = false, onClose, onTogglePreviousVersions, onVersionClick, onCreateVersionClick, onCancelCreateVersion, onFormChange, onSubmitVersion, onArchiveVersion}: {
+const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPreviousVersions, isCreatingVersion, newVersionForm, isSubmitting, isArchiving, error, isLoadingVersion = false, songId, tags: initialTags = [], onClose, onTogglePreviousVersions, onVersionClick, onCreateVersionClick, onCancelCreateVersion, onFormChange, onSubmitVersion, onArchiveVersion}: {
   songTitle: string;
   version: SongVersion & { songId?: string; nextVersionId?: string | null; originalVersionId?: string | null };
   previousVersions: SongVersion[];
@@ -19,6 +20,8 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
   isArchiving: boolean;
   error: string | null;
   isLoadingVersion?: boolean;
+  songId?: string;
+  tags?: string[];
   onClose: () => void;
   onTogglePreviousVersions: () => void;
   onVersionClick: (version: SongVersion) => void;
@@ -99,6 +102,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
       ) : (
         <>
           <VersionContent version={version} />
+          <SongTags songId={songId} initialTags={initialTags} />
           <VersionMetadata version={version} />
           <PreviousVersionsList
             previousVersions={previousVersions}
