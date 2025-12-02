@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import ProgramHeaderControls from './components/ProgramHeaderControls';
 import ProgramElementsSection from './components/ProgramElementsSection';
@@ -50,6 +50,10 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isDeletingProgram, setIsDeletingProgram] = useState(false);
   const [fullVersions, setFullVersions] = useState<Record<string, SongVersion>>({});
+  const fullVersionsRef = useRef(fullVersions);
+  useEffect(() => {
+    fullVersionsRef.current = fullVersions;
+  }, [fullVersions]);
   const [pendingVersionId, setPendingVersionId] = useState<string | null>(null);
   const programMap = useMemo(() => {
     const map: Record<string, Program> = {};
@@ -241,6 +245,10 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
     });
     return map;
   }, [versions]);
+  const versionMapRef = useRef(versionMap);
+  useEffect(() => {
+    versionMapRef.current = versionMap;
+  }, [versionMap]);
 
   const handleSelectProgram = (programId: string | null) => {
     setSelectedProgramId(programId);
@@ -653,29 +661,32 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
   const handleElementClick = useCallback(async (versionId: string) => {
     setVersionError(null);
     setPendingVersionId(versionId);
-    const initialVersion = fullVersions[versionId] || (() => {
-      const fallback = versionMap[versionId];
-      if (!fallback) {
-        return null;
-      }
-      return {
-        id: fallback.id,
-        songId: fallback.songId,
-        label: fallback.label,
-        content: '',
-        audioUrl: '',
-        previousVersionId: null,
-        nextVersionId: fallback.nextVersionId,
-        originalVersionId: null,
-        renderedContent: null,
-        bpm: null,
-        archived: false,
-        createdAt: fallback.createdAt,
-        createdBy: null,
-      } as SongVersion;
-    })();
+    const existingVersion = fullVersionsRef.current[versionId];
+    const fallback = existingVersion
+      ? existingVersion
+      : (() => {
+          const fallbackOption = versionMapRef.current[versionId];
+          if (!fallbackOption) {
+            return null;
+          }
+          return {
+            id: fallbackOption.id,
+            songId: fallbackOption.songId,
+            label: fallbackOption.label,
+            content: '',
+            audioUrl: '',
+            previousVersionId: null,
+            nextVersionId: fallbackOption.nextVersionId,
+            originalVersionId: null,
+            renderedContent: null,
+            bpm: null,
+            archived: false,
+            createdAt: fallbackOption.createdAt,
+            createdBy: null,
+          } as SongVersion;
+        })();
     const version = await selectVersionById(versionId, {
-      initialVersion: initialVersion || undefined,
+      initialVersion: fallback || undefined,
       onError: (message) => setVersionError(message),
     });
     if (version) {
@@ -685,7 +696,7 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
       router.push(`/programs/${selectedProgramId}/${version.id}`);
     }
     setPendingVersionId(null);
-  }, [selectVersionById, selectedProgramId, router, fullVersions, versionMap]);
+  }, [selectVersionById, selectedProgramId, router]);
 
   const handleTogglePreviousVersions = () => {
     togglePreviousVersions();
@@ -700,9 +711,10 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
   };
 
   useEffect(() => {
-    if (initialVersionId) {
-      handleElementClick(initialVersionId);
+    if (!initialVersionId) {
+      return;
     }
+    handleElementClick(initialVersionId);
   }, [initialVersionId, handleElementClick]);
 
   const handleVersionClick = async (version: SongVersion) => {

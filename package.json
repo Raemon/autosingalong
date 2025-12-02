@@ -7,7 +7,9 @@
     "dev:turbo": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "yarn lint:types && yarn lint:eslint",
+    "lint:eslint": "next lint",
+    "lint:types": "tsc --noEmit",
     "import:songs": "tsx scripts/importSongsToDb.ts",
     "migrate": "tsx scripts/runMigrations.ts",
     "schema:snapshot": "tsx scripts/generateSchemaSnapshot.ts"

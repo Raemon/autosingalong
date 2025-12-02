@@ -1,4 +1,4 @@
-import ProgramManager from '../../ProgramManager';
+import ProgramBrowser from '../../programBrowser/ProgramBrowser';
 
 type ProgramVersionPageProps = {
   params: Promise<{
@@ -9,7 +9,7 @@ type ProgramVersionPageProps = {
 
 const ProgramVersionPage = async ({ params }: ProgramVersionPageProps) => {
   const { programId, versionId } = await params;
-  return <ProgramManager initialProgramId={programId} initialVersionId={versionId} />;
+  return <ProgramBrowser initialProgramId={programId} initialVersionId={versionId} />;
 };
 
 export default ProgramVersionPage;

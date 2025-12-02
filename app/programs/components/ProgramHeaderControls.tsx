@@ -1,4 +1,4 @@
-import ProgramSelector from './ProgramSelector';
+import ProgramSelector from '../programBrowser/components/ProgramSelector';
 import type { Program } from '../types';
 
 const ProgramHeaderControls = ({programs, selectedProgramId, onSelectProgram, canEdit, onCreateProgram, onArchiveProgram, isDeletingProgram, selectedProgram}: {programs: Program[], selectedProgramId: string | null, onSelectProgram: (programId: string | null) => void, canEdit: boolean, onCreateProgram: () => void, onArchiveProgram: () => void, isDeletingProgram: boolean, selectedProgram: Program | null}) => {

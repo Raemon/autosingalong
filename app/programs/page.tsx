@@ -1,7 +1,7 @@
-import ProgramManager from './ProgramManager';
+import ProgramBrowser from './programBrowser/ProgramBrowser';
 
 const ProgramPage = () => {
-  return <ProgramManager />;
+  return <ProgramBrowser />;
 };
 
 export default ProgramPage;

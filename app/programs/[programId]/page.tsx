@@ -1,4 +1,4 @@
-import ProgramManager from '../ProgramManager';
+import ProgramBrowser from '../programBrowser/ProgramBrowser';
 
 type ProgramPageProps = {
   params: Promise<{
@@ -8,7 +8,7 @@ type ProgramPageProps = {
 
 const ProgramPage = async ({ params }: ProgramPageProps) => {
   const { programId } = await params;
-  return <ProgramManager initialProgramId={programId} />;
+  return <ProgramBrowser initialProgramId={programId} />;
 };
 
 export default ProgramPage;

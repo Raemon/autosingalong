@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactElement } from 'react';
 import DragAndDropList from './DragAndDropList';
-import ProgramElementItem from './ProgramElementItem';
+import ProgramElementItem from '../programBrowser/components/ProgramElementItem';
 import ProgramReferenceItem from './ProgramReferenceItem';
 import VersionSelector from './VersionSelector';
 import type { Program, VersionOption } from '../types';
