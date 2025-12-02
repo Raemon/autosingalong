@@ -33,26 +33,8 @@ const ProgramStructurePanel = ({
     void onVersionClick(versionId);
   };
 
-  const subprogramNames = program.programIds
-    .map((childId) => programMap[childId]?.title)
-    .filter(Boolean) as string[];
-
   return (
-    <div className="border-l border-gray-200 pl-4 w-full max-w-xl h-[calc(100vh-2rem)] overflow-y-auto scrollbar-hide">
-      <div className="mb-4">
-        <div className="text-xs text-gray-400">
-          {program.elementIds.length} elements · {program.programIds.length} linked programs
-        </div>
-        {subprogramNames.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-300">
-            {subprogramNames.map((name) => (
-              <span key={name} className="rounded-full border border-gray-700 px-2 py-0.5">
-                {name}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
+    <div className="w-full max-w-xl h-[calc(100vh-2rem)] overflow-y-auto scrollbar-hide">
       <ProgramStructureNode
         current={program}
         depth={0}
