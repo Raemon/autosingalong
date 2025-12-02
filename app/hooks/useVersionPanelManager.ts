@@ -34,13 +34,9 @@ const useVersionPanelManager = ({
   const panelState = useSongVersionPanel();
   const {
     selectedVersion,
-    previousVersions,
-    isExpandedPreviousVersions,
-    isCreatingVersion,
     newVersionForm,
     selectVersionById,
     clearSelection,
-    togglePreviousVersions,
     startEditingVersion,
     cancelEditing,
     updateForm,
@@ -187,6 +183,7 @@ const useVersionPanelManager = ({
     selectVersionById,
     pushHistory,
     getBasePath,
+    resetPanelError,
   ]);
 
   const handleArchiveVersion = useCallback(async () => {

@@ -12,6 +12,7 @@ export type ProgramStructurePanelProps = {
   selectedVersionId?: string;
   onVersionClick: (versionId: string) => void | Promise<void>;
   onReorderElements: (programId: string, reorderedElementIds: string[]) => void | Promise<void>;
+  onChangeVersion: (programId: string, oldId: string, newId: string) => void | Promise<void>;
 };
 
 const ProgramStructurePanel = ({
@@ -22,6 +23,7 @@ const ProgramStructurePanel = ({
   selectedVersionId,
   onVersionClick,
   onReorderElements,
+  onChangeVersion,
 }: ProgramStructurePanelProps): ReactElement => {
   if (!program) {
     return (
@@ -47,6 +49,7 @@ const ProgramStructurePanel = ({
         selectedVersionId={selectedVersionId}
         onElementClick={handleElementClick}
         onReorderElements={onReorderElements}
+        onChangeVersion={onChangeVersion}
       />
     </div>
   );

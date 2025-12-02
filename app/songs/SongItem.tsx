@@ -2,6 +2,7 @@
 
 import type { Song, SongVersion } from './types';
 import MyTooltip from '@/app/components/Tooltip';
+import { useUser } from '../contexts/UserContext';
 import { formatRelativeTimestamp } from '@/lib/dateUtils';
 
 
@@ -31,11 +32,13 @@ const VersionRow = ({version, isSelected, onClick}: {
   );
 };
 
-const SongItem = ({song, selectedVersionId, onVersionClick}: {
+const SongItem = ({song, selectedVersionId, onVersionClick, onCreateNewVersion}: {
   song: Song;
   selectedVersionId?: string;
   onVersionClick: (version: SongVersion) => void;
+  onCreateNewVersion: (song: Song) => void;
 }) => {
+  const { canEdit } = useUser();
 
   const tagsMinusSong = song.tags.filter(tag => tag !== 'song');
 
@@ -46,6 +49,15 @@ const SongItem = ({song, selectedVersionId, onVersionClick}: {
           <span>{song.title.replace(/_/g, ' ')}</span>
           <span className="text-xs text-gray-500">{tagsMinusSong.join(', ')}</span>
           </div>
+        {canEdit && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onCreateNewVersion(song); }}
+            className="opacity-0 bg-gray-800 font-bold rounded-lg p-1 group-hover:opacity-100 text-white hover:bg-gray-700 px-2 text-sm"
+            title="Add new version"
+          >
+            +
+          </button>
+        )}
       </div>
       <div className="border-b border-gray-200 w-1/3">
         {song.versions.length === 0 ? (

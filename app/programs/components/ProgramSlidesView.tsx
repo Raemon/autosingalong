@@ -22,7 +22,7 @@ const ProgramSlidesView = ({slides}:{slides: SongSlideData[]}) => {
   return (
     <div className="space-y-4">
       <div className="text-sm font-semibold">Program Slides</div>
-      {slides.map((songData, songIndex) => (
+      {slides.map((songData) => (
         <div key={songData.versionId} className="space-y-2">
           {songData.slides.length === 0 ? (
             <div className="text-xs text-gray-500">No slides available</div>
@@ -32,7 +32,6 @@ const ProgramSlidesView = ({slides}:{slides: SongSlideData[]}) => {
                 <SlideItem 
                   key={slideIndex} 
                   slide={slide} 
-                  slideLabel={`Song ${songIndex + 1} - Slide ${slideIndex + 1}`}
                 />
               ))}
             </div>

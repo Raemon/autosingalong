@@ -17,6 +17,7 @@ export type ProgramStructureNodeProps = {
   selectedVersionId?: string;
   onElementClick: (versionId: string) => void;
   onReorderElements: (programId: string, reorderedElementIds: string[]) => void | Promise<void>;
+  onChangeVersion: (programId: string, oldId: string, newId: string) => void | Promise<void>;
 };
 
 const ProgramStructureNode = ({
@@ -29,6 +30,7 @@ const ProgramStructureNode = ({
   selectedVersionId,
   onElementClick,
   onReorderElements,
+  onChangeVersion,
 }: ProgramStructureNodeProps): ReactElement => {
   const nextTrail = new Set(trail);
   nextTrail.add(current.id);
@@ -57,7 +59,9 @@ const ProgramStructureNode = ({
                 version={version}
                 allVersions={versions}
                 onRemove={noop}
-                onChangeVersion={noop}
+                onChangeVersion={(oldId, newId) => {
+                  void onChangeVersion(current.id, oldId, newId);
+                }}
                 onClick={onElementClick}
                 canEdit={false}
                 selectedVersionId={selectedVersionId}
@@ -97,6 +101,7 @@ const ProgramStructureNode = ({
                 selectedVersionId={selectedVersionId}
                 onElementClick={onElementClick}
                 onReorderElements={onReorderElements}
+                onChangeVersion={onChangeVersion}
               />
             );
           })}
