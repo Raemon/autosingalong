@@ -34,7 +34,7 @@ const ProgramStructurePanel = ({
   };
 
   return (
-    <div className="w-full max-w-xl h-[calc(100vh-2rem)] overflow-y-auto scrollbar-hide">
+    <div className="w-full max-w-xl h-[calc(100vh-100px)] overflow-y-auto scrollbar-hide">
       <ProgramStructureNode
         current={program}
         depth={0}

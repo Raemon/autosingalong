@@ -387,7 +387,7 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
               selectedVersionId={selectedVersion?.id}
               onVersionClick={(versionId) => handleVersionClick(versionId)}
             />
-          </div>
+          </div>  
           {selectedVersion && (
             <div className="flex-3 flex-grow">
               <VersionDetailPanel
