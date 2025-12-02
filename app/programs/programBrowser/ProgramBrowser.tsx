@@ -371,7 +371,7 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
 
   return (
     <div className="min-h-screen p-4">
-      <div className="max-w-6xl mx-auto flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         <div className="flex gap-4 justify-center">
           <div>
             <ProgramSelector
