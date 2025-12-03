@@ -8,7 +8,6 @@ import type { SongVersion } from '../../songs/types';
 import ProgramSelector from './components/ProgramSelector';
 import ProgramStructurePanel from './ProgramStructurePanel';
 import useVersionPanelManager from '../../hooks/useVersionPanelManager';
-import ProgramSlidesView from '../components/ProgramSlidesView';
 import { generateSlidesFromHtml } from '../../../src/components/slides/slideGenerators';
 import type { Slide } from '../../../src/components/slides/types';
 import { extractLyrics } from '../../../lib/lyricsExtractor';
@@ -348,83 +347,6 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
     selectedProgramId,
   ]);
 
-  const allSlides = useMemo(() => {
-    if (!selectedProgram) return [];
-    
-    const convertToLyricsOnly = (content: string, label: string): string => {
-      try {
-        const lyrics = extractLyrics(content, label);
-        return `<div>${lyrics.split('\n').map(line => `<p>${line || '&nbsp;'}</p>`).join('')}</div>`;
-      } catch (err) {
-        console.error('Failed to extract lyrics:', err);
-        return content;
-      }
-    };
-    
-    const linesPerSlide = 10;
-
-    const buildSongSlides = (versionId: string): SongSlideData | null => {
-      const version = versionMap[versionId];
-      if (!version) {
-        return null;
-      }
-      const fullVersion = fullVersions[versionId];
-      let slides: Slide[] = [];
-      if (fullVersion) {
-        try {
-          let contentToProcess = '';
-          
-          if (fullVersion.content) {
-            contentToProcess = convertToLyricsOnly(fullVersion.content, version.label);
-          } else if (fullVersion.renderedContent) {
-            contentToProcess = fullVersion.renderedContent.htmlLyricsOnly || fullVersion.renderedContent.htmlFull || fullVersion.renderedContent.legacy || '';
-          }
-          
-          if (contentToProcess) {
-            slides = generateSlidesFromHtml(contentToProcess, { linesPerSlide });
-            
-            const titleSlide: Slide = [{ text: version.songTitle, isHeading: true, level: 1 }];
-            slides.unshift(titleSlide);
-          }
-        } catch (err) {
-          console.error(`Failed to parse content for ${versionId}:`, err);
-        }
-      }
-      return {
-        versionId: version.id,
-        songTitle: version.songTitle,
-        versionLabel: version.label,
-        slides,
-        tags: version.tags || [],
-      };
-    };
-
-    const collectSlides = (program: Program | null, visited: Set<string> = new Set()): SongSlideData[] => {
-      if (!program || visited.has(program.id)) {
-        return [];
-      }
-      visited.add(program.id);
-      const result: SongSlideData[] = [];
-      
-      for (const versionId of program.elementIds) {
-        const songSlides = buildSongSlides(versionId);
-        if (songSlides) {
-          result.push(songSlides);
-        }
-      }
-      
-      for (const childId of program.programIds) {
-        const childProgram = programMap[childId] || null;
-        result.push(...collectSlides(childProgram, visited));
-      }
-      
-      visited.delete(program.id);
-      return result;
-    };
-    
-    return collectSlides(selectedProgram, new Set());
-  }, [selectedProgram, versionMap, fullVersions, programMap]);
-
   if (loading) {
     return (
       <div className="min-h-screen p-4">
@@ -463,11 +385,14 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
       <div className="flex flex-col gap-4">
         <div className="flex gap-4 justify-center">
           <div>
-            <ProgramSelector
-              programs={programs}
-              selectedProgramId={selectedProgramId}
-              onSelect={handleProgramSelect}
-            />
+            <div className="flex items-center justify-between">
+              <ProgramSelector
+                programs={programs}
+                selectedProgramId={selectedProgramId}
+                onSelect={handleProgramSelect}
+              />
+              <a href={`/programs/${selectedProgramId}/slides`} className="text-sm">View Slides</a>
+            </div>
             <ProgramStructurePanel
               program={selectedProgram}
               programMap={programMap}
@@ -506,7 +431,6 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
             </div>
           ) : (
             <div className="flex-3 flex-grow">
-              {/* <ProgramSlidesView slides={allSlides} /> */}
             </div>
           )}
         </div>
