@@ -218,7 +218,7 @@ const useVersionPanelManager = ({
     } finally {
       setIsArchiving(false);
     }
-  }, [selectedVersion, onVersionArchived, clearSelection, pushHistory, getBasePath]);
+  }, [selectedVersion, onVersionArchived, clearSelection, pushHistory, getBasePath, resetPanelError]);
 
   return {
     ...panelState,
