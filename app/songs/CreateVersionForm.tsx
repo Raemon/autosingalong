@@ -2,8 +2,8 @@ import ChordmarkEditor from '../chordmark-converter/ChordmarkEditor';
 import { detectFileType } from '../../lib/lyricsExtractor';
 
 type CreateVersionFormProps = {
-  form: { label: string; content: string; audioUrl: string; bpm: number; previousVersionId: string; nextVersionId: string };
-  onFormChange: (updates: Partial<{ label: string; content: string; audioUrl: string; bpm: number; previousVersionId: string; nextVersionId: string }>) => void;
+  form: { label: string; content: string; audioUrl: string; bpm: number; transpose: number; previousVersionId: string; nextVersionId: string };
+  onFormChange: (updates: Partial<{ label: string; content: string; audioUrl: string; bpm: number; transpose: number; previousVersionId: string; nextVersionId: string }>) => void;
   onSubmit: () => void;
   onCancel: () => void;
   isSubmitting: boolean;
@@ -48,6 +48,8 @@ const CreateVersionForm = ({form, onFormChange, onSubmit, onCancel, isSubmitting
             bpm={form.bpm || 90}
             autosaveKey={autosaveKey}
             versionCreatedAt={versionCreatedAt}
+            initialTranspose={form.transpose}
+            onTransposeChange={(transpose: number) => onFormChange({ transpose })}
           />
         ) : (
           <textarea

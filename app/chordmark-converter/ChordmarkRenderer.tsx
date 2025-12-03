@@ -329,7 +329,9 @@ const ChordmarkRenderer = ({
   
   // Always parse for the player, but only render if we don't have cached content
   const parsedSong = useChordmarkParser(content);
-  const shouldUseCachedContent = useMemo(() => Boolean(renderedContent) && transposeSteps === 0, [renderedContent, transposeSteps]);
+  // Only use cached content if both initialTranspose and current transposeSteps are 0
+  // (cached content is always rendered with transposeValue: 0)
+  const shouldUseCachedContent = useMemo(() => Boolean(renderedContent) && initialTranspose === 0 && transposeSteps === 0, [renderedContent, initialTranspose, transposeSteps]);
   // Always render with current transposeSteps, even if we might use cached content (for when transposeSteps changes)
   const renderedOutputs = useChordmarkRenderer(parsedSong.song, transposeSteps);
   

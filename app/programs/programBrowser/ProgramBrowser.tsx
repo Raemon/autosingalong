@@ -506,7 +506,7 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
             </div>
           ) : (
             <div className="flex-3 flex-grow">
-              <ProgramSlidesView slides={allSlides} />
+              {/* <ProgramSlidesView slides={allSlides} /> */}
             </div>
           )}
         </div>

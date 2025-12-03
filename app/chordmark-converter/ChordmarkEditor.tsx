@@ -17,6 +17,8 @@ interface ChordmarkEditorProps {
   bpm?: number;
   autosaveKey?: string;
   versionCreatedAt?: string;
+  initialTranspose?: number;
+  onTransposeChange?: (transpose: number) => void;
 }
 
 type PreviewMode = 'full' | 'chords' | 'lyrics' | 'side-by-side' | 'slides';
@@ -26,7 +28,7 @@ type AutosaveSnapshot = {
   savedAt: string;
 };
 
-const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm, autosaveKey, versionCreatedAt }: ChordmarkEditorProps) => {
+const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm, autosaveKey, versionCreatedAt, initialTranspose = 0, onTransposeChange }: ChordmarkEditorProps) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   const [error, setError] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState<PreviewMode>('full');
@@ -34,7 +36,7 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm, autosav
   const [pendingAutosave, setPendingAutosave] = useState<AutosaveSnapshot | null>(null);
   const [playerStartLine, setPlayerStartLine] = useState(0);
   const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
-  const [transposeSteps, setTransposeSteps] = useState(0);
+  const [transposeSteps, setTransposeSteps] = useState(initialTranspose);
   const previewRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const autosaveStorageKey = `chordmark-editor:${autosaveKey || 'default'}`;
@@ -72,6 +74,15 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm, autosav
 
     return () => clearTimeout(timer);
   }, [value]);
+
+  useEffect(() => {
+    setTransposeSteps(initialTranspose);
+  }, [initialTranspose]);
+
+  const handleTransposeChange = (newTranspose: number) => {
+    setTransposeSteps(newTranspose);
+    onTransposeChange?.(newTranspose);
+  };
 
   const parsedSong = useChordmarkParser(debouncedValue);
   const renderedOutputs = useChordmarkRenderer(parsedSong.song, transposeSteps);
@@ -270,7 +281,7 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm, autosav
                 Slides
               </button>
             </div>
-            <TransposeControls value={transposeSteps} onChange={setTransposeSteps} />
+            <TransposeControls value={transposeSteps} onChange={handleTransposeChange} />
             </div>
           </div>
           <div ref={previewRef} className="flex-1 p-2 border overflow-auto text-xs font-mono">
