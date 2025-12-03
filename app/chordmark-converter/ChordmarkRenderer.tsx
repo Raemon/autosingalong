@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { parseSong, renderSong } from 'chord-mark';
 import { extractTextFromHTML, convertCustomFormatToChordmark, prepareSongForRendering, prepareSongForChordsWithMeta, removeRepeatBarIndicators, isBracketedMetaLine } from './utils';
 import ChordmarkPlayer from './ChordmarkPlayer';
@@ -323,10 +323,15 @@ const ChordmarkRenderer = ({
   const [mode, setMode] = useState<ChordmarkViewMode>(defaultMode);
   const [transposeSteps, setTransposeSteps] = useState(initialTranspose);
   
+  useEffect(() => {
+    setTransposeSteps(initialTranspose);
+  }, [initialTranspose]);
+  
   // Always parse for the player, but only render if we don't have cached content
   const parsedSong = useChordmarkParser(content);
-  const shouldUseCachedContent = Boolean(renderedContent) && transposeSteps === 0;
-  const renderedOutputs = useChordmarkRenderer(shouldUseCachedContent ? null : parsedSong.song, transposeSteps);
+  const shouldUseCachedContent = useMemo(() => Boolean(renderedContent) && transposeSteps === 0, [renderedContent, transposeSteps]);
+  // Always render with current transposeSteps, even if we might use cached content (for when transposeSteps changes)
+  const renderedOutputs = useChordmarkRenderer(parsedSong.song, transposeSteps);
   
   // Always generate slides client-side (they're cheap and can't be generated server-side easily)
   const slides = useMemo(() => {
