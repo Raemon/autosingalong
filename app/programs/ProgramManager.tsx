@@ -14,6 +14,7 @@ import { extractLyrics, detectFileType } from '../../lib/lyricsExtractor';
 import { generateChordmarkRenderedContent } from '../chordmark-converter/clientRenderUtils';
 import type { Program, VersionOption, SongSlideData } from './types';
 import useSongVersionPanel from '../hooks/useSongVersionPanel';
+import useProgram from './useProgram';
 
 type ProgramManagerProps = {
   initialProgramId?: string;
@@ -358,6 +359,7 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
       prev.map((program) => (program.id === updatedProgram.id ? updatedProgram : program))
     );
   }, []);
+  const { handleReorder, handleAdd, handleDelete } = useProgram(selectedProgram, refreshProgram, setError);
   const updateProgramElementReferences = useCallback(async (oldVersionId: string, newVersionId: string) => {
     if (!selectedProgram) {
       return;
@@ -465,7 +467,7 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
     setShowCreateModal(false);
   };
 
-  const handleAddElement = async (versionId: string) => {
+  const handleAddElement = useCallback(async (versionId: string) => {
     if (!selectedProgram) {
       return;
     }
@@ -473,50 +475,9 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
       setSearchTerm('');
       return;
     }
-
-    const nextElementIds = [...selectedProgram.elementIds, versionId];
-
-    try {
-      const response = await fetch(`/api/programs/${selectedProgram.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ elementIds: nextElementIds, programIds: selectedProgram.programIds }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update program');
-      }
-      refreshProgram(data.program);
-      setSearchTerm('');
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update program');
-    }
-  };
-
-  const handleRemoveElement = async (versionId: string) => {
-    if (!selectedProgram) {
-      return;
-    }
-
-    const nextElementIds = selectedProgram.elementIds.filter((id) => id !== versionId);
-
-    try {
-      const response = await fetch(`/api/programs/${selectedProgram.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ elementIds: nextElementIds, programIds: selectedProgram.programIds }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update program');
-      }
-      refreshProgram(data.program);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update program');
-    }
-  };
+    await handleAdd(versionId);
+    setSearchTerm('');
+  }, [selectedProgram, handleAdd]);
 
   const handleChangeVersion = async (oldId: string, newId: string) => {
     if (!selectedProgram) {
@@ -542,31 +503,6 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
     }
   };
 
-  const handleReorderElements = async (reorderedElementIds: string[]) => {
-    if (!selectedProgram) {
-      return;
-    }
-
-    const previousElementIds = selectedProgram.elementIds;
-    refreshProgram({ ...selectedProgram, elementIds: reorderedElementIds });
-
-    try {
-      const response = await fetch(`/api/programs/${selectedProgram.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ elementIds: reorderedElementIds, programIds: selectedProgram.programIds }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update program');
-      }
-      refreshProgram(data.program);
-      setError(null);
-    } catch (err) {
-      refreshProgram({ ...selectedProgram, elementIds: previousElementIds });
-      setError(err instanceof Error ? err.message : 'Failed to update program');
-    }
-  };
 
   const handleAddProgram = async (programId: string) => {
     if (!selectedProgram) {
@@ -887,9 +823,7 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
           filteredVersions={filteredVersions}
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
-          onAddElement={handleAddElement}
-          onRemoveElement={handleRemoveElement}
-          onReorderElements={handleReorderElements}
+          refreshProgram={refreshProgram}
           onChangeVersion={handleChangeVersion}
           onElementClick={handleElementClick}
           onCreateVersion={handleCreateNewVersion}

@@ -1,15 +1,20 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactElement } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactElement } from 'react';
 import DragAndDropList from './DragAndDropList';
 import ProgramElementItem from '../programBrowser/components/ProgramElementItem';
 import ProgramReferenceItem from './ProgramReferenceItem';
 import VersionSelector from './VersionSelector';
 import type { Program, VersionOption } from '../types';
+import useProgram from '../useProgram';
 
 const noopRemove = () => {};
 const noopChangeVersion = () => {};
 const noopCreateVersion = () => {};
 
-const ProgramElementsSection = ({selectedProgram, versions, versionMap, selectedVersionId, filteredVersions, searchTerm, onSearchChange, onAddElement, onRemoveElement, onReorderElements, onChangeVersion, onElementClick, onCreateVersion, onKeyDown, canEdit, programs, programMap, onAddProgram, onRemoveProgram, onReorderProgramIds, canReferenceProgram}: {selectedProgram: Program | null, versions: VersionOption[], versionMap: Record<string, VersionOption>, selectedVersionId: string | undefined, filteredVersions: VersionOption[], searchTerm: string, onSearchChange: (value: string) => void, onAddElement: (versionId: string) => void, onRemoveElement: (versionId: string) => void, onReorderElements: (ids: string[]) => void, onChangeVersion: (oldId: string, newId: string) => void, onElementClick: (versionId: string) => void, onCreateVersion: (songId: string) => void, onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void, canEdit: boolean, programs: Program[], programMap: Record<string, Program>, onAddProgram: (programId: string) => void, onRemoveProgram: (programId: string) => void, onReorderProgramIds: (ids: string[]) => void, canReferenceProgram: (sourceProgram: Program | null, targetProgramId: string) => boolean}) => {
+const ProgramElementsSection = ({selectedProgram, versions, versionMap, selectedVersionId, filteredVersions, searchTerm, onSearchChange, refreshProgram, onChangeVersion, onElementClick, onCreateVersion, onKeyDown, canEdit, programs, programMap, onAddProgram, onRemoveProgram, onReorderProgramIds, canReferenceProgram}: {selectedProgram: Program | null, versions: VersionOption[], versionMap: Record<string, VersionOption>, selectedVersionId: string | undefined, filteredVersions: VersionOption[], searchTerm: string, onSearchChange: (value: string) => void, refreshProgram: (updatedProgram: Program) => void, onChangeVersion: (oldId: string, newId: string) => void, onElementClick: (versionId: string) => void, onCreateVersion: (songId: string) => void, onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void, canEdit: boolean, programs: Program[], programMap: Record<string, Program>, onAddProgram: (programId: string) => void, onRemoveProgram: (programId: string) => void, onReorderProgramIds: (ids: string[]) => void, canReferenceProgram: (sourceProgram: Program | null, targetProgramId: string) => boolean}) => {
+  const { handleReorder, handleAdd: handleAddBase, handleDelete } = useProgram(selectedProgram, refreshProgram);
+  const handleAdd = useCallback(async (versionId: string) => {
+    await handleAddBase(versionId, () => onSearchChange(''));
+  }, [handleAddBase, onSearchChange]);
   const [isProgramPickerOpen, setIsProgramPickerOpen] = useState(false);
   const [programSearchTerm, setProgramSearchTerm] = useState('');
   const [programSelectedIndex, setProgramSelectedIndex] = useState(-1);
@@ -160,7 +165,7 @@ const ProgramElementsSection = ({selectedProgram, versions, versionMap, selected
       {selectedProgram && selectedProgram.elementIds.length > 0 && (
         <DragAndDropList
           items={selectedProgram.elementIds}
-          onReorder={onReorderElements}
+          onReorder={handleReorder}
           keyExtractor={(id) => `${id}-${selectedProgram.id}`}
           renderItem={(id, index) => {
             const version = versionMap[id];
@@ -169,7 +174,7 @@ const ProgramElementsSection = ({selectedProgram, versions, versionMap, selected
               index={index} 
               version={version} 
               allVersions={versions} 
-              onRemove={onRemoveElement} 
+              onRemove={handleDelete} 
               onChangeVersion={onChangeVersion} 
               onClick={onElementClick} 
               onCreateNewVersion={onCreateVersion} 
@@ -183,7 +188,7 @@ const ProgramElementsSection = ({selectedProgram, versions, versionMap, selected
         searchTerm={searchTerm}
         onSearchChange={onSearchChange}
         filteredVersions={filteredVersions}
-        onAddElement={onAddElement}
+        onAddElement={handleAdd}
         onKeyDown={onKeyDown}
         onCreateVersion={onCreateVersion}
         disabled={!selectedProgram}
