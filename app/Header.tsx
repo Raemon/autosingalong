@@ -8,7 +8,7 @@ const Header = () => {
   const { userName, setUserName } = useUser();
   const pathname = usePathname();
   
-  if (pathname?.includes('/print')) {
+  if (pathname?.includes('/print') || pathname?.match(/\/programs\/[^/]+\/slides/)) {
     return null;
   }
 

@@ -16,7 +16,7 @@ const SlideItem = ({slide, className}:{slide: Slide, className?: string}) => {
               return <img key={lineIndex} src={line.src} alt="" className="max-w-full h-auto mx-auto" />; 
             }
             if (line.isHeading) {
-              return <div key={lineIndex} style={{fontSize: 'clamp(1.3rem, 2.625vw, 3rem)'}}>{line.text?.replace(/[_]/g, ' ')}</div>;
+              return <div key={lineIndex} style={{fontSize: 'clamp(1.5rem, 3.625vw, 5rem)'}}>{line.text?.replace(/[_]/g, ' ')}</div>;
             }
             if (line.isEmpty) {
               return <div key={lineIndex}>&nbsp;</div>;
