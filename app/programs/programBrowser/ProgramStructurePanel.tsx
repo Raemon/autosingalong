@@ -14,6 +14,8 @@ export type ProgramStructurePanelProps = {
   onReorderElements: (programId: string, reorderedElementIds: string[]) => void | Promise<void>;
   onChangeVersion: (programId: string, oldId: string, newId: string) => void | Promise<void>;
   onAddElement: (programId: string, versionId: string) => void | Promise<void>;
+  onRemoveElement: (programId: string, elementId: string) => void | Promise<void>;
+  canEdit: boolean;
 };
 
 const ProgramStructurePanel = ({
@@ -26,6 +28,8 @@ const ProgramStructurePanel = ({
   onReorderElements,
   onChangeVersion,
   onAddElement,
+  onRemoveElement,
+  canEdit,
 }: ProgramStructurePanelProps): ReactElement => {
   if (!program) {
     return (
@@ -53,6 +57,8 @@ const ProgramStructurePanel = ({
         onReorderElements={onReorderElements}
         onChangeVersion={onChangeVersion}
         onAddElement={onAddElement}
+        onRemoveElement={onRemoveElement}
+        canEdit={canEdit}
       />
     </div>
   );

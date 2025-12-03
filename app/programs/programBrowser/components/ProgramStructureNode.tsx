@@ -6,8 +6,6 @@ import DragAndDropList from '../../components/DragAndDropList';
 import type { Program, VersionOption } from '../../types';
 import { formatRelativeTimestamp } from '@/lib/dateUtils';
 
-const noop = () => {};
-
 export type ProgramStructureNodeProps = {
   current: Program;
   depth: number;
@@ -20,6 +18,8 @@ export type ProgramStructureNodeProps = {
   onReorderElements: (programId: string, reorderedElementIds: string[]) => void | Promise<void>;
   onChangeVersion: (programId: string, oldId: string, newId: string) => void | Promise<void>;
   onAddElement: (programId: string, versionId: string) => void | Promise<void>;
+  onRemoveElement: (programId: string, elementId: string) => void | Promise<void>;
+  canEdit: boolean;
 };
 
 const ProgramStructureNode = ({
@@ -34,6 +34,8 @@ const ProgramStructureNode = ({
   onReorderElements,
   onChangeVersion,
   onAddElement,
+  onRemoveElement,
+  canEdit,
 }: ProgramStructureNodeProps): ReactElement => {
   const nextTrail = new Set(trail);
   nextTrail.add(current.id);
@@ -143,13 +145,15 @@ const ProgramStructureNode = ({
                 index={index}
                 version={version}
                 allVersions={versions}
-                onRemove={noop}
+                onRemove={() => {
+                  void onRemoveElement(current.id, elementId);
+                }}
                 onChangeVersion={(oldId, newId) => {
                   void onChangeVersion(current.id, oldId, newId);
                 }}
                 onClick={onElementClick}
-                canEdit={false}
                 selectedVersionId={selectedVersionId}
+                canEdit={canEdit}
               />
             );
           }}
@@ -188,6 +192,8 @@ const ProgramStructureNode = ({
                 onReorderElements={onReorderElements}
                 onChangeVersion={onChangeVersion}
                 onAddElement={onAddElement}
+                onRemoveElement={onRemoveElement}
+                canEdit={canEdit}
               />
             );
           })}

@@ -15,7 +15,7 @@ type ProgramBrowserProps = {
 };
 
 const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserProps) => {
-  const { userName } = useUser();
+  const { userName, canEdit } = useUser();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [versions, setVersions] = useState<VersionOption[]>([]);
   const [isLoadingPrograms, setIsLoadingPrograms] = useState(true);
@@ -225,6 +225,31 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
     }
   }, [programMap]);
 
+  const handleRemoveElement = useCallback(async (programId: string, elementId: string) => {
+    const program = programMap[programId];
+    if (!program) {
+      return;
+    }
+    const nextElementIds = program.elementIds.filter((id) => id !== elementId);
+    try {
+      const response = await fetch(`/api/programs/${programId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ elementIds: nextElementIds, programIds: program.programIds }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to remove element');
+      }
+      const data = await response.json();
+      setPrograms((prev) => prev.map((p) => (p.id === programId ? data.program : p)));
+      setDataError(null);
+    } catch (err) {
+      console.error('Failed to remove element:', err);
+      setDataError(err instanceof Error ? err.message : 'Failed to remove element');
+    }
+  }, [programMap]);
+
   const containsVersion = useCallback(
     (program: Program | null, targetVersionId: string, visited: Set<string>): boolean => {
       if (!program || visited.has(program.id)) {
@@ -331,6 +356,8 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
               onReorderElements={handleReorderElements}
               onChangeVersion={handleChangeVersion}
               onAddElement={handleAddElement}
+              onRemoveElement={handleRemoveElement}
+              canEdit={canEdit}
             />
           </div>  
           {selectedVersion ? (
