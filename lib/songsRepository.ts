@@ -477,3 +477,48 @@ export const updateSongTags = async (songId: string, tags: string[]): Promise<So
   }
   return typedRows[0];
 };
+
+export const updateSongTitle = async (songId: string, title: string): Promise<SongRecord> => {
+  const rows = await sql`
+    update songs
+    set title = ${title}
+    where id = ${songId}
+    returning id, title, created_by as "createdBy", created_at as "createdAt", archived, tags
+  `;
+  const typedRows = rows as SongRowResult[];
+  if (typedRows.length === 0) {
+    throw new Error(`Song ${songId} not found`);
+  }
+  return typedRows[0];
+};
+
+export type ChangelogVersionRecord = {
+  id: string;
+  songId: string;
+  songTitle: string;
+  label: string;
+  content: string | null;
+  previousContent: string | null;
+  createdBy: string | null;
+  createdAt: string;
+};
+
+export const listVersionsForChangelog = async (): Promise<ChangelogVersionRecord[]> => {
+  const rows = await sql`
+    select
+      v.id,
+      v.song_id as "songId",
+      s.title as "songTitle",
+      v.label,
+      v.content,
+      prev.content as "previousContent",
+      v.created_by as "createdBy",
+      v.created_at as "createdAt"
+    from song_versions v
+    join songs s on s.id = v.song_id
+    left join song_versions prev on prev.id = v.previous_version_id
+    where v.archived = false and s.archived = false
+    order by v.created_at desc
+  `;
+  return rows as ChangelogVersionRecord[];
+};

@@ -6,10 +6,11 @@ import PreviousVersionsList from './PreviousVersionsList';
 import CreateVersionForm from './CreateVersionForm';
 import VersionHeader from './VersionHeader';
 import SongTags from './SongTags';
+import SongTitle from './SongTitle';
 import type { SongVersion } from './types';
 import { useUser } from '../contexts/UserContext';
 
-const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPreviousVersions, isCreatingVersion, newVersionForm, isSubmitting, isArchiving, error, isLoadingVersion = false, songId, tags: initialTags = [], onClose, onTogglePreviousVersions, onVersionClick, onCreateVersionClick, onCancelCreateVersion, onFormChange, onSubmitVersion, onArchiveVersion}: {
+const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPreviousVersions, isCreatingVersion, newVersionForm, isSubmitting, isArchiving, error, isLoadingVersion = false, songId, tags: initialTags = [], onClose, onTogglePreviousVersions, onVersionClick, onCreateVersionClick, onCancelCreateVersion, onFormChange, onSubmitVersion, onArchiveVersion, onTitleChange}: {
   songTitle: string;
   version: SongVersion & { songId?: string; nextVersionId?: string | null; originalVersionId?: string | null };
   previousVersions: SongVersion[];
@@ -30,6 +31,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
   onFormChange: (updates: Partial<{ label: string; content: string; audioUrl: string; bpm: number; transpose: number; previousVersionId: string; nextVersionId: string }>) => void;
   onSubmitVersion: () => void;
   onArchiveVersion: () => void;
+  onTitleChange?: (newTitle: string) => void;
 }) => {
   const { canEdit } = useUser();
 
@@ -53,7 +55,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
             <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
           </svg>
         </button>
-        {songTitle.replace(/_/g, ' ')}
+        <SongTitle songId={songId} title={songTitle} onTitleChange={onTitleChange} />
       </h2>
       <SongTags songId={songId} initialTags={initialTags} />
       <div className="mb-2 flex items-center justify-between sticky top-[-80px]">

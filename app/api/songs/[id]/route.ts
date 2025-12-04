@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSongWithVersions, updateSongTags } from '@/lib/songsRepository';
+import { getSongWithVersions, updateSongTags, updateSongTitle } from '@/lib/songsRepository';
 
 export async function GET(_: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -25,19 +25,30 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   try {
     const params = await context.params;
     const body = await request.json();
-    const { tags } = body;
+    const { tags, title } = body;
     
-    if (!Array.isArray(tags)) {
-      return NextResponse.json({ error: 'tags must be an array' }, { status: 400 });
+    if (title !== undefined) {
+      if (typeof title !== 'string' || !title.trim()) {
+        return NextResponse.json({ error: 'title must be a non-empty string' }, { status: 400 });
+      }
+      const updatedSong = await updateSongTitle(params.id, title.trim());
+      return NextResponse.json({ song: updatedSong });
     }
     
-    const updatedSong = await updateSongTags(params.id, tags);
-    return NextResponse.json({ song: updatedSong });
+    if (tags !== undefined) {
+      if (!Array.isArray(tags)) {
+        return NextResponse.json({ error: 'tags must be an array' }, { status: 400 });
+      }
+      const updatedSong = await updateSongTags(params.id, tags);
+      return NextResponse.json({ song: updatedSong });
+    }
+    
+    return NextResponse.json({ error: 'No valid update fields provided' }, { status: 400 });
   } catch (error) {
-    console.error('Failed to update song tags:', error);
+    console.error('Failed to update song:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({ 
-      error: 'Failed to update song tags',
+      error: 'Failed to update song',
       details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
     }, { status: 500 });
   }
