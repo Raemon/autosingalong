@@ -38,6 +38,18 @@ const CreateVersionForm = ({form, onFormChange, onSubmit, onCancel, isSubmitting
           placeholder="BPM"
         />
       </div>
+      {!isChordmarkFile && (
+        <div>
+          <label className="text-xs text-gray-400">Transpose (optional)</label>
+          <input
+            type="number"
+            value={form.transpose}
+            onChange={(e) => onFormChange({ transpose: parseInt(e.target.value) || 0 })}
+            className="w-full px-2 py-1 text-xs border border-gray-300 bg-black"
+            placeholder="0"
+          />
+        </div>
+      )}
       <div>
         <label className="text-xs text-gray-400">Content</label>
         {isChordmarkFile ? (
