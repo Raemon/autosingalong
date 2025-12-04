@@ -292,7 +292,7 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm, autosav
                 <div className="flex gap-4 h-full">
                   <div className="flex-0 min-w-0">
                     <div className="text-gray-400 mb-1 text-xs">Chords</div>
-                    <div className="styled-chords" dangerouslySetInnerHTML={{ __html: renderedOutputs.htmlChordsOnly || '' }} />
+                    <div className="styled-chordmark" dangerouslySetInnerHTML={{ __html: renderedOutputs.htmlChordsOnly || '' }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-gray-400 mb-1 text-xs">Lyrics</div>

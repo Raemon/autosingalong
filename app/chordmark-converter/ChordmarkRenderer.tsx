@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { parseSong, renderSong } from 'chord-mark';
-import { extractTextFromHTML, convertCustomFormatToChordmark, prepareSongForRendering, prepareSongForChordsWithMeta, removeRepeatBarIndicators, isBracketedMetaLine } from './utils';
+import { extractTextFromHTML, convertCustomFormatToChordmark, prepareSongForRendering, prepareSongForChordsWithMeta, removeRepeatBarIndicators } from './utils';
 import ChordmarkPlayer from './ChordmarkPlayer';
 import { useLineHighlighting } from './useLineHighlighting';
 import { generateSlidesFromChordmark } from '../../src/components/slides/slideGenerators';
@@ -12,23 +12,7 @@ import ChordmarkContent from './ChordmarkContent';
 export type ChordmarkViewMode = 'lyrics+chords' | 'lyrics' | 'chords' | 'one-line' | 'slides' | 'raw';
 
 export const CHORDMARK_STYLES = `
-  .styled-chords .cmSong {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    white-space: pre;
-    font-variant-ligatures: none;
-  }
-  .styled-chords .cmSong * {
-    font-family: inherit;
-    white-space: inherit;
-  }
-  .styled-chords .cmSong p {
-    margin: 0;
-    line-height: 16px;
-  }
-  .styled-chords .cmSong p + p {
-  }
   .styled-chordmark .cmSong {
-    max-width:  800px;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     white-space: pre;
     font-variant-ligatures: none;
@@ -86,25 +70,10 @@ export const CHORDMARK_STYLES = `
     width: 300px;
     white-space: pre-wrap;
   }
-  .styled-chords .cmSong .cmBracketMeta {
-    color: #888;
-    font-style: italic;
-    max-width: 400px;
-    display: inline-block;
-    white-space: pre-wrap;
-    width: 300px;
-  }
   
   /* Line highlighting for active playback - only chord lines get data-line-index */
   .styled-chordmark .cmSong .cmChordLine[data-line-active="true"],
   .styled-chordmark .cmSong .cmChordLyricLine[data-line-active="true"] {
-    background-color: #fef3c7;
-    border-radius: 2px;
-    padding: 0 2px;
-    margin: 0 -2px;
-  }
-  .styled-chords .cmSong .cmChordLine[data-line-active="true"],
-  .styled-chords .cmSong .cmChordLyricLine[data-line-active="true"] {
     background-color: #fef3c7;
     border-radius: 2px;
     padding: 0 2px;
@@ -203,8 +172,8 @@ const addLineIndexAttributes = (html: string, chordLineIndices: number[]): strin
 };
 
 // Helper to add CSS class to bracket meta lines
-const addBracketMetaClasses = (html: string, parsedSong: ReturnType<typeof parseSong> | null): string => {
-  if (!html || !parsedSong?.allLines) return html;
+const addBracketMetaClasses = (html: string): string => {
+  if (!html) return html;
   
   const parser = getDomParser();
   if (!parser) {
@@ -212,23 +181,12 @@ const addBracketMetaClasses = (html: string, parsedSong: ReturnType<typeof parse
   }
   const doc = parser.parseFromString(html, 'text/html');
   
-  // Find all lyric line elements
+  // Find all lyric line elements and check by text content
   const lyricElements = doc.querySelectorAll('.cmLyricLine');
-  
-  // Track which lyric lines in the rendered output correspond to bracket meta lines
-  let lyricIndex = 0;
   lyricElements.forEach((element) => {
-    // Find the corresponding line in the parsed song
-    while (lyricIndex < parsedSong.allLines.length) {
-      const line = parsedSong.allLines[lyricIndex];
-      if (line.type === 'lyric') {
-        if (isBracketedMetaLine(line)) {
-          element.classList.add('cmBracketMeta');
-        }
-        lyricIndex++;
-        break;
-      }
-      lyricIndex++;
+    const text = (element.textContent || '').trim();
+    if (text.startsWith('[') && text.endsWith(']')) {
+      element.classList.add('cmBracketMeta');
     }
   });
   
@@ -265,17 +223,17 @@ export const useChordmarkRenderer = (parsedSong: ReturnType<typeof parseSong> | 
       htmlChordsOnly = addLineIndexAttributes(htmlChordsOnly, chordLineIndices);
       htmlLyricsOnly = addLineIndexAttributes(htmlLyricsOnly, chordLineIndices);
 
-      // Add bracket meta classes - use the correct source song for each render
-      htmlFull = addBracketMetaClasses(htmlFull, parsedSong);
-      htmlChordsOnly = addBracketMetaClasses(htmlChordsOnly, songForChordsWithMeta || parsedSong);
-      htmlLyricsOnly = addBracketMetaClasses(htmlLyricsOnly, parsedSong);
+      // Add bracket meta classes
+      htmlFull = addBracketMetaClasses(htmlFull);
+      htmlChordsOnly = addBracketMetaClasses(htmlChordsOnly);
+      htmlLyricsOnly = addBracketMetaClasses(htmlLyricsOnly);
 
       return { htmlFull, htmlChordsOnly, htmlLyricsOnly, renderError: null };
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'An error occurred during rendering';
       return { htmlFull: '', htmlChordsOnly: '', htmlLyricsOnly: '', renderError: errorMsg };
     }
-  }, [songForRendering, songForChordsWithMeta, chordLineIndices, parsedSong, transposeValue]);
+  }, [songForRendering, songForChordsWithMeta, chordLineIndices, transposeValue]);
 };
 
 const ChordmarkTabs = ({mode, onModeChange}: {mode: ChordmarkViewMode, onModeChange: (mode: ChordmarkViewMode) => void}) => {
@@ -345,10 +303,11 @@ const ChordmarkRenderer = ({
   const finalOutputs = useMemo(() => {
     if (shouldUseCachedContent && renderedContent) {
       console.log('[ChordmarkRenderer] Using cached rendered content');
+      // Apply bracket meta classes to cached content (not applied during server-side rendering)
       return {
-        htmlFull: renderedContent.htmlFull || '',
-        htmlChordsOnly: renderedContent.htmlChordsOnly || '',
-        htmlLyricsOnly: renderedContent.htmlLyricsOnly || '',
+        htmlFull: addBracketMetaClasses(renderedContent.htmlFull || ''),
+        htmlChordsOnly: addBracketMetaClasses(renderedContent.htmlChordsOnly || ''),
+        htmlLyricsOnly: addBracketMetaClasses(renderedContent.htmlLyricsOnly || ''),
         slides,
         renderError: null,
       };

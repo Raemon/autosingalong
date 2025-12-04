@@ -27,7 +27,7 @@ const ChordmarkContent = ({error, content, mode, finalOutputs}: {error: string |
       <div className="flex gap-4">
         <div className="flex-0 min-w-0" style={{ flex: '0 0 auto', minWidth: '18ch' }}>
           {/* <div className=" mb-1">Chords</div> */}
-          <div className="styled-chords text-xs font-mono" dangerouslySetInnerHTML={{ __html: finalOutputs.htmlChordsOnly }} />
+          <div className="styled-chordmark text-xs font-mono" dangerouslySetInnerHTML={{ __html: finalOutputs.htmlChordsOnly }} />
         </div>
         <div className="flex-1 min-w-0">
           {/* <div className="mb-1">Lyrics</div> */}
@@ -50,9 +50,8 @@ const ChordmarkContent = ({error, content, mode, finalOutputs}: {error: string |
     return <pre className="text-xs font-mono whitespace-pre-wrap">{content}</pre>;
   }
 
-  // Don't apply CSS styling for chords-only mode
   if (mode === 'chords') {
-    return <div className="text-xs font-mono" dangerouslySetInnerHTML={{ __html: html }} />;
+    return <div className="styled-chordmark text-xs font-mono" dangerouslySetInnerHTML={{ __html: html }} />;
   }
 
   return <div className="styled-chordmark text-xs" dangerouslySetInnerHTML={{ __html: html }} />;
