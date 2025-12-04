@@ -499,6 +499,7 @@ export type ChangelogVersionRecord = {
   label: string;
   content: string | null;
   previousContent: string | null;
+  previousVersionId: string | null;
   createdBy: string | null;
   createdAt: string;
 };
@@ -512,6 +513,7 @@ export const listVersionsForChangelog = async (): Promise<ChangelogVersionRecord
       v.label,
       v.content,
       prev.content as "previousContent",
+      v.previous_version_id as "previousVersionId",
       v.created_by as "createdBy",
       v.created_at as "createdAt"
     from song_versions v

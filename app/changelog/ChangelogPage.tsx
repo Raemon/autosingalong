@@ -10,6 +10,7 @@ type ChangelogVersion = {
   songTitle: string;
   label: string;
   content: string | null;
+  previousVersionId: string | null;
   previousContent: string | null;
   createdBy: string | null;
   createdAt: string;
@@ -70,6 +71,7 @@ const ChangelogPage = () => {
               </Link>
               <span className="text-gray-500 shrink-0">{version.createdBy || 'anonymous'}</span>
               {changedText && <span className={`truncate ${removed > added ? 'text-red-500' : 'text-green-500'}`}>{changedText}</span>}
+              <Link href={`/changelog/${version.previousVersionId ?? ''}/${version.id}`} className="text-gray-400 hover:text-gray-200 text-sm">Compare</Link>
             </div>
           );
         })}

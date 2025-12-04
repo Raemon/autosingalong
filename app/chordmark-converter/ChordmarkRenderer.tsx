@@ -263,7 +263,7 @@ const ChordmarkTabs = ({mode, onModeChange}: {mode: ChordmarkViewMode, onModeCha
 
 const ChordmarkRenderer = ({
   content,
-  defaultMode = 'one-line',
+  defaultMode = 'lyrics+chords',
   activeLineIndex = null,
   initialBpm = 90,
   initialTranspose = 0,

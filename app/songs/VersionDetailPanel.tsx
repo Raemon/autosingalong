@@ -108,7 +108,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
           <VersionMetadata version={version} />
           <PreviousVersionsList
             previousVersions={previousVersions}
-            currentLabel={version.label}
+            currentVersion={version}
             isExpanded={isExpandedPreviousVersions}
             onToggle={onTogglePreviousVersions}
             onVersionClick={onVersionClick}
