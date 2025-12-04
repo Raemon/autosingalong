@@ -8,7 +8,6 @@ import type { Slide } from '../../../../src/components/slides/types';
 import { extractLyrics } from '../../../../lib/lyricsExtractor';
 import type { Program, VersionOption, SongSlideData } from '../../types';
 import type { SongVersion } from '../../../songs/types';
-import VideoFrameUploader from '../../components/VideoFrameUploader';
 
 type ProgramSlidesProps = {
   programId: string;
@@ -280,20 +279,6 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
     return extractedFrames[Math.min(frameIndex, extractedFrames.length - 1)];
   };
 
-  const handleUploadComplete = () => {
-    if (selectedProgram?.id) {
-      fetch(`/api/programs/${selectedProgram.id}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.program?.videoUrl) {
-            setVideoUrl(data.program.videoUrl);
-            setExtractedFrames([]);
-          }
-        })
-        .catch(err => console.error('Failed to refresh program details:', err));
-    }
-  };
-
   useEffect(() => {
     setCurrentSlide(0);
   }, [flattenedSlides.length]);
@@ -351,7 +336,7 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
     <div className="relative w-screen h-screen flex items-center justify-center">
       <video ref={videoRef} style={{display: 'none'}} crossOrigin="anonymous" />
       {!isFullyLoaded && totalVersionsToLoad > 0 && (
-        <div className="fixed top-4 left-4 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded">
+        <div className="fixed top-4 left-4 z-10 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded">
           Loading: {loadedVersionsCount}/{totalVersionsToLoad} songs
         </div>
       )}
@@ -360,19 +345,12 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
           Extracting frames from video...
         </div>
       )}
-      <div className="fixed top-4 right-4 z-10">
-        {showUploader ? (
-          <div className="bg-black bg-opacity-75 px-3 py-2 rounded">
-            <VideoFrameUploader programId={programId} onUploadComplete={handleUploadComplete} />
-            <button onClick={() => setShowUploader(false)} className="text-xs text-gray-400 mt-1">Close</button>
-          </div>
-        ) : (
-          <button onClick={() => setShowUploader(true)} className="text-white text-xs bg-black bg-opacity-50 px-3 py-1 rounded">
-            Video Backgrounds
-          </button>
-        )}
+      <div className={`fixed top-4 right-4 z-10 ${isFullyLoaded ? 'opacity-0 hover:opacity-100' : 'opacity-100'} hover:opacity-100`}>
+        <button onClick={() => setShowUploader(!showUploader)} className="text-white text-xs bg-black bg-opacity-50 px-3 py-1 rounded">
+          {showUploader ? 'Close' : 'Video Backgrounds'}
+        </button>
       </div>
-      <SlideItem slide={flattenedSlides[currentSlide]} className="bg-black w-screen h-screen flex items-center justify-center p-4 font-georgia" backgroundImageUrl={getBackgroundForSlide(currentSlide)} backgroundOpacity={programTitleSlideIndices.has(currentSlide) ? 1.0 : 0.5} />
+      <SlideItem slide={flattenedSlides[currentSlide]} className="bg-black w-screen h-screen flex items-center justify-center p-4 font-georgia" backgroundImageUrl={getBackgroundForSlide(currentSlide)} backgroundOpacity={programTitleSlideIndices.has(currentSlide) ? .75 : 0.5} isProgramTitle={programTitleSlideIndices.has(currentSlide)} />
       <div className="fixed bottom-4 right-4 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded">
         {currentSlide + 1} / {flattenedSlides.length}
       </div>
