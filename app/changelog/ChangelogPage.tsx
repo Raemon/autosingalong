@@ -55,19 +55,21 @@ const ChangelogPage = () => {
       <div className="space-y-1">
         {versions.map((version) => {
           const { added, removed } = calculateDiff(version.content, version.previousContent);
+          const changedText = version.content !== version.previousContent ? (version.content || '').slice(0, 80) : '';
           return (
             <div key={version.id} className="flex items-center gap-3 py-1 text-sm font-mono">
-              <span className="text-gray-500 w-12 text-right shrink-0">{formatRelativeTimestamp(version.createdAt)}</span>
-              <Link href={`/songs/${version.id}`} className="text-gray-200 hover:underline truncate">
-                {version.songTitle} / {version.label}
-              </Link>
-              <span className="text-gray-500 shrink-0">{version.createdBy || 'anonymous'}</span>
-              <span className="shrink-0">
+              <span className="w-20 shrink-0 text-right">
                 {added > 0 && <span className="text-green-500">+{added}</span>}
-                {added > 0 && removed > 0 && <span className="text-gray-500"> / </span>}
+                {added > 0 && removed > 0 && <span className="text-gray-500">/</span>}
                 {removed > 0 && <span className="text-red-500">-{removed}</span>}
                 {added === 0 && removed === 0 && version.previousContent !== null && <span className="text-gray-500">±0</span>}
               </span>
+              <span className="text-gray-500 w-12 text-right shrink-0">{formatRelativeTimestamp(version.createdAt)}</span>
+              <Link href={`/songs/${version.id}`} className="text-gray-200 hover:underline shrink-0">
+                {version.songTitle} / {version.label}
+              </Link>
+              <span className="text-gray-500 shrink-0">{version.createdBy || 'anonymous'}</span>
+              {changedText && <span className={`truncate ${removed > added ? 'text-red-500' : 'text-green-500'}`}>{changedText}</span>}
             </div>
           );
         })}
