@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { listVersionsForChangelog } from '@/lib/songsRepository';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const versions = await listVersionsForChangelog();
+    const songId = request.nextUrl.searchParams.get('songId') || undefined;
+    const versions = await listVersionsForChangelog(songId);
     return NextResponse.json({ versions });
   } catch (error) {
     console.error('Error fetching changelog:', error);

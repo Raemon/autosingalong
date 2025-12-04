@@ -7,6 +7,7 @@ import CreateVersionForm from './CreateVersionForm';
 import VersionHeader from './VersionHeader';
 import SongTags from './SongTags';
 import SongTitle from './SongTitle';
+import ChangelogPage from '../changelog/ChangelogPage';
 import type { SongVersion } from './types';
 import { useUser } from '../contexts/UserContext';
 
@@ -106,13 +107,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
         <>
           <VersionContent version={version} />
           <VersionMetadata version={version} />
-          <PreviousVersionsList
-            previousVersions={previousVersions}
-            currentVersion={version}
-            isExpanded={isExpandedPreviousVersions}
-            onToggle={onTogglePreviousVersions}
-            onVersionClick={onVersionClick}
-          />
+
           <div className="mt-4 pt-4 border-t border-gray-200 flex gap-4">
             <a
               href={`/songs/${version.id}/print`}
@@ -131,6 +126,12 @@ const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPre
               Slides View
             </a>
           </div>
+          {songId && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <h3 className="text-xs text-gray-400 mb-2">History</h3>
+              <ChangelogPage songId={songId} compact />
+            </div>
+          )}
         </>
       )}
     </div>

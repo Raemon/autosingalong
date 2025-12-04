@@ -504,23 +504,41 @@ export type ChangelogVersionRecord = {
   createdAt: string;
 };
 
-export const listVersionsForChangelog = async (): Promise<ChangelogVersionRecord[]> => {
-  const rows = await sql`
-    select
-      v.id,
-      v.song_id as "songId",
-      s.title as "songTitle",
-      v.label,
-      v.content,
-      prev.content as "previousContent",
-      v.previous_version_id as "previousVersionId",
-      v.created_by as "createdBy",
-      v.created_at as "createdAt"
-    from song_versions v
-    join songs s on s.id = v.song_id
-    left join song_versions prev on prev.id = v.previous_version_id
-    where v.archived = false and s.archived = false
-    order by v.created_at desc
-  `;
+export const listVersionsForChangelog = async (songId?: string): Promise<ChangelogVersionRecord[]> => {
+  const rows = songId
+    ? await sql`
+        select
+          v.id,
+          v.song_id as "songId",
+          s.title as "songTitle",
+          v.label,
+          v.content,
+          prev.content as "previousContent",
+          v.previous_version_id as "previousVersionId",
+          v.created_by as "createdBy",
+          v.created_at as "createdAt"
+        from song_versions v
+        join songs s on s.id = v.song_id
+        left join song_versions prev on prev.id = v.previous_version_id
+        where v.archived = false and s.archived = false and v.song_id = ${songId}
+        order by v.created_at desc
+      `
+    : await sql`
+        select
+          v.id,
+          v.song_id as "songId",
+          s.title as "songTitle",
+          v.label,
+          v.content,
+          prev.content as "previousContent",
+          v.previous_version_id as "previousVersionId",
+          v.created_by as "createdBy",
+          v.created_at as "createdAt"
+        from song_versions v
+        join songs s on s.id = v.song_id
+        left join song_versions prev on prev.id = v.previous_version_id
+        where v.archived = false and s.archived = false
+        order by v.created_at desc
+      `;
   return rows as ChangelogVersionRecord[];
 };
