@@ -18,11 +18,7 @@ const Header = () => {
       <nav className="flex gap-6 items-center">
         <Link href="/songs" className="hover:underline">Songs</Link>
         <Link href="/programs" className="hover:underline">Programs</Link>
-        {/* <Link href="/bulk-create-versions" className="hover:underline">Bulk Create Versions</Link> */}
-        <Link href="/slides" className="hover:underline">Slides</Link>
         <Link href="/changelog" className="hover:underline">Changelog</Link>
-        {/* <Link href="/chord-player" className="hover:underline">Chord Player</Link> */}
-        {/* <Link href="/chordmark-converter" className="hover:underline">Chordmark Converter</Link> */}
         <input
           type="text"
           value={userName}
