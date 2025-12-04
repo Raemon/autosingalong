@@ -169,123 +169,39 @@ const PrintProgram = ({ programId }: PrintProgramProps) => {
           size: 11in 8.5in landscape;
           margin: 0.5in;
         }
-        
-        @media print {
-          body {
-            background: white;
-            margin: 0;
-            padding: 0;
-          }
-          header {
-            display: none !important;
-          }
-          .no-print, nav, button {
-            display: none !important;
-          }
-          .sheet {
-            page-break-after: always;
-            width: 11in;
-            height: 8.5in;
-            display: flex;
-            flex-direction: row;
-          }
-          .sheet:last-child {
-            page-break-after: auto;
-          }
-          .half-page {
-            width: 5.5in;
-            height: 8.5in;
-            padding: 0.75in;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-          }
-          .title-page {
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-          }
-          .blank-page {
-            justify-content: center;
-            align-items: center;
-          }
-        }
-        
-        @media screen {
-          body {
-            background: white !important;
-          }
-          header {
-            display: none !important;
-          }
-          .sheet {
-            width: 11in;
-            height: 8.5in;
-            margin: 20px auto;
-            display: flex;
-            flex-direction: row;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            background: white;
-          }
-          .half-page {
-            width: 5.5in;
-            height: 8.5in;
-            padding: 0.75in;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            border-right: 1px dashed #ccc;
-            position: relative;
-          }
-          .half-page:last-child {
-            border-right: none;
-          }
-          .title-page {
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-          }
-          .blank-page {
-            justify-content: center;
-            align-items: center;
-          }
-          .content-page {
-            overflow: hidden;
-          }
-        }
       `}} />
       
       <div className="bg-white text-black min-h-screen">
-        <button onClick={() => window.print()} className="no-print fixed top-4 right-4 px-4 py-2 bg-black text-white hover:bg-gray-800 z-50">
+        <button onClick={() => window.print()} className="print:hidden fixed top-4 right-4 px-4 py-2 bg-black text-white hover:bg-gray-800 z-50">
           Print Program
         </button>
         
         {/* Sheet 1: Page 4 (left) | Page 1 (right) */}
-        <div className="sheet">
+        <div className="w-[11in] h-[8.5in] flex flex-row my-5 mx-auto shadow-[0_0_10px_rgba(0,0,0,0.1)] bg-white print:shadow-none print:m-0 print:break-after-page">
           {/* Page 4: Epitaph Page */}
-          <div className="half-page blank-page">
+          <div className="w-[5.5in] h-[8.5in] p-[0.75in] box-border flex flex-col justify-center items-center border-r border-dashed border-gray-300 print:border-0">
             {selectedProgram.printProgramEpitaph && (
-              <div className="text-center whitespace-pre-wrap" style={{fontFamily: 'Georgia, serif'}}>
+              <div className="text-center whitespace-pre-wrap font-georgia">
                 {selectedProgram.printProgramEpitaph}
               </div>
             )}
           </div>
           
           {/* Page 1: Title Page */}
-          <div className="half-page title-page">
-            <h1 className="text-6xl font-bold" style={{fontFamily: 'Georgia, serif'}}>
+          <div className="w-[5.5in] h-[8.5in] p-[0.75in] box-border flex flex-col justify-center items-center text-center">
+            <h1 className="text-6xl font-georgia">
               {selectedProgram.title}
             </h1>
           </div>
         </div>
         
         {/* Sheet 2: Page 2 (left) | Page 3 (right) */}
-        <div className="sheet" ref={contentRef}>
+        <div className="w-[11in] h-[8.5in] flex flex-row my-5 mx-auto shadow-[0_0_10px_rgba(0,0,0,0.1)] bg-white print:shadow-none print:m-0 print:break-after-auto" ref={contentRef}>
           {/* Page 2: First half of content */}
-          <div className="half-page content-page" style={{fontSize: `${fontSize}px`}}>
+          <div className="w-[5.5in] h-[8.5in] p-[0.75in] box-border flex flex-col overflow-hidden border-r border-dashed border-gray-300 print:border-0" style={{fontSize: `${fontSize}px`}}>
             <div className="space-y-1">
               {selectedProgram.printProgramForeword && (
-                <div className="mb-4 whitespace-pre-wrap" style={{fontFamily: 'Georgia, serif'}}>
+                <div className="mb-4 whitespace-pre-wrap font-georgia">
                   {selectedProgram.printProgramForeword}
                 </div>
               )}
@@ -294,7 +210,7 @@ const PrintProgram = ({ programId }: PrintProgramProps) => {
           </div>
           
           {/* Page 3: Second half of content */}
-          <div className="half-page content-page" style={{fontSize: `${fontSize}px`}}>
+          <div className="w-[5.5in] h-[8.5in] p-[0.75in] box-border flex flex-col overflow-hidden" style={{fontSize: `${fontSize}px`}}>
             <div className="space-y-1">
               {page3Elements}
             </div>
