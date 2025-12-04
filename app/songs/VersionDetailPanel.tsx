@@ -2,7 +2,6 @@
 
 import VersionContent from './VersionContent';
 import VersionMetadata from './VersionMetadata';
-import PreviousVersionsList from './PreviousVersionsList';
 import CreateVersionForm from './CreateVersionForm';
 import VersionHeader from './VersionHeader';
 import SongTags from './SongTags';
@@ -11,7 +10,7 @@ import ChangelogPage from '../changelog/ChangelogPage';
 import type { SongVersion } from './types';
 import { useUser } from '../contexts/UserContext';
 
-const VersionDetailPanel = ({songTitle, version, previousVersions, isExpandedPreviousVersions, isCreatingVersion, newVersionForm, isSubmitting, isArchiving, error, isLoadingVersion = false, songId, tags: initialTags = [], onClose, onTogglePreviousVersions, onVersionClick, onCreateVersionClick, onCancelCreateVersion, onFormChange, onSubmitVersion, onArchiveVersion, onTitleChange}: {
+const VersionDetailPanel = ({songTitle, version, isCreatingVersion, newVersionForm, isSubmitting, isArchiving, error, isLoadingVersion = false, songId, tags: initialTags = [], onClose, onCreateVersionClick, onCancelCreateVersion, onFormChange, onSubmitVersion, onArchiveVersion, onTitleChange}: {
   songTitle: string;
   version: SongVersion & { songId?: string; nextVersionId?: string | null; originalVersionId?: string | null };
   previousVersions: SongVersion[];

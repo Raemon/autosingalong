@@ -1,4 +1,5 @@
-import VersionDiffPage from './VersionDiffPage';
+import VersionDiffPage from "./VersionDiffPage";
+
 
 type VersionDiffPageProps = {
   params: Promise<{
