@@ -67,7 +67,7 @@ const PrintProgram = ({ programId }: PrintProgramProps) => {
     }
     visited.add(program.id);
     
-    const elements: JSX.Element[] = [];
+    const elements: React.ReactElement[] = [];
     
     if (level > 0) {
       elements.push(
