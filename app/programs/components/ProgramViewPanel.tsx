@@ -18,6 +18,8 @@ type ProgramViewPanelProps = {
     transpose: number;
     previousVersionId: string;
     nextVersionId: string;
+    slideCredits: string;
+    programCredits: string;
   };
   isSubmitting: boolean;
   isArchiving: boolean;

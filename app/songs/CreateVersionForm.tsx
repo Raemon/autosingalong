@@ -2,8 +2,8 @@ import ChordmarkEditor from '../chordmark-converter/ChordmarkEditor';
 import { detectFileType } from '../../lib/lyricsExtractor';
 
 type CreateVersionFormProps = {
-  form: { label: string; content: string; audioUrl: string; bpm: number; transpose: number; previousVersionId: string; nextVersionId: string };
-  onFormChange: (updates: Partial<{ label: string; content: string; audioUrl: string; bpm: number; transpose: number; previousVersionId: string; nextVersionId: string }>) => void;
+  form: { label: string; content: string; audioUrl: string; bpm: number; transpose: number; previousVersionId: string; nextVersionId: string; slideCredits: string; programCredits: string };
+  onFormChange: (updates: Partial<{ label: string; content: string; audioUrl: string; bpm: number; transpose: number; previousVersionId: string; nextVersionId: string; slideCredits: string; programCredits: string }>) => void;
   onSubmit: () => void;
   onCancel: () => void;
   isSubmitting: boolean;
@@ -88,6 +88,26 @@ const CreateVersionForm = ({form, onFormChange, onSubmit, onCancel, isSubmitting
           onChange={(e) => onFormChange({ nextVersionId: e.target.value })}
           className="w-full px-2 py-1 text-xs border border-gray-300 bg-black"
           placeholder="Next Version ID"
+        />
+      </div>
+      <div>
+        <label className="text-xs text-gray-400">Slide Credits (optional)</label>
+        <input
+          type="text"
+          value={form.slideCredits}
+          onChange={(e) => onFormChange({ slideCredits: e.target.value })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 bg-black"
+          placeholder="Slide Credits"
+        />
+      </div>
+      <div>
+        <label className="text-xs text-gray-400">Program Credits (optional)</label>
+        <input
+          type="text"
+          value={form.programCredits}
+          onChange={(e) => onFormChange({ programCredits: e.target.value })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 bg-black"
+          placeholder="Program Credits"
         />
       </div>
       <div className="flex gap-2">

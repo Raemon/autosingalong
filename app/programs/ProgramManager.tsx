@@ -619,6 +619,8 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
             bpm: null,
             archived: false,
             createdAt: fallbackOption.createdAt,
+            slideCredits: null,
+            programCredits: null,
             createdBy: null,
           } as SongVersion;
         })();
@@ -685,6 +687,8 @@ const ProgramManager = ({ initialProgramId, initialVersionId }: ProgramManagerPr
       archived: false,
       createdAt: new Date().toISOString(),
       createdBy: userName,
+      slideCredits: null,
+      programCredits: null,
     };
     setSelectedVersion(dummyVersion);
     setPreviousVersions([]);

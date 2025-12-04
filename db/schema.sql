@@ -30,6 +30,8 @@ create table if not exists song_versions (
   created_by text,
   transpose integer default 0,
   rendered_content jsonb,
+  slide_credits text,
+  program_credits text,
   constraint song_versions_next_version_id_fkey FOREIGN KEY (next_version_id) REFERENCES song_versions(id) ON DELETE SET NULL,
   constraint song_versions_original_version_id_fkey FOREIGN KEY (original_version_id) REFERENCES song_versions(id) ON DELETE SET NULL,
   constraint song_versions_pkey PRIMARY KEY (id),

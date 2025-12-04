@@ -24,6 +24,8 @@ export type SongVersion = {
   archived: boolean;
   createdAt: string;
   createdBy: string | null;
+  slideCredits: string | null;
+  programCredits: string | null;
 };
 
 export type Song = {
