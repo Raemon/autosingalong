@@ -9,6 +9,8 @@ create table if not exists programs (
   created_by text,
   program_ids uuid[] not null default '{}'::uuid[],
   video_url text,
+  print_program_foreword text,
+  print_program_epitaph text,
   constraint programs_pkey PRIMARY KEY (id)
 );
 

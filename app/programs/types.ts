@@ -8,6 +8,8 @@ export type Program = {
   createdAt: string;
   archived: boolean;
   videoUrl?: string | null;
+  printProgramForeword?: string | null;
+  printProgramEpitaph?: string | null;
 };
 
 export type VersionOption = {

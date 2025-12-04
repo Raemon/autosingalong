@@ -347,6 +347,9 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
                 <a href={`/programs/${selectedProgramId}/slides`} className="text-sm hover:opacity-50">
                   Slides
                 </a>
+                <a href={`/programs/${selectedProgramId}/edit`} className="text-sm hover:opacity-50">
+                  Edit
+                </a>
               </div>
             </div>
             <ProgramStructurePanel
