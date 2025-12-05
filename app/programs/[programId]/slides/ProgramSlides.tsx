@@ -333,6 +333,15 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
 
   return (
     <div className="relative w-screen h-screen flex items-center justify-center">
+      <style>
+        {`
+          .slideMeta {
+            opacity: 0.65;
+            font-style: italic;
+            color: white;
+          }
+        `}
+      </style>
       <video ref={videoRef} style={{display: 'none'}} crossOrigin="anonymous" />
       {!isFullyLoaded && totalVersionsToLoad > 0 && (
         <div className="fixed top-4 left-4 z-10 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded">
