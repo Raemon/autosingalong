@@ -28,6 +28,9 @@ export const lyricsToHtml = (lyrics: string): string => {
   return `<div>${lyrics
     .split('\n')
     .map(line => {
+      if (line.trim().includes('---')) {
+        return '<hr />';
+      }
       // Check if line starts with [[ and ends with ]] (double brackets)
       const doubleMetaMatch = line.match(/^\[\[(.*)\]\]$/);
       if (doubleMetaMatch) {
