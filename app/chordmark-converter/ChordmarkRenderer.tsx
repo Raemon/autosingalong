@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { parseSong, renderSong } from 'chord-mark';
 import { extractTextFromHTML, convertCustomFormatToChordmark, prepareSongForRendering, prepareSongForChordsWithMeta, removeRepeatBarIndicators } from './utils';
 import ChordmarkPlayer from './ChordmarkPlayer';
@@ -328,10 +328,35 @@ const ChordmarkRenderer = ({
 
   const error = parsedSong.error || finalOutputs.renderError;
 
-  const handlePlayFromLine = (lineIndex: number) => {
+  const lineCount = useMemo(() => content.split('\n').length, [content]);
+
+  const handlePlayFromLine = useCallback((lineIndex: number) => {
     setPlayerStartLine(lineIndex);
     setShouldAutoPlay(true);
-  };
+  }, []);
+
+  // Memoized line numbers to avoid re-rendering on every content change
+  const lineNumbers = useMemo(() => {
+    return Array.from({ length: lineCount }, (_, index) => (
+      <div
+        key={index}
+        className="relative group flex items-center"
+        style={{ height: '16px', lineHeight: '16px' }}
+      >
+        <button
+          onClick={() => handlePlayFromLine(index)}
+          className="absolute left-0 opacity-0 group-hover:opacity-100 transition-opacity px-1 text-blue-400 hover:text-blue-300 text-xs"
+          title={`Play from line ${index + 1}`}
+          style={{ fontSize: '10px' }}
+        >
+          ▶
+        </button>
+        <span className="text-gray-500 text-xs pr-1 pl-5 select-none" style={{ fontSize: '10px', minWidth: '40px', textAlign: 'right' }}>
+          {index + 1}
+        </span>
+      </div>
+    ));
+  }, [lineCount, handlePlayFromLine]);
 
   // Apply line highlighting
   const lineToHighlight = activeLineIndex ?? currentLineIndex;
@@ -359,25 +384,7 @@ const ChordmarkRenderer = ({
       </div>
       <div className="flex relative" style={{ maxWidth: isSideBySide ? 'none' : '800px' }}>
         {!print && <div className="flex flex-col bg-gray-900 border-r border-gray-700">
-          {content.split('\n').map((_, index) => (
-            <div
-              key={index}
-              className="relative group flex items-center"
-              style={{ height: '16px', lineHeight: '16px' }}
-            >
-              <button
-                onClick={() => handlePlayFromLine(index)}
-                className="absolute left-0 opacity-0 group-hover:opacity-100 transition-opacity px-1 text-blue-400 hover:text-blue-300 text-xs"
-                title={`Play from line ${index + 1}`}
-                style={{ fontSize: '10px' }}
-              >
-                ▶
-              </button>
-              <span className="text-gray-500 text-xs pr-1 pl-5 select-none" style={{ fontSize: '10px', minWidth: '40px', textAlign: 'right' }}>
-                {index + 1}
-              </span>
-            </div>
-          ))}
+          {lineNumbers}
         </div>}
         <div ref={contentRef} className="text-gray-200 p-2 flex-1">
           <ChordmarkContent error={error} content={content} mode={mode} finalOutputs={finalOutputs} />
