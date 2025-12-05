@@ -40,6 +40,8 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm, autosav
   const previewRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const autosaveStorageKey = `chordmark-editor:${autosaveKey || 'default'}`;
+  
+  const lineCount = useMemo(() => value.split('\n').length, [value]);
 
   const persistAutosaveSnapshot = useCallback((snapshot: AutosaveSnapshot) => {
     if (typeof window === 'undefined') {
@@ -140,10 +142,33 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm, autosav
     setPendingAutosave(null);
   };
 
-  const handlePlayFromLine = (lineIndex: number) => {
+  const handlePlayFromLine = useCallback((lineIndex: number) => {
     setPlayerStartLine(lineIndex);
     setShouldAutoPlay(true);
-  };
+  }, []);
+
+  // Memoized line numbers to avoid re-rendering on every keystroke
+  const lineNumbers = useMemo(() => {
+    return Array.from({ length: lineCount }, (_, index) => (
+      <div
+        key={index}
+        className="relative group flex items-center"
+        style={{ height: '16px', lineHeight: '16px' }}
+      >
+        <button
+          onClick={() => handlePlayFromLine(index)}
+          className="absolute left-0 opacity-0 group-hover:opacity-100 transition-opacity px-1 text-blue-400 hover:text-blue-300 text-xs"
+          title={`Play from line ${index + 1}`}
+          style={{ fontSize: '10px' }}
+        >
+          ▶
+        </button>
+        <span className="text-gray-500 text-xs pr-1 pl-5 select-none" style={{ fontSize: '10px', minWidth: '40px', textAlign: 'right' }}>
+          {index + 1}
+        </span>
+      </div>
+    ));
+  }, [lineCount, handlePlayFromLine]);
 
   // Apply line highlighting to preview
   useLineHighlighting(previewRef, currentLineIndex);
@@ -214,25 +239,7 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm, autosav
           <h3 className="text-xs font-semibold mb-1 text-gray-400">Chordmark Input</h3>
           <div className="flex flex-1 border relative" style={{ maxWidth: '800px' }}>
             <div className="flex flex-col bg-gray-900 border-r border-gray-700">
-              {value.split('\n').map((_, index) => (
-                <div
-                  key={index}
-                  className="relative group flex items-center"
-                  style={{ height: '16px', lineHeight: '16px' }}
-                >
-                  <button
-                    onClick={() => handlePlayFromLine(index)}
-                    className="absolute left-0 opacity-0 group-hover:opacity-100 transition-opacity px-1 text-blue-400 hover:text-blue-300 text-xs"
-                    title={`Play from line ${index + 1}`}
-                    style={{ fontSize: '10px' }}
-                  >
-                    ▶
-                  </button>
-                  <span className="text-gray-500 text-xs pr-1 pl-5 select-none" style={{ fontSize: '10px', minWidth: '40px', textAlign: 'right' }}>
-                    {index + 1}
-                  </span>
-                </div>
-              ))}
+              {lineNumbers}
             </div>
             <textarea
               ref={textareaRef}
