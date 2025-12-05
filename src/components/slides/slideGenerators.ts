@@ -31,14 +31,14 @@ export const lyricsToHtml = (lyrics: string): string => {
       // Check if line starts with [[ and ends with ]] (double brackets)
       const doubleMetaMatch = line.match(/^\[\[(.*)\]\]$/);
       if (doubleMetaMatch) {
-        // Convert [[text]] to [text] and mark as meta
+        // Convert [[text]] to [text] and mark as slideMeta - will be shown in slides
         return `<p class="slideMeta">${escapeHtml(`[ ${doubleMetaMatch[1]} ]`)}</p>`;
       }
       // Check if line starts with [ and ends with ] (single brackets)
       const singleMetaMatch = line.match(/^\[(.*)\]$/);
       if (singleMetaMatch) {
-        // Keep [text] as-is and mark as meta
-        return `<p class="slideMeta">${escapeHtml(`[ ${singleMetaMatch[1]} ]`)}</p>`;
+        // Single brackets WITHOUT slideMeta class - will be stripped from slides
+        return `<p>${escapeHtml(`[${singleMetaMatch[1]}]`)}</p>`;
       }
       return `<p>${line ? escapeHtml(line) : '&nbsp;'}</p>`;
     })

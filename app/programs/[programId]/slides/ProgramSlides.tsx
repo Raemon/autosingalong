@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef } from 'react';
 import SlideItem from '../../../../src/components/slides/SlideItem';
-import { generateSlidesFromHtml } from '../../../../src/components/slides/slideGenerators';
+import { generateSlidesFromHtml, lyricsToHtml } from '../../../../src/components/slides/slideGenerators';
 import { extractFrames } from '../../../../src/components/slides/utils';
 import type { Slide } from '../../../../src/components/slides/types';
 import { extractLyrics } from '../../../../lib/lyricsExtractor';
@@ -137,16 +137,6 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
   const allSlides = useMemo(() => {
     if (!selectedProgram) return [];
     
-    const convertToLyricsOnly = (content: string, label: string): string => {
-      try {
-        const lyrics = extractLyrics(content, label);
-        return `<div>${lyrics.split('\n').map(line => `<p>${line || '&nbsp;'}</p>`).join('')}</div>`;
-      } catch (err) {
-        console.error('Failed to extract lyrics:', err);
-        return content;
-      }
-    };
-    
     const linesPerSlide = 10;
 
     const buildSongSlides = (versionId: string): SongSlideData | null => {
@@ -161,7 +151,8 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
           let contentToProcess = '';
           
           if (fullVersion.content) {
-            contentToProcess = convertToLyricsOnly(fullVersion.content, version.label);
+            const lyrics = extractLyrics(fullVersion.content, version.label);
+            contentToProcess = lyricsToHtml(lyrics);
           } else if (fullVersion.renderedContent) {
             contentToProcess = fullVersion.renderedContent.htmlLyricsOnly || fullVersion.renderedContent.htmlFull || fullVersion.renderedContent.legacy || '';
           }
