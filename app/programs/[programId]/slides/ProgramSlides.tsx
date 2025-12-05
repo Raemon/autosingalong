@@ -227,7 +227,12 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
   }, [allSlides]);
 
   const flattenedSlides = useMemo(() => {
-    return processedSlides.flatMap(songData => songData.slides);
+    const slides: Slide[] = [];
+    for (const songData of processedSlides) {
+      slides.push(...songData.slides);
+      slides.push([]);
+    }
+    return slides;
   }, [processedSlides]);
 
   const programTitleSlideIndices = useMemo(() => {
