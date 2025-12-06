@@ -4,6 +4,7 @@ import type { Song, SongVersion } from './types';
 import MyTooltip from '@/app/components/Tooltip';
 import { useUser } from '../contexts/UserContext';
 import { formatRelativeTimestamp } from '@/lib/dateUtils';
+import { groupBy, map } from 'lodash';
 
 
 const formatDate = (dateStr: string) => {
@@ -42,6 +43,12 @@ const SongItem = ({song, selectedVersionId, onVersionClick, onCreateNewVersion}:
 
   const tagsMinusSong = song.tags.filter(tag => tag !== 'song');
 
+  // Group versions by label and get the most recent version for each label
+  const versionsByLabel = groupBy(song.versions, 'label');
+  const mostRecentVersions = map(versionsByLabel, versions => 
+    versions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
+  );
+
   return (
     <div className="flex">
       <div className="group flex items-center w-2/3 justify-between px-2 py-1 text-lg font-medium border-b border-gray-200 font-georgia">
@@ -60,10 +67,10 @@ const SongItem = ({song, selectedVersionId, onVersionClick, onCreateNewVersion}:
         )}
       </div>
       <div className="border-b border-gray-200 w-1/3">
-        {song.versions.length === 0 ? (
+        {mostRecentVersions.length === 0 ? (
           <p className="px-2 py-1 text-xs text-gray-500">No versions stored yet.</p>
         ) : (
-          song.versions.map((version) => (
+          mostRecentVersions.map((version) => (
             <VersionRow
               key={version.id}
               version={version}
