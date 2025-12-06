@@ -17,12 +17,20 @@ export function parseHTMLContent(htmlContent: string): ParsedLine[] {
   // Remove bracketed text from elements that don't have the slideMeta class
   const elementsToClean = tempDiv.querySelectorAll('*:not(.slideMeta)');
   elementsToClean.forEach(el => {
+    let hadBracketedText = false;
     if (el.childNodes.length > 0) {
       el.childNodes.forEach(node => {
         if (node.nodeType === Node.TEXT_NODE && node.textContent) {
-          node.textContent = node.textContent.replace(/\[.*?\]/g, '');
+          const replaced = node.textContent.replace(/\[.*?\]/g, '');
+          if (replaced !== node.textContent) {
+            hadBracketedText = true;
+            node.textContent = replaced;
+          }
         }
       });
+    }
+    if (hadBracketedText) {
+      (el as HTMLElement).dataset.hadBracket = 'true';
     }
   });
   console.log('tempDiv children count:', tempDiv.children.length);
@@ -181,7 +189,16 @@ export function parseHTMLContent(htmlContent: string): ParsedLine[] {
         const hasBr = element.querySelector('br');
         // Check if this element has the slideMeta class
         const isSlideMeta = element.classList.contains('slideMeta');
-        if (!hasHeading && !hasSvg) {
+        const hadBracketRemoval = element.dataset && element.dataset.hadBracket === 'true';
+        const innerHTMLTrimmed = (element.innerHTML || '').trim();
+        const representsEmptyLine = innerHTMLTrimmed === '&nbsp;' || innerHTMLTrimmed.toLowerCase() === '<br>' || innerHTMLTrimmed.toLowerCase() === '<br/>' || innerHTMLTrimmed === '';
+        if (!hasHeading && !hasSvg && text.length === 0) {
+          if (isSlideMeta) {
+            lines.push({ text: '', isEmpty: true, isSlideMeta });
+          } else if (!hadBracketRemoval && representsEmptyLine) {
+            lines.push({ text: '', isEmpty: true });
+          }
+        } else if (!hasHeading && !hasSvg) {
           if (hasBr) {
             // If paragraph contains br tags, split by br and process each part
             const parts = element.innerHTML.split(/<br\s*\/?>/i);
@@ -321,7 +338,16 @@ export function groupIntoSlides(lines: ParsedLine[], linesPerSlide: number): Sli
     }
     
     // Handle empty lines - end current paragraph (but don't add the empty line itself)
-    if (line.isEmpty || line.text?.trim() === '---') {
+    if (line.isEmpty) {
+      if (currentParagraph.length > 0) {
+        paragraphs.push(currentParagraph);
+        currentParagraph = [];
+      }
+      paragraphs.push([line]);
+      continue;
+    }
+    
+    if (line.text?.trim() === '---') {
       if (currentParagraph.length > 0) {
         paragraphs.push(currentParagraph);
         currentParagraph = [];
@@ -348,11 +374,25 @@ export function groupIntoSlides(lines: ParsedLine[], linesPerSlide: number): Sli
   
   // Now group paragraphs into slides, trying to fit as many as possible without exceeding linesPerSlide
   for (const paragraph of paragraphs) {
+    const isEmptyParagraph = paragraph.length === 1 && paragraph[0].isEmpty;
+    
     // Handle hr tags - just end current slide and start new one, don't create a slide for the hr marker
     if (paragraph.length === 1 && paragraph[0].isHr) {
       if (currentSlide.length > 0) {
         slides.push(currentSlide);
         currentSlide = [];
+      }
+      continue;
+    }
+    
+    // If a paragraph exceeds the line limit, split it into chunks
+    if (paragraph.length > linesPerSlide) {
+      if (currentSlide.length > 0) {
+        slides.push(currentSlide);
+        currentSlide = [];
+      }
+      for (let i = 0; i < paragraph.length; i += linesPerSlide) {
+        slides.push(paragraph.slice(i, i + linesPerSlide));
       }
       continue;
     }
@@ -368,14 +408,14 @@ export function groupIntoSlides(lines: ParsedLine[], linesPerSlide: number): Sli
     
     // Check if adding this paragraph would exceed the limit
     // Account for the empty line separator that will be added between paragraphs
-    const separatorLines = currentSlide.length > 0 ? 1 : 0;
+    const separatorLines = currentSlide.length > 0 && !isEmptyParagraph ? 1 : 0;
     if (currentSlide.length > 0 && currentSlide.length + separatorLines + paragraph.length > linesPerSlide) {
       // Start a new slide with this paragraph
       slides.push(currentSlide);
       currentSlide = [...paragraph];
     } else {
       // Add paragraph to current slide with separator if needed
-      if (currentSlide.length > 0) {
+      if (currentSlide.length > 0 && separatorLines > 0) {
         currentSlide.push({ text: '', isEmpty: true });
       }
       currentSlide.push(...paragraph);
