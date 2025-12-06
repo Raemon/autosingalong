@@ -3,8 +3,8 @@ import { detectFileType } from '../../lib/lyricsExtractor';
 import SlidesMovieUpload from './SlidesMovieUpload';
 
 export type CreateVersionFormProps = {
-  form: { label: string; content: string; audioUrl: string; slidesMovieUrl: string; bpm: number; transpose: number; previousVersionId: string; nextVersionId: string; slideCredits: string; programCredits: string };
-  onFormChange: (updates: Partial<{ label: string; content: string; audioUrl: string; slidesMovieUrl: string; bpm: number; transpose: number; previousVersionId: string; nextVersionId: string; slideCredits: string; programCredits: string }>) => void;
+  form: { label: string; content: string; audioUrl: string; slidesMovieUrl: string; slideMovieStart: number; bpm: number; transpose: number; previousVersionId: string; nextVersionId: string; slideCredits: string; programCredits: string };
+  onFormChange: (updates: Partial<{ label: string; content: string; audioUrl: string; slidesMovieUrl: string; slideMovieStart: number; bpm: number; transpose: number; previousVersionId: string; nextVersionId: string; slideCredits: string; programCredits: string }>) => void;
   onSubmit: () => void;
   onCancel: () => void;
   isSubmitting: boolean;
@@ -86,6 +86,16 @@ const CreateVersionForm = ({form, onFormChange, onSubmit, onCancel, isSubmitting
       </div>
       <div>
         <SlidesMovieUpload slidesMovieUrl={form.slidesMovieUrl} onFormChange={onFormChange} songId={songId} />
+      </div>
+      <div>
+        <label className="text-xs text-gray-400">Slide Movie Start (optional)</label>
+        <input
+          type="number"
+          value={form.slideMovieStart}
+          onChange={(e) => onFormChange({ slideMovieStart: parseInt(e.target.value) || 0 })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 bg-black"
+          placeholder="Slide number to start movie"
+        />
       </div>
       <div>
         <label className="text-xs text-gray-400">Previous Version ID (optional)</label>

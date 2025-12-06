@@ -13,7 +13,7 @@ type ProgramSlidesProps = {
   programId: string;
 };
 
-type SongSlideDataWithMovie = SongSlideData & { slidesMovieUrl?: string | null };
+type SongSlideDataWithMovie = SongSlideData & { slidesMovieUrl?: string | null; slideMovieStart?: number | null };
 
 const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -178,6 +178,7 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
         slides,
         tags: version.tags || [],
         slidesMovieUrl: fullVersion?.slidesMovieUrl,
+        slideMovieStart: fullVersion?.slideMovieStart ?? null,
       };
     };
 
@@ -261,6 +262,16 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
     return indices;
   }, [processedSlides]);
 
+  const songSlideRanges = useMemo(() => {
+    const ranges: { start: number; length: number }[] = [];
+    let currentIndex = 0;
+    processedSlides.forEach((songData) => {
+      ranges.push({ start: currentIndex, length: songData.slides.length });
+      currentIndex += songData.slides.length + 1;
+    });
+    return ranges;
+  }, [processedSlides]);
+
   useEffect(() => {
     if (!videoUrl || flattenedSlides.length === 0 || isExtractingFrames) return;
 
@@ -300,12 +311,20 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
     if (slideToSongIndex.length === 0) return;
     const songIndex = slideToSongIndex[Math.min(currentSlide, slideToSongIndex.length - 1)];
     const songData = typeof songIndex === 'number' ? processedSlides[songIndex] : undefined;
-    if (songData?.slidesMovieUrl) {
-      setBackgroundMovieUrl(songData.slidesMovieUrl);
-    } else {
-      setBackgroundMovieUrl(null);
+    const range = typeof songIndex === 'number' ? songSlideRanges[songIndex] : undefined;
+    if (songData?.slidesMovieUrl && range) {
+      const withinSongSlides = currentSlide >= range.start && currentSlide < range.start + range.length;
+      if (withinSongSlides) {
+        const positionInSong = currentSlide - range.start + 1;
+        const startAt = songData.slideMovieStart ?? 1;
+        if (positionInSong >= startAt) {
+          setBackgroundMovieUrl(songData.slidesMovieUrl);
+          return;
+        }
+      }
     }
-  }, [currentSlide, slideToSongIndex, processedSlides]);
+    setBackgroundMovieUrl(null);
+  }, [currentSlide, slideToSongIndex, processedSlides, songSlideRanges]);
 
   useEffect(() => {
     const video = slidesMovieRef.current;

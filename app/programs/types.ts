@@ -21,6 +21,7 @@ export type VersionOption = {
   nextVersionId: string | null;
   programCredits: string | null;
   tags: string[];
+  slideMovieStart?: number | null;
 };
 
 export type SongSlideData = {
@@ -30,6 +31,7 @@ export type SongSlideData = {
   slides: Slide[];
   tags: string[];
   slidesMovieUrl?: string | null;
+  slideMovieStart?: number | null;
 };
 
 
