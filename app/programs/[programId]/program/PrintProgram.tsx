@@ -15,7 +15,6 @@ const PrintProgram = ({ programId }: PrintProgramProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [allElements, setAllElements] = useState<React.ReactElement[]>([]);
-  const [fontSize, setFontSize] = useState(16);
   const contentRef = useRef<HTMLDivElement>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedProgram, setEditedProgram] = useState<Program | null>(null);
@@ -92,7 +91,7 @@ const PrintProgram = ({ programId }: PrintProgramProps) => {
     
     if (level > 0) {
       elements.push(
-        <h2 key={`program-${program.id}`} className="text-3xl font-georgia mt-6 mb-2">
+        <h2 key={`program-${program.id}`} className="font-georgia mt-6 mb-2" style={{fontSize: '24px'}}>
           {program.title}
         </h2>
       );
@@ -104,19 +103,19 @@ const PrintProgram = ({ programId }: PrintProgramProps) => {
         const creditsValue = isEditMode ? (editedVersions[versionId] ?? '') : (version.programCredits || '');
         elements.push(
           <div key={`version-${versionId}`} className="mb-1">
-            <div style={{fontFamily: 'Georgia, serif'}}>{version.songTitle}</div>
+            <div style={{fontFamily: 'Georgia, serif', fontSize: '16px'}}>{version.songTitle}</div>
             {isEditMode ? (
               <input
                 type="text"
                 value={creditsValue}
                 onChange={(e) => setEditedVersions({...editedVersions, [versionId]: e.target.value})}
                 placeholder="Program credits"
-                className="text-sm bg-transparent text-black w-full border border-gray-300 px-1 py-0.5"
-                style={{fontSize: `${fontSize}px`}}
+                className="bg-transparent text-black w-full border border-gray-300 px-1 py-0.5"
+                style={{fontSize: '12px'}}
               />
             ) : (
               creditsValue && (
-                <div className="text-sm text-gray-600">{creditsValue}</div>
+                <div className="text-gray-600" style={{fontSize: '12px'}}>{creditsValue}</div>
               )
             )}
           </div>
@@ -141,28 +140,6 @@ const PrintProgram = ({ programId }: PrintProgramProps) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayProgram, loading, isEditMode, editedVersions]);
-
-  // Calculate font size to fit content on 2 pages
-  useEffect(() => {
-    if (allElements.length > 0 && contentRef.current) {
-      const calculateFontSize = () => {
-        const contentHeight = contentRef.current?.scrollHeight || 0;
-        const twoPageHeight = 2 * (8.5 - 1.5) * 96; // 2 pages * (8.5in - 1.5in padding) * 96 DPI = ~1344px
-        
-        if (contentHeight > twoPageHeight) {
-          const scale = twoPageHeight / contentHeight;
-          const newFontSize = Math.max(8, Math.floor(16 * scale)); // Min 8px, base 16px
-          setFontSize(newFontSize);
-        } else {
-          setFontSize(16);
-        }
-      };
-
-      // Delay to ensure DOM is rendered
-      const timer = setTimeout(calculateFontSize, 200);
-      return () => clearTimeout(timer);
-    }
-  }, [allElements]);
 
   const midpoint = Math.ceil(allElements.length / 2);
   const page2Elements = allElements.slice(0, midpoint);
@@ -358,7 +335,7 @@ const PrintProgram = ({ programId }: PrintProgramProps) => {
         {/* Sheet 2: Page 2 (left) | Page 3 (right) */}
         <div className="w-[11in] h-[8.5in] flex flex-row my-5 mx-auto shadow-[0_0_10px_rgba(0,0,0,0.1)] bg-white print:shadow-none print:m-0 print:break-after-auto" ref={contentRef}>
           {/* Page 2: First half of content */}
-          <div className="w-[5.5in] h-[8.5in] p-[0.75in] box-border flex flex-col overflow-hidden border-r border-dashed border-gray-300 print:border-0" style={{fontSize: `${fontSize}px`}}>
+          <div className="w-[5.5in] h-[8.5in] p-[0.75in] box-border flex flex-col overflow-hidden border-r border-dashed border-gray-300 print:border-0">
             <div className="space-y-1">
               {isEditMode && editedProgram ? (
                 <textarea
@@ -366,11 +343,11 @@ const PrintProgram = ({ programId }: PrintProgramProps) => {
                   onChange={(e) => setEditedProgram({...editedProgram, printProgramForeword: e.target.value})}
                   placeholder="Foreword"
                   className="mb-4 whitespace-pre-wrap font-georgia w-full border border-gray-300 p-2 resize-none"
-                  style={{fontSize: `${fontSize}px`}}
+                  style={{fontSize: '16px'}}
                 />
               ) : (
                 displayProgram.printProgramForeword && (
-                  <div className="mb-4 whitespace-pre-wrap font-georgia">
+                  <div className="mb-4 whitespace-pre-wrap font-georgia" style={{fontSize: '16px'}}>
                     {displayProgram.printProgramForeword}
                   </div>
                 )
@@ -380,7 +357,7 @@ const PrintProgram = ({ programId }: PrintProgramProps) => {
           </div>
           
           {/* Page 3: Second half of content */}
-          <div className="w-[5.5in] h-[8.5in] p-[0.75in] box-border flex flex-col overflow-hidden" style={{fontSize: `${fontSize}px`}}>
+          <div className="w-[5.5in] h-[8.5in] p-[0.75in] box-border flex flex-col overflow-hidden">
             <div className="space-y-1">
               {page3Elements}
             </div>
