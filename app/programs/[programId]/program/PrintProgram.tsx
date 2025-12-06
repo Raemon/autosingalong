@@ -92,7 +92,7 @@ const PrintProgram = ({ programId }: PrintProgramProps) => {
     
     if (level > 0) {
       elements.push(
-        <h2 key={`program-${program.id}`} className="font-georgia mb-2" style={{fontSize: '24px'}}>
+        <h2 key={`program-${program.id}`} className="font-georgia mb-2 font-semibold" style={{fontSize: '24px'}}>
           {program.title}
         </h2>
       );
@@ -311,7 +311,7 @@ const PrintProgram = ({ programId }: PrintProgramProps) => {
                 value={editedProgram.printProgramEpitaph || ''}
                 onChange={(html) => setEditedProgram({...editedProgram, printProgramEpitaph: html})}
                 placeholder="Epitaph"
-                className="text-center whitespace-pre-wrap font-georgia w-full h-full border border-gray-300 p-2"
+                className="text-center whitespace-pre-wrap font-georgia font-semibold w-full h-full border border-gray-300 p-2"
               />
             ) : (
               displayProgram.printProgramEpitaph && (
@@ -322,7 +322,7 @@ const PrintProgram = ({ programId }: PrintProgramProps) => {
           
           {/* Page 1: Title Page */}
           <div className="w-[5.5in] h-[8.5in] p-[0.75in] box-border flex flex-col justify-center items-center text-center">
-            <h1 className="text-6xl font-georgia">
+            <h1 className="text-6xl font-georgia font-semibold">
               {displayProgram.title}
             </h1>
           </div>
