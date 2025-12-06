@@ -13,6 +13,8 @@ type ProgramSlidesProps = {
   programId: string;
 };
 
+type SongSlideDataWithMovie = SongSlideData & { slidesMovieUrl?: string | null };
+
 const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [versions, setVersions] = useState<VersionOption[]>([]);
@@ -26,6 +28,8 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
   const [showUploader, setShowUploader] = useState(false);
   const [isExtractingFrames, setIsExtractingFrames] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const slidesMovieRef = useRef<HTMLVideoElement>(null);
+  const [backgroundMovieUrl, setBackgroundMovieUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -134,12 +138,12 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
   const loadedVersionsCount = Object.keys(fullVersions).length;
   const isFullyLoaded = totalVersionsToLoad > 0 && loadedVersionsCount >= totalVersionsToLoad;
 
-  const allSlides = useMemo(() => {
+  const allSlides = useMemo<SongSlideDataWithMovie[]>(() => {
     if (!selectedProgram) return [];
     
     const linesPerSlide = 10;
 
-    const buildSongSlides = (versionId: string): SongSlideData | null => {
+    const buildSongSlides = (versionId: string): SongSlideDataWithMovie | null => {
       const version = versionMap[versionId];
       if (!version) {
         return null;
@@ -173,19 +177,20 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
         versionLabel: version.label,
         slides,
         tags: version.tags || [],
+        slidesMovieUrl: fullVersion?.slidesMovieUrl,
       };
     };
 
-    const collectSlides = (program: Program | null, visited: Set<string> = new Set(), isSubprogram: boolean = false): SongSlideData[] => {
+    const collectSlides = (program: Program | null, visited: Set<string> = new Set(), isSubprogram: boolean = false): SongSlideDataWithMovie[] => {
       if (!program || visited.has(program.id)) {
         return [];
       }
       visited.add(program.id);
-      const result: SongSlideData[] = [];
+      const result: SongSlideDataWithMovie[] = [];
       
       if (isSubprogram) {
         const programTitleSlide: Slide = [{ text: program.title, isHeading: true, level: 1 }];
-        const programTitleData: SongSlideData = {
+        const programTitleData: SongSlideDataWithMovie = {
           versionId: `program-${program.id}`,
           songTitle: program.title,
           versionLabel: '',
@@ -247,6 +252,15 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
     return indices;
   }, [processedSlides]);
 
+  const slideToSongIndex = useMemo(() => {
+    const indices: number[] = [];
+    processedSlides.forEach((songData, songIndex) => {
+      songData.slides.forEach(() => indices.push(songIndex));
+      indices.push(songIndex);
+    });
+    return indices;
+  }, [processedSlides]);
+
   useEffect(() => {
     if (!videoUrl || flattenedSlides.length === 0 || isExtractingFrames) return;
 
@@ -281,6 +295,31 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
   useEffect(() => {
     setCurrentSlide(0);
   }, [flattenedSlides.length]);
+
+  useEffect(() => {
+    if (slideToSongIndex.length === 0) return;
+    const songIndex = slideToSongIndex[Math.min(currentSlide, slideToSongIndex.length - 1)];
+    const songData = typeof songIndex === 'number' ? processedSlides[songIndex] : undefined;
+    if (songData?.slidesMovieUrl) {
+      setBackgroundMovieUrl(songData.slidesMovieUrl);
+    } else {
+      setBackgroundMovieUrl(null);
+    }
+  }, [currentSlide, slideToSongIndex, processedSlides]);
+
+  useEffect(() => {
+    const video = slidesMovieRef.current;
+    if (!video) return;
+    if (backgroundMovieUrl) {
+      video.src = backgroundMovieUrl;
+      video.load();
+      video.play().catch(err => console.error('Error playing slides movie:', err));
+    } else {
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+    }
+  }, [backgroundMovieUrl]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -331,6 +370,9 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
     );
   }
 
+  const backgroundImageUrl = backgroundMovieUrl ? undefined : getBackgroundForSlide(currentSlide);
+  const overlayOpacity = programTitleSlideIndices.has(currentSlide) ? .75 : 0.5;
+
   return (
     <div className="relative w-screen h-screen flex items-center justify-center">
       <style>
@@ -343,6 +385,12 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
         `}
       </style>
       <video ref={videoRef} style={{display: 'none'}} crossOrigin="anonymous" />
+      {backgroundMovieUrl && (
+        <video ref={slidesMovieRef} className="absolute inset-0 w-full h-full object-cover" muted loop playsInline autoPlay preload="auto" style={{zIndex: 0}} />
+      )}
+      {backgroundMovieUrl && (
+        <div className="absolute inset-0 bg-black" style={{opacity: overlayOpacity, zIndex: 1}} />
+      )}
       {!isFullyLoaded && totalVersionsToLoad > 0 && (
         <div className="fixed top-4 left-4 z-10 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded">
           Loading: {loadedVersionsCount}/{totalVersionsToLoad} songs
@@ -358,7 +406,7 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
           {showUploader ? 'Close' : 'Video Backgrounds'}
         </button>
       </div>
-      <SlideItem slide={flattenedSlides[currentSlide]} className="bg-black w-screen h-screen flex items-center justify-center p-4 font-georgia" backgroundImageUrl={getBackgroundForSlide(currentSlide)} backgroundOpacity={programTitleSlideIndices.has(currentSlide) ? .75 : 0.5} isProgramTitle={programTitleSlideIndices.has(currentSlide)} />
+      <SlideItem slide={flattenedSlides[currentSlide]} className={backgroundMovieUrl ? "w-screen h-screen flex items-center justify-center p-4 font-georgia bg-transparent" : "bg-black w-screen h-screen flex items-center justify-center p-4 font-georgia"} backgroundImageUrl={backgroundImageUrl} backgroundOpacity={programTitleSlideIndices.has(currentSlide) ? .75 : 0.5} isProgramTitle={programTitleSlideIndices.has(currentSlide)} />
       <div className="fixed bottom-4 right-4 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded">
         {currentSlide + 1} / {flattenedSlides.length}
       </div>
