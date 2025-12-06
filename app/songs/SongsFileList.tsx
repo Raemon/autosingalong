@@ -231,7 +231,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
             >
               Show
             </button>
-            <div className="flex-1 w-full overflow-y-auto h-[calc(100vh-3rem)] scrollbar-hide space-y-1">
+            <div className="flex-1 w-full overflow-y-auto space-y-1">
               {filteredSongs.map((song) => {
                 const abbreviation = song.title.replace(/The/g, ' ').replace(/An/g, ' ').replace(/A/g, ' ').slice(0, 6) || '...';
                 const isSongSelected = selectedVersion ? song.versions.some(v => v.id === selectedVersion.id) : false;
@@ -253,7 +253,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
             </div>
           </div>
         ) : (
-          <div className={`flex-1 w-full max-w-[650px] overflow-y-auto h-[calc(100vh-2rem)] scrollbar-hide ${isCreatingVersion ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className={`flex-1 w-full max-w-[650px] ${isCreatingVersion ? 'opacity-50 pointer-events-none' : ''}`}>
             <div className="flex gap-2 items-center mb-3">
               <SearchInput
                 ref={searchInputRef}

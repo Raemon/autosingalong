@@ -80,14 +80,14 @@ const VersionDetailPanel = ({songTitle, version, isCreatingVersion, newVersionFo
 
   if (isLoadingVersion) {
     return (
-      <div className="border-l border-gray-200 pl-4 w-full h-[calc(100vh-2rem)] overflow-y-auto scrollbar-hide lg:p-20 relative flex items-center justify-center text-gray-400">
+      <div className="border-l border-gray-200 pl-4 w-full lg:p-20 relative flex items-center justify-center text-gray-400">
         Loading version...
       </div>
     );
   }
 
   return (
-    <div className="border-l border-gray-200 pl-4 w-full h-[calc(100vh-2rem)] overflow-y-auto scrollbar-hide lg:p-20 relative ">
+    <div className="border-l border-gray-200 pl-4 w-full lg:p-20 relative ">
       <h2 className="font-georgia -ml-8 text-2xl mb-2 flex items-center gap-3">
         <button
           onClick={() => !isCreatingVersion && onClose()}
