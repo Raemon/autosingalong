@@ -18,7 +18,7 @@ const SlideItem = ({slide, className, backgroundImageUrl, isProgramTitle = false
   const baseScale = .04
   const headingScale = isProgramTitle ? baseScale * 3.5 : baseScale * 1.85;
 
-  const getSize = (scale: number) => containerHeight ? containerHeight * scale : "inherit"
+  const getSize = (scale: number) => containerHeight ? containerHeight * scale : null;
   const baseFontSize = getSize(baseScale);
   const headingFontSize = getSize(headingScale);
   
@@ -38,7 +38,7 @@ const SlideItem = ({slide, className, backgroundImageUrl, isProgramTitle = false
   
   return (
     <div>
-      <div ref={containerRef} className={className || "bg-black aspect-[16/9] flex items-center justify-center p-4 font-georgia"} style={{fontSize: baseFontSize, ...backgroundStyle, position: 'relative'}}>
+      <div ref={containerRef} className={className || "bg-black aspect-[16/9] flex items-center justify-center p-4 font-georgia"} style={{fontSize: baseFontSize ?? undefined, ...backgroundStyle, position: 'relative'}}>
         {backgroundImageUrl && <div style={overlayStyle} />}
         <div className="space-y-1 text-center" style={{position: 'relative', zIndex: 1}}> 
           {slide.map((line: ParsedLine, lineIndex: number) => {
@@ -46,7 +46,7 @@ const SlideItem = ({slide, className, backgroundImageUrl, isProgramTitle = false
               return <img key={lineIndex} src={line.src} alt="" className="max-w-full h-auto mx-auto" />; 
             }
             if (line.isHeading) {
-              return <div key={lineIndex} className="text-balance -mt-[5vh]" style={{fontSize: headingFontSize, textShadow: '0 0 10px rgba(0, 0, 0, .8)'}}>{line.text?.replace(/[_]/g, ' ')}</div>;
+              return <div key={lineIndex} className="text-balance -mt-[5vh]" style={{fontSize: headingFontSize ?? undefined, textShadow: '0 0 10px rgba(0, 0, 0, .8)'}}>{line.text?.replace(/[_]/g, ' ')}</div>;
             }
             if (line.isEmpty) {
               return <div key={lineIndex}>&nbsp;</div>;

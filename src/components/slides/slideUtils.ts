@@ -427,7 +427,26 @@ export function groupIntoSlides(lines: ParsedLine[], linesPerSlide: number): Sli
     slides.push(currentSlide);
   }
   
-  return slides;
+  // Post-process slides to remove leading and trailing empty lines
+  // Keep empty lines only if they're between two non-empty lines on the same slide
+  const processedSlides = slides.map(slide => {
+    // Remove leading empty lines
+    let start = 0;
+    while (start < slide.length && slide[start].isEmpty) {
+      start++;
+    }
+    
+    // Remove trailing empty lines
+    let end = slide.length - 1;
+    while (end >= start && slide[end].isEmpty) {
+      end--;
+    }
+    
+    // Return trimmed slide
+    return slide.slice(start, end + 1);
+  }).filter(slide => slide.length > 0); // Remove completely empty slides
+  
+  return processedSlides;
 }
 
 // Convert image to inverted data URL
