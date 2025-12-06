@@ -1,9 +1,33 @@
 import { lineTypes } from 'chord-mark';
 import type { ParsedSong, ChordLine } from 'chord-mark';
+import { chordParserFactory, chordRendererFactory } from 'chord-symbol';
 import { Chord, Note } from 'tonal';
 import type { ChordEvent } from './types';
 
 const isChordLine = (line: { type: string }): line is ChordLine => line.type === lineTypes.CHORD;
+
+// Use chord-symbol's built-in transpose functionality
+const parseChord = chordParserFactory();
+const transposeChord = (chordSymbol: string, semitones: number): string => {
+  if (!chordSymbol || chordSymbol === 'NC' || chordSymbol === '%' || semitones === 0) return chordSymbol;
+  
+  // Strip trailing dots (duration markers in chordmark notation)
+  const cleanedSymbol = chordSymbol.replace(/\.+$/, '');
+  const dots = chordSymbol.match(/\.+$/)?.[0] || '';
+  
+  try {
+    const parsed = parseChord(cleanedSymbol);
+    // Check if parsing was successful (parsed.input exists on successful parse)
+    if (!parsed || !('input' in parsed)) return chordSymbol;
+    
+    const renderTransposed = chordRendererFactory({ transposeValue: semitones });
+    const transposed = renderTransposed(parsed);
+    return transposed ? `${transposed}${dots}` : chordSymbol;
+  } catch (err) {
+    console.warn(`Failed to transpose chord ${chordSymbol}:`, err);
+    return chordSymbol;
+  }
+};
 
 // Convert a chord symbol like "C", "Am7", "G/B" to piano notes in a good octave range
 export const chordToNotes = (chordSymbol: string, octaveOffset: number = 0): string[] => {
@@ -60,7 +84,7 @@ export const chordToNotes = (chordSymbol: string, octaveOffset: number = 0): str
 };
 
 // Extract chord events with timing from a parsed song
-export const extractChordEvents = (song: ParsedSong | null): ChordEvent[] => {
+export const extractChordEvents = (song: ParsedSong | null, transposeSteps: number = 0): ChordEvent[] => {
   if (!song?.allLines) return [];
   
   const events: ChordEvent[] = [];
@@ -95,10 +119,11 @@ export const extractChordEvents = (song: ParsedSong | null): ChordEvent[] => {
           continue;
         }
         
-        const notes = chordToNotes(chordSymbol);
+        const transposedChordSymbol = transposeChord(chordSymbol, transposeSteps);
+        const notes = chordToNotes(transposedChordSymbol);
         if (notes.length > 0) {
           events.push({
-            chordSymbol,
+            chordSymbol: transposedChordSymbol,
             notes,
             startBeat: currentBeat,
             durationBeats: chord.duration || 1,

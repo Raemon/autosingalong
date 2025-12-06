@@ -385,6 +385,7 @@ const ChordmarkRenderer = ({
         onStartLineChange={setPlayerStartLine}
         autoPlay={shouldAutoPlay}
         onAutoPlayComplete={() => setShouldAutoPlay(false)}
+        transposeSteps={transposeSteps}
       />}
       {error && mode !== 'raw' && (
         <div className="mb-2 p-1 bg-red-100 text-red-800 text-xs">{error}</div>

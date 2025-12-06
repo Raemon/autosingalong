@@ -14,6 +14,7 @@ interface ChordmarkPlayerProps {
   onStartLineChange?: (line: number) => void;
   autoPlay?: boolean;
   onAutoPlayComplete?: () => void;
+  transposeSteps?: number;
 }
 
 const ChordmarkPlayer = ({
@@ -25,8 +26,9 @@ const ChordmarkPlayer = ({
   onStartLineChange,
   autoPlay,
   onAutoPlayComplete,
+  transposeSteps = 0,
 }: ChordmarkPlayerProps) => {
-  const chordEvents = useMemo(() => extractChordEvents(parsedSong), [parsedSong]);
+  const chordEvents = useMemo(() => extractChordEvents(parsedSong, transposeSteps), [parsedSong, transposeSteps]);
   const hasChords = chordEvents.length > 0;
   const lineOptions = useMemo(() => {
     if (!parsedSong?.allLines) return [];

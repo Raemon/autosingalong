@@ -230,6 +230,7 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm, autosav
           onStartLineChange={setPlayerStartLine}
           autoPlay={shouldAutoPlay}
           onAutoPlayComplete={() => setShouldAutoPlay(false)}
+          transposeSteps={transposeSteps}
         />
 
       <ChordButtons startCollapsed />
