@@ -15,7 +15,6 @@ const PrintProgram = ({ programId }: PrintProgramProps) => {
   const [versions, setVersions] = useState<VersionOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [allElements, setAllElements] = useState<React.ReactElement[]>([]);
   const contentRef = useRef<HTMLDivElement>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedProgram, setEditedProgram] = useState<Program | null>(null);
@@ -134,11 +133,11 @@ const PrintProgram = ({ programId }: PrintProgramProps) => {
   };
 
   // Generate program content elements
-  useEffect(() => {
+  const allElements = useMemo(() => {
     if (displayProgram && !loading) {
-      const elements = renderProgram(displayProgram, 0);
-      setAllElements(elements);
+      return renderProgram(displayProgram, 0);
     }
+    return [];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayProgram, loading, isEditMode, editedVersions]);
 
@@ -266,6 +265,19 @@ const PrintProgram = ({ programId }: PrintProgramProps) => {
         @page {
           size: 11in 8.5in landscape;
           margin: 0;
+        }
+        p {
+          margin-bottom: 0.75em;
+          margin-top: 0.75em;
+        }
+        p:first-child {
+          margin-top: 0;
+        }
+        p:last-child {
+          margin-bottom: 0;
+        }
+        b, strong {
+          font-weight: 600;
         }
       `}} />
       

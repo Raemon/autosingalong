@@ -1,6 +1,7 @@
 'use client';
 
 import { type ReactElement } from 'react';
+import Link from 'next/link';
 import ProgramElementItem from './ProgramElementItem';
 import DragAndDropList from '../../components/DragAndDropList';
 import AddElementControls from './AddElementControls';
@@ -47,9 +48,9 @@ const ProgramStructureNode = ({
     <div className={`px-2 ${depth > 0 ? 'ml-1' : ''}`}>
       <div className="flex items-center justify-between gap-2">
         {depth > 0 && (
-          <div className="text-xl font-georgia">
+          <Link href={`/programs/${current.id}`} className="text-xl font-georgia hover:underline">
             {current.title}
-          </div>
+          </Link>
         )}
       </div>
       <AddElementControls
