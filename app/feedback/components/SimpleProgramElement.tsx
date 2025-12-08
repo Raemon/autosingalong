@@ -1,5 +1,7 @@
 'use client';
 
+import VoteWidget from "./VoteWidget";
+
 type VersionOption = {
   id: string;
   songId: string;
@@ -10,7 +12,7 @@ type VersionOption = {
 };
 
 type SimpleProgramElementProps = {
-  version?: VersionOption;
+  version: VersionOption;
   index: number;
   onClick: () => void;
   isSelected: boolean;
@@ -21,12 +23,13 @@ const SimpleProgramElement = ({ version, index, onClick, isSelected }: SimplePro
 
   return (
     <div
-      className={`text-sm px-2 py-1 cursor-pointer hover:bg-black ${isSelected ? 'text-primary' : ''}`}
+      className={`flex justify-between items-center gap-2 text-sm px-2 py-1 cursor-pointer hover:bg-black`}
       onClick={onClick}
     >
-      <span className={`font-georgia text-base ${isSpeech ? 'italic' : ''}`}>
+      <span className={`${isSelected ? 'text-primary' : ''} font-georgia text-base ${isSpeech ? 'italic' : ''}`}>
         {version?.songTitle || 'Unknown'}
       </span>
+      <VoteWidget versionId={version?.id} songId={version?.songId} hideVotes/>
     </div>
   );
 };

@@ -54,7 +54,8 @@ const ChordmarkContent = ({error, content, mode, finalOutputs}: {error: string |
     return <div className="styled-chordmark text-xs font-mono" dangerouslySetInnerHTML={{ __html: html }} />;
   }
 
-  return <div className="styled-chordmark text-xs" dangerouslySetInnerHTML={{ __html: html }} />;
+  const lyricsClassName = mode === 'lyrics' ? 'styled-chordmark text-xs lyrics-wrap' : 'styled-chordmark text-xs';
+  return <div className={lyricsClassName} dangerouslySetInnerHTML={{ __html: html }} />;
 };
 
 export default ChordmarkContent;

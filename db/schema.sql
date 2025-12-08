@@ -68,9 +68,13 @@ create table if not exists votes (
   weight integer not null,
   type text not null,
   version_id uuid not null,
+  song_id uuid not null,
   created_at timestamptz not null default now(),
   constraint votes_pkey PRIMARY KEY (id),
-  constraint votes_version_id_fkey FOREIGN KEY (version_id) REFERENCES song_versions(id) ON DELETE CASCADE
+  constraint votes_version_id_fkey FOREIGN KEY (version_id) REFERENCES song_versions(id) ON DELETE CASCADE,
+  constraint votes_song_id_fkey FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE
 );
 
 CREATE INDEX if not exists votes_version_id_idx on votes USING btree (version_id);
+CREATE INDEX if not exists votes_song_id_idx on votes USING btree (song_id);
+CREATE UNIQUE INDEX if not exists votes_version_id_name_idx on votes USING btree (version_id, name);

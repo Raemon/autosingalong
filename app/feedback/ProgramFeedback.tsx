@@ -18,7 +18,7 @@ type SimpleProgramProps = {
   initialProgramId?: string;
 };
 
-const SimpleProgram = ({ initialProgramId }: SimpleProgramProps) => {
+const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [versions, setVersions] = useState<VersionOption[]>([]);
   const [isLoadingPrograms, setIsLoadingPrograms] = useState(true);
@@ -131,14 +131,32 @@ const SimpleProgram = ({ initialProgramId }: SimpleProgramProps) => {
 
   const selectedVersion = selectedVersionId ? versionMap[selectedVersionId] : null;
 
+  const handleSelectProgram = (programId: string) => {
+    if (selectedProgramId === programId) {
+      setSelectedProgramId(null);
+      setSelectedVersionId(null);
+    } else {
+      setSelectedProgramId(programId);
+      setSelectedVersionId(null);
+    }
+  };
+
   return (
     <div className="p-4">
       <div className="flex gap-4">
-        <div className="flex-1">
+        {selectedVersion && (
+            <div className="flex-1 max-w-xl">
+              <SimpleDetailPanel
+                version={selectedVersion}
+                onClose={() => setSelectedVersionId(null)}
+              />
+            </div>
+          )}
+        <div className="flex flex-col gap-1 w-full max-w-lg mx-auto">
           <div className="mb-4">
             <select
               value={selectedProgramId || ''}
-              onChange={(e) => setSelectedProgramId(e.target.value)}
+              onChange={(e) => handleSelectProgram(e.target.value)}
               className="bg-black text-white px-2 py-1 text-sm"
             >
             {programs.map((program) => (
@@ -146,13 +164,13 @@ const SimpleProgram = ({ initialProgramId }: SimpleProgramProps) => {
             ))}
             </select>
           </div>
-          <div className="flex flex-col gap-1">
+          <div>
             {selectedProgram?.programIds.map((subProgramId) => {
               const subProgram = programMap[subProgramId];
               if (!subProgram) return null;
               return (
                 <div key={subProgramId} className="mb-3">
-                  <div className="text-xs text-gray-400 mb-1">{subProgram.title}</div>
+                  <div className="font-georgia text-2xl text-center my-4">{subProgram.title}</div>
                   <div className="flex flex-col">
                     {subProgram.elementIds.map((elementId, index) => {
                       const version = versionMap[elementId];
@@ -173,29 +191,24 @@ const SimpleProgram = ({ initialProgramId }: SimpleProgramProps) => {
             {selectedProgram?.elementIds.map((elementId, index) => {
               const version = versionMap[elementId];
               return (
-                <SimpleProgramElement
-                  key={elementId}
-                  version={version}
-                  index={index}
-                  onClick={() => setSelectedVersionId(elementId)}
-                  isSelected={selectedVersionId === elementId}
-                />
+                <div>
+                  <SimpleProgramElement
+                    key={elementId}
+                    version={version}
+                    index={index}
+                    onClick={() => setSelectedVersionId(elementId)}
+                    isSelected={selectedVersionId === elementId}
+                  />
+                </div>
               );
             })}
           </div>
         </div>
-        {selectedVersion && (
-          <div className="flex-1">
-            <SimpleDetailPanel
-              version={selectedVersion}
-              onClose={() => setSelectedVersionId(null)}
-            />
-          </div>
-        )}
+
       </div>
     </div>
   );
 };
 
-export default SimpleProgram;
+export default ProgramFeedback;
 

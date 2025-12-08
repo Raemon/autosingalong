@@ -1,6 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import VoteWidget from './VoteWidget';
+import { generateChordmarkRenderedContent } from '../../chordmark-converter/clientRenderUtils';
+import { CHORDMARK_STYLES } from '../../chordmark-converter/ChordmarkRenderer';
+import { detectFileType } from '../../../lib/lyricsExtractor';
 
 type VersionOption = {
   id: string;
@@ -52,30 +56,31 @@ const SimpleDetailPanel = ({ version, onClose }: SimpleDetailPanelProps) => {
 
   const isSpeech = version.tags?.includes('speech');
   const content = fullVersion?.content || '';
+  const fileType = detectFileType(fullVersion?.label || version.label, content);
+  const isChordmarkFile = fileType === 'chordmark';
+  const chordmarkRender = useMemo(() => isChordmarkFile ? generateChordmarkRenderedContent(content) : null, [isChordmarkFile, content]);
+  const lyricsHtml = chordmarkRender?.htmlLyricsOnly;
 
   return (
-    <div className="flex flex-col">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className={`font-georgia text-xl ${isSpeech ? 'italic' : ''}`}>
-          {version.songTitle}
-        </h2>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-white text-sm px-2"
-        >
-          ×
-        </button>
-      </div>
+    <div className="flex flex-col pl-8">
       {loading && <p className="text-gray-400">Loading...</p>}
       {error && <p className="text-red-600">Error: {error}</p>}
       {!loading && !error && (
-        <div className="whitespace-pre-wrap font-mono text-sm">
-          {content || 'No content available'}
-        </div>
+        <>
+          {isChordmarkFile && lyricsHtml ? (
+            <div className="text-sm">
+              <style dangerouslySetInnerHTML={{ __html: CHORDMARK_STYLES }} />
+              <div className="styled-chordmark text-xs lyrics-wrap" dangerouslySetInnerHTML={{ __html: lyricsHtml }} />
+            </div>
+          ) : (
+            <div className="whitespace-pre-wrap font-mono text-sm">
+              {content || 'No content available'}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 };
 
 export default SimpleDetailPanel;
-

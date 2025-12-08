@@ -17,6 +17,9 @@ export const CHORDMARK_STYLES = `
     white-space: pre;
     font-variant-ligatures: none;
   }
+  .styled-chordmark.lyrics-wrap .cmSong {
+    white-space: pre-wrap;
+  }
   .styled-chordmark .cmSong * {
     font-family: inherit;
     white-space: inherit;
