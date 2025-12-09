@@ -20,19 +20,22 @@ type FeedbackElementProps = {
   isSelected: boolean;
 };
 
+export const gridCols = '190px 210px 200px'
+
 const FeedbackElement = ({ version, index, onClick, isSelected }: FeedbackElementProps) => {
   const isSpeech = version?.tags?.includes('speech');
   const [selected, setSelected] = useState(false);
 
   return (
     <div
-      className={`grid grid-cols-[180px_250px_150px_200px] relative group/feedback-element items-center gap-4 text-sm px-2 py-1 cursor-pointer border-b border-gray-500`}
+      className="grid relative group/feedback-element items-center gap-4 text-sm px-2 py-1 cursor-pointer border-b border-gray-500"
+      style={{ gridTemplateColumns: gridCols }}
     >
       <div className={`${isSelected ? 'text-primary' : ''} font-georgia text-base ${isSpeech ? 'italic' : ''}`} onClick={() => {setSelected(!selected); onClick();}}>
         {version?.songTitle}
       </div>
       <VoteWidget versionId={version?.id} songId={version?.songId} category="quality" hideVotes/>
-      <VoteWidget versionId={version?.id} songId={version?.songId} category="singability" hideVotes/>
+      {/* <VoteWidget versionId={version?.id} songId={version?.songId} category="singability" hideVotes/> */}
       <div className="col-span-1">
         <InlineCommentBox versionId={version?.id} />
       </div>

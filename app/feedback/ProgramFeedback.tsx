@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Program } from '../programs/types';
-import FeedbackElement from './components/FeedbackElement';
+import FeedbackElement, { gridCols } from './components/FeedbackElement';
 import FeedbackDetail from './components/FeedbackDetail';
 
 type VersionOption = {
@@ -185,7 +185,7 @@ const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
             </div>
           )}
         <div className="flex flex-col gap-1 w-full lg:max-w-4xl mx-auto">
-          <div className="mb-4">
+          {/* <div className="mb-4">
             <select
               value={selectedProgramId || ''}
               onChange={(e) => handleSelectProgram(e.target.value)}
@@ -195,19 +195,41 @@ const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
               <option key={program.id} value={program.id}>{program.title}</option>
             ))}
             </select>
-          </div>
+          </div> */}
           <div>
+            {selectedProgram?.elementIds && selectedProgram.elementIds.length > 0 && (
+              <>
+                <div className="grid grid-cols-[275px_310px_200px_1fr] items-center gap-4 text-sm px-2 py-1 border-b border-gray-700 text-gray-400 font-medium">
+                  <div>Song/Speech</div>
+                  <div className="pl-1">Quality</div>
+                  <div className="pl-2">Singability</div>
+                  <div className="pl-2">Comments</div>
+                </div>
+                {selectedProgram.elementIds.map((elementId, index) => {
+                  const version = versionMap[elementId];
+                  return (
+                    <FeedbackElement
+                      key={elementId}
+                      version={version}
+                      index={index}
+                      onClick={() => setSelectedVersionId(elementId)}
+                      isSelected={selectedVersionId === elementId}
+                    />
+                  );
+                })}
+              </>
+            )}
             {selectedProgram?.programIds.map((subProgramId) => {
               const subProgram = programMap[subProgramId];
               if (!subProgram) return null;
               return (
                 <div key={subProgramId} className="mb-3">
-                  <div className="font-georgia text-2xl text-center my-4">{subProgram.title}</div>
-                  <div className="grid grid-cols-[275px_310px_200px_1fr] items-center gap-4 text-sm px-2 py-1 border-b border-gray-700 text-gray-400 font-medium">
-                    <div>song/speech</div>
-                    <div>quality</div>
-                    <div>singability</div>
-                    <div>comments</div>
+                  <div className="font-georgia text-2xl text-center my-12">{subProgram.title}</div>
+                  <div className="grid gap-4 text-sm px-2 py-1 border-b border-gray-700 text-gray-400 font-medium" style={{ gridTemplateColumns: gridCols }}>
+                    <div>Song/Speech</div>
+                    <div className="pl-1">Quality</div>
+                    {/* <div className="pl-2">Singability</div> */}
+                    <div className="pl-2">Comments</div>
                   </div>
                   <div className="flex flex-col">
                     {subProgram.elementIds.map((elementId, index) => {
@@ -226,28 +248,6 @@ const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
                 </div>
               );
             })}
-            {selectedProgram?.elementIds && selectedProgram.elementIds.length > 0 && (
-              <>
-                <div className="grid grid-cols-[275px_310px_200px_1fr] items-center gap-4 text-sm px-2 py-1 border-b border-gray-700 text-gray-400 font-medium">
-                  <div>song/speech</div>
-                  <div>quality</div>
-                  <div>singability</div>
-                  <div>comments</div>
-                </div>
-                {selectedProgram.elementIds.map((elementId, index) => {
-                  const version = versionMap[elementId];
-                  return (
-                    <FeedbackElement
-                      key={elementId}
-                      version={version}
-                      index={index}
-                      onClick={() => setSelectedVersionId(elementId)}
-                      isSelected={selectedVersionId === elementId}
-                    />
-                  );
-                })}
-              </>
-            )}
           </div>
         </div>
 

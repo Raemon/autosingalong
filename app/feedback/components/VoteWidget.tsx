@@ -169,15 +169,15 @@ const VoteWidget = ({ versionId, songId, category, hideVotes = false }: {version
   
 
   return (
-    <div className="flex items-center gap-2 text-xs">
-      <div className="flex items-center gap-2 py-1 p-1">
+    <div className="flex items-center gap-2 text-[11px]">
+      <div className="flex items-center gap-1 py-1 p-1">
         {options.map((option) => {
           const button = <button
               key={option.label}
               onClick={() => handleVote(option)}
               aria-label={option.label}
               aria-pressed={currentWeight === option.weight}
-              className={`px-2 py-1 rounded-md disabled:opacity-50 
+              className={`px-[6px] py-[3px] rounded-md disabled:opacity-50 
                 ${currentWeight === option.weight && 'bg-gray-500'} 
                 ${category === 'quality' && 'border border-gray-500'}`}
             >
