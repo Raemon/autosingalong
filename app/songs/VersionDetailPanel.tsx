@@ -172,7 +172,7 @@ const VersionDetailPanel = ({songTitle, version, isCreatingVersion, newVersionFo
           {songId && (
             <div className="mt-4 pt-4 border-t border-gray-200">
               <h3 className="text-xs text-gray-400 mb-2">History</h3>
-              <ChangelogPage songId={songId} compact />
+              <ChangelogPage songId={songId} filename={version.label} compact />
             </div>
           )}
         </>

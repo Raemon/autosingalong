@@ -201,6 +201,20 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
     }
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        if (creatingVersionForSong) {
+          handleCancelNewVersionForSong();
+        } else if (selectedVersion) {
+          handleClosePanel();
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [creatingVersionForSong, selectedVersion, handleClosePanel, handleCancelNewVersionForSong]);
+
   if (loading) {
     return (
       <div className="min-h-screen p-4">

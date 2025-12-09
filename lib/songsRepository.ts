@@ -296,7 +296,7 @@ export const findVersionBySongTitleAndLabel = async (songTitle: string, label: s
       v.bpm,
       v.transpose,
       v.previous_version_id as "previousVersionId",
-      v.next_version_id as "nextVersionId",
+      v.next_version_id as "nextVersionId",(y)
       v.original_version_id as "originalVersionId",
       v.rendered_content as "renderedContent",
       v.archived as "archived",
@@ -627,7 +627,7 @@ export type ChangelogVersionRecord = {
   createdAt: string;
 };
 
-export const listVersionsForChangelog = async (songId?: string): Promise<ChangelogVersionRecord[]> => {
+export const listVersionsForChangelog = async (songId?: string, filename?: string): Promise<ChangelogVersionRecord[]> => {
   const rows = songId
     ? await sql`
         select
@@ -644,6 +644,7 @@ export const listVersionsForChangelog = async (songId?: string): Promise<Changel
         join songs s on s.id = v.song_id
         left join song_versions prev on prev.id = v.previous_version_id
         where v.archived = false and s.archived = false and v.song_id = ${songId}
+          ${filename ? sql`and v.label = ${filename}` : sql``}
         order by v.created_at desc
       `
     : await sql`
@@ -661,6 +662,7 @@ export const listVersionsForChangelog = async (songId?: string): Promise<Changel
         join songs s on s.id = v.song_id
         left join song_versions prev on prev.id = v.previous_version_id
         where v.archived = false and s.archived = false
+          ${filename ? sql`and v.label = ${filename}` : sql``}
         order by v.created_at desc
       `;
   return rows as ChangelogVersionRecord[];

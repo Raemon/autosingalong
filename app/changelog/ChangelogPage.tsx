@@ -26,7 +26,7 @@ const calculateDiff = (content: string | null, previousContent: string | null) =
   return { added: Math.max(0, diff), removed: Math.max(0, -diff) };
 };
 
-const ChangelogPage = ({songId, compact = false}: {songId?: string; compact?: boolean} = {}) => {
+const ChangelogPage = ({songId, filename, compact = false}: {songId?: string; filename?: string; compact?: boolean} = {}) => {
   const [versions, setVersions] = useState<ChangelogVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +34,10 @@ const ChangelogPage = ({songId, compact = false}: {songId?: string; compact?: bo
   useEffect(() => {
     const fetchChangelog = async () => {
       try {
-        const url = songId ? `/api/changelog?songId=${songId}` : '/api/changelog';
+        const params = new URLSearchParams();
+        if (songId) params.set('songId', songId);
+        if (filename) params.set('filename', filename);
+        const url = params.toString() ? `/api/changelog?${params.toString()}` : '/api/changelog';
         const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch changelog');
         const data = await response.json();
@@ -46,7 +49,7 @@ const ChangelogPage = ({songId, compact = false}: {songId?: string; compact?: bo
       }
     };
     fetchChangelog();
-  }, [songId]);
+  }, [songId, filename]);
 
   if (loading) return <div className={compact ? "text-gray-400 text-xs" : "p-4 text-gray-400"}>Loading changelog...</div>;
   if (error) return <div className={compact ? "text-red-500 text-xs" : "p-4 text-red-500"}>Error: {error}</div>;
