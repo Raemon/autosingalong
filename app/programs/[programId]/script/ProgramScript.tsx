@@ -3,6 +3,8 @@ import Link from 'next/link';
 import sql from '@/lib/db';
 import { getProgramById } from '@/lib/programsRepository';
 import { CHORDMARK_STYLES } from '@/app/chordmark-converter/chordmarkStyles';
+import { TableOfContents } from './TableOfContents';
+import { ScrollHandler } from './ScrollHandler';
 
 type Program = {
   id: string;
@@ -139,6 +141,55 @@ async function loadProgramScriptData(programId: string) {
   };
 }
 
+type Entry = 
+  | { type: 'program'; program: Program; level: number }
+  | { type: 'programHeading'; program: Program; level: number }
+  | { type: 'version'; version: SongVersion; level: number };
+
+function buildProgramEntries(
+  selectedProgram: Program, 
+  versions: Record<string, SongVersion>,
+  programMap: Record<string, Program>,
+  includeTopLevel: boolean
+): Entry[] {
+  const entries: Entry[] = [];
+  const stack = [{ program: selectedProgram, level: 0 }];
+  const visited = new Set<string>();
+  
+  while (stack.length > 0) {
+    const current = stack.pop();
+    if (!current || visited.has(current.program.id)) continue;
+    
+    visited.add(current.program.id);
+    const { program, level } = current;
+    
+    if (level > 0 || includeTopLevel) {
+      entries.push({ 
+        type: level > 0 ? 'programHeading' : 'program', 
+        program, 
+        level 
+      });
+    }
+    
+    program.elementIds.forEach((versionId) => {
+      const version = versions[versionId];
+      if (version) {
+        entries.push({ type: 'version', version, level: includeTopLevel ? level + 1 : level });
+      }
+    });
+    
+    const childPrograms = program.programIds
+      .map((childId) => programMap[childId])
+      .filter(Boolean);
+    
+    for (let i = childPrograms.length - 1; i >= 0; i--) {
+      stack.push({ program: childPrograms[i], level: level + 1 });
+    }
+  }
+  
+  return entries;
+}
+
 const ProgramScript = async ({ programId }: ProgramScriptProps) => {
   let data;
   try {
@@ -151,14 +202,11 @@ const ProgramScript = async ({ programId }: ProgramScriptProps) => {
     );
   }
 
-  const programs: Program[] = data.programs || [];
-  const versions: Record<string, SongVersion> = data.versions || {};
-  const selectedProgram: Program | null = data.program || null;
+  const { programs = [], versions = {}, program: selectedProgram } = data;
 
-  const programMap: Record<string, Program> = {};
-  programs.forEach((program) => {
-    programMap[program.id] = program;
-  });
+  const programMap: Record<string, Program> = Object.fromEntries(
+    programs.map((p) => [p.id, p])
+  );
 
   if (!selectedProgram) {
     return (
@@ -167,110 +215,28 @@ const ProgramScript = async ({ programId }: ProgramScriptProps) => {
       </div>
     );
   }
-  type TocEntry =
-    | { type: 'program'; program: Program; level: number }
-    | { type: 'version'; version: SongVersion; level: number };
-  const tocEntries: TocEntry[] = [];
-  const tocStack = selectedProgram ? [{ program: selectedProgram, level: 0 }] : [];
-  const tocVisited = new Set<string>();
-  while (tocStack.length > 0) {
-    const current = tocStack.pop();
-    if (!current || tocVisited.has(current.program.id)) {
-      continue;
-    }
-    tocVisited.add(current.program.id);
-    const currentProgram = current.program;
-    tocEntries.push({ type: 'program', program: currentProgram, level: current.level });
-    currentProgram.elementIds.forEach((versionId) => {
-      const version = versions[versionId];
-      if (version) {
-        tocEntries.push({ type: 'version', version, level: current.level + 1 });
-      }
-    });
-    const childPrograms = currentProgram.programIds.map((childId) => programMap[childId]).filter(Boolean);
-    for (let i = childPrograms.length - 1; i >= 0; i -= 1) {
-      tocStack.push({ program: childPrograms[i], level: current.level + 1 });
-    }
-  }
 
-  type ContentEntry =
-    | { type: 'programHeading'; program: Program; level: number }
-    | { type: 'version'; version: SongVersion; level: number };
-  const contentEntries: ContentEntry[] = [];
-  const contentStack = selectedProgram ? [{ program: selectedProgram, level: 0 }] : [];
-  const contentVisited = new Set<string>();
-  while (contentStack.length > 0) {
-    const current = contentStack.pop();
-    if (!current || contentVisited.has(current.program.id)) {
-      continue;
-    }
-    contentVisited.add(current.program.id);
-    const currentProgram = current.program;
-    if (current.level > 0) {
-      contentEntries.push({ type: 'programHeading', program: currentProgram, level: current.level });
-    }
-    currentProgram.elementIds.forEach((versionId) => {
-      const version = versions[versionId];
-      if (version) {
-        contentEntries.push({ type: 'version', version, level: current.level });
-      }
-    });
-    const childPrograms = currentProgram.programIds.map((childId) => programMap[childId]).filter(Boolean);
-    for (let i = childPrograms.length - 1; i >= 0; i -= 1) {
-      contentStack.push({ program: childPrograms[i], level: current.level + 1 });
-    }
-  }
+  const tocEntries = buildProgramEntries(selectedProgram, versions, programMap, true);
+  const contentEntries = buildProgramEntries(selectedProgram, versions, programMap, false);
 
   return (
-    <div className="min-h-screen bg-white text-black">
+    <div className="min-h-screen bg-white text-black flex mx-auto justify-center">
       <style dangerouslySetInnerHTML={{ __html: CHORDMARK_STYLES }} />
-      <div className="max-w-4xl mx-auto p-8">
-        <h1 className="text-4xl mb-8" style={{fontFamily: 'Georgia, serif'}}>
-          {selectedProgram.title}
-        </h1>
+      <ScrollHandler />
+      <div className="max-w-lg p-8 font-georgia fixed top-[50px] left-0">
         {tocEntries.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-2xl mb-3" style={{fontFamily: 'Georgia, serif'}}>
-              Contents
-            </h2>
-            <div className="space-y-1">
-              {tocEntries.map((entry) =>
-                entry.type === 'program' ? (
-                  <div
-                    key={`toc-program-${entry.program.id}`}
-                    className="flex flex-col"
-                    style={{ fontFamily: 'Georgia, serif', color: 'black', marginLeft: entry.level * 16 }}
-                  >
-                    <Link
-                      href={`/programs/${entry.program.id}`}
-                      className={`${entry.level === 0 ? 'text-3xl' : 'text-2xl'} hover:underline`}
-                    >
-                      {entry.program.title}
-                    </Link>
-                  </div>
-                ) : (
-                  <div
-                    key={`toc-version-${entry.version.id}`}
-                    className="ml-4"
-                    style={{ fontFamily: 'Georgia, serif', color: 'black', marginLeft: entry.level * 16 }}
-                  >
-                    <Link href={`/songs/${entry.version.id}`} className="hover:underline">
-                      {entry.version.songTitle}
-                    </Link>
-                  </div>
-                )
-              )}
-            </div>
-          </div>
+          <TableOfContents entries={tocEntries} programId={selectedProgram.id} />
         )}
+      </div>
+      <div className="max-w-3xl p-8 font-georgia">
         {contentEntries.map((entry) => {
           if (entry.type === 'programHeading') {
             return (
               <h2
-                key={`program-${entry.program.id}`}
-                className="text-2xl mt-8 mb-4"
+                key={`heading-${entry.program.id}`}
+                className="text-4xl mt-8 mb-4 font-semibold"
                 id={`program-${entry.program.id}`}
-                style={{fontFamily: 'Georgia, serif', marginLeft: entry.level * 16}}
+                style={{ marginLeft: entry.level * 16 }}
               >
                 <Link href={`/programs/${entry.program.id}`} className="hover:underline">
                   {entry.program.title}
@@ -278,28 +244,39 @@ const ProgramScript = async ({ programId }: ProgramScriptProps) => {
               </h2>
             );
           }
-          const version = entry.version;
-          const isText = version.tags?.includes('text');
-          const isSpeech = version.tags?.includes('speech');
-          const showFullContent = isText || isSpeech;
-          const chordmarkLyricsHtml = version.renderedContent?.htmlLyricsOnly;
-          const fallbackText = (showFullContent && version.content) || version.renderedContent?.plainText || version.content || '';
-          return (
-            <div key={`version-${version.id}`} className="mb-8" id={`song-${version.id}`} style={{ marginLeft: entry.level * 16 }}>
-              <h3 className="text-xl mb-2" style={{fontFamily: 'Georgia, serif'}}>
-                <Link href={`/songs/${version.id}`} className="hover:underline">
-                  {version.songTitle}
-                </Link>
-              </h3>
-              {chordmarkLyricsHtml ? (
-                <div className="styled-chordmark lyrics-wrap" dangerouslySetInnerHTML={{ __html: chordmarkLyricsHtml }} />
-              ) : (
-                fallbackText && (
-                  <div className="whitespace-pre-wrap">{fallbackText}</div>
-                )
-              )}
-            </div>
-          );
+
+          if (entry.type === 'version') {
+            const { version } = entry;
+            const isTextOrSpeech = version.tags?.some((tag: string) => ['text', 'speech'].includes(tag));
+            const lyricsHtml = version.renderedContent?.htmlLyricsOnly;
+            const plainText = version.renderedContent?.plainText || version.content || '';
+            
+            return (
+              <div 
+                key={`song-${version.id}`} 
+                className="mb-8" 
+                id={`song-${version.id}`}
+                style={{ marginLeft: entry.level * 16 }}
+              >
+                <h3 className="text-xl mb-2 font-semibold">
+                  <Link href={`/programs/${selectedProgram.id}?songId=${version.id}`} className="hover:underline">
+                    {version.songTitle}
+                  </Link>
+                </h3>
+                
+                {lyricsHtml ? (
+                  <div 
+                    className="styled-chordmark lyrics-wrap text-xs font-mono" 
+                    dangerouslySetInnerHTML={{ __html: lyricsHtml }} 
+                  />
+                ) : isTextOrSpeech && plainText ? (
+                  <div className="whitespace-pre-wrap">{plainText}</div>
+                ) : null}
+              </div>
+            );
+          }
+          
+          return null;
         })}
       </div>
     </div>
