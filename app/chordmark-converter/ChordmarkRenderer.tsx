@@ -8,81 +8,11 @@ import { useLineHighlighting } from './useLineHighlighting';
 import { generateSlidesFromChordmark } from '../../src/components/slides/slideGenerators';
 import TransposeControls from './TransposeControls';
 import ChordmarkContent from './ChordmarkContent';
+import { CHORDMARK_STYLES } from './chordmarkStyles';
+
+export { CHORDMARK_STYLES } from './chordmarkStyles';
 
 export type ChordmarkViewMode = 'lyrics+chords' | 'lyrics' | 'chords' | 'one-line' | 'slides' | 'raw';
-
-export const CHORDMARK_STYLES = `
-  .styled-chordmark .cmSong {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    white-space: pre;
-    font-variant-ligatures: none;
-  }
-  .styled-chordmark.lyrics-wrap .cmSong {
-    white-space: pre-wrap;
-  }
-  .styled-chordmark .cmSong * {
-    font-family: inherit;
-    white-space: inherit;
-  }
-  .styled-chordmark .cmSong p {
-    margin: 0;
-    line-height: 16px;
-  }
-  .styled-chordmark .cmSong p + p {
-  }
-  .styled-chordmark .cmSong .cmLine,
-  .styled-chordmark .cmSong .cmChordLine,
-  .styled-chordmark .cmSong .cmLyricLine,
-  .styled-chordmark .cmSong .cmChordLyricLine,
-  .styled-chordmark .cmSong .cmSectionLabel,
-  .styled-chordmark .cmSong .cmEmptyLine {
-    display: block;
-    line-height: 16px;
-  }
-  .styled-chordmark .cmSong .cmChordLyricPair {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.15em;
-  }
-  .styled-chordmark .cmSong .cmChordLineOffset,
-  .styled-chordmark .cmSong .cmChordSymbol,
-  .styled-chordmark .cmSong .cmChordDuration,
-  .styled-chordmark .cmSong .cmBarSeparator,
-  .styled-chordmark .cmSong .cmTimeSignature,
-  .styled-chordmark .cmSong .cmSubBeatGroupOpener,
-  .styled-chordmark .cmSong .cmSubBeatGroupCloser {
-    white-space: inherit;
-    color: #aaa;
-  }
-  .styled-chordmark .cmSong .cmLyricLine,
-  .styled-chordmark .cmSong .cmLyric {
-
-  }
-  .styled-chordmark .cmSong .cmSectionLabel {
-    font-weight: 600;
-  }
-  .styled-chordmark .cmSong .cmEmptyLine {
-    min-height: 0.5em;
-  }
-  .styled-chordmark .cmSong .cmBracketMeta {
-    color: #888;
-    font-style: italic;
-    max-width: 400px;
-    display: inline-block;
-    width: 300px;
-    white-space: pre-wrap;
-  }
-  
-  /* Line highlighting for active playback - only chord lines get data-line-index */
-  .styled-chordmark .cmSong .cmChordLine[data-line-active="true"],
-  .styled-chordmark .cmSong .cmChordLyricLine[data-line-active="true"] {
-    background-color: #fef3c7;
-    border-radius: 2px;
-    padding: 0 2px;
-    margin: 0 -2px;
-  }
-`;
 
 export const useChordmarkParser = (content: string) => {
   return useMemo<{ song: ReturnType<typeof parseSong> | null; error: string | null }>(() => {
