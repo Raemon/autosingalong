@@ -64,6 +64,35 @@ const VoteWidget = ({ versionId, songId, hideVotes = false }: {versionId: string
     setError(null);
     const previousVotes = votes;
     const existing = votes.find((vote) => vote.name === trimmedName);
+
+    // Toggle off if clicking the same vote
+    if (existing && existing.weight === option.weight) {
+      const updatedVotes = votes.filter((vote) => vote.name !== trimmedName);
+      setVotes(updatedVotes);
+      setIsSaving(true);
+
+      try {
+        const response = await fetch(`/api/votes?versionId=${versionId}&name=${encodeURIComponent(trimmedName)}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete vote');
+        }
+
+        const data = await response.json();
+        const savedVotes = data.votes || updatedVotes;
+        setVotes(savedVotes);
+      } catch (err) {
+        console.error('Failed to delete vote:', err);
+        setVotes(previousVotes);
+        setError('Unable to delete vote');
+      } finally {
+        setIsSaving(false);
+      }
+      return;
+    }
+
     const optimisticVote: VoteRecord = {
       id: existing?.id || `temp-${Date.now()}`,
       name: trimmedName,

@@ -104,27 +104,6 @@ const InlineCommentBox = ({ versionId, onCommentPosted }: InlineCommentBoxProps)
         rows={isExpanded ? 3 : 1}
         disabled={isSubmitting}
       />
-      {isExpanded && (
-        <div className="flex justify-end gap-1 mt-1">
-          <button
-            type="button"
-            onClick={() => {
-              setNewComment('');
-              setIsExpanded(false);
-            }}
-            className="px-2 py-0.5 text-xs text-gray-400 hover:text-gray-200"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={!newComment.trim() || isSubmitting}
-            className="px-2 py-0.5 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? 'Posting...' : 'Post'}
-          </button>
-        </div>
-      )}
       {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
     </form>
   );

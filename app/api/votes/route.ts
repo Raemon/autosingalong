@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getVotesSummary, upsertVote } from '@/lib/votesRepository';
+import { getVotesSummary, upsertVote, deleteVote } from '@/lib/votesRepository';
 import { getVersionById } from '@/lib/songsRepository';
 
 const VALID_WEIGHTS = new Set([-3, -1, 0, 1, 3]);
@@ -68,4 +68,27 @@ export async function POST(request: Request) {
   }
 }
 
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const versionId = searchParams.get('versionId');
+    const name = searchParams.get('name');
+
+    if (!versionId) {
+      return NextResponse.json({ error: 'versionId is required' }, { status: 400 });
+    }
+
+    if (!name || name.trim().length < 3) {
+      return NextResponse.json({ error: 'name is required and must be at least 3 characters' }, { status: 400 });
+    }
+
+    await deleteVote(versionId, name.trim());
+
+    const summary = await getVotesSummary(versionId);
+    return NextResponse.json(summary);
+  } catch (error) {
+    console.error('Failed to delete vote:', error);
+    return NextResponse.json({ error: 'Failed to delete vote' }, { status: 500 });
+  }
+}
 

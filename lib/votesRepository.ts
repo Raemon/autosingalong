@@ -98,6 +98,14 @@ export const upsertVote = async (params: { versionId: string; songId: string; na
   return { ...vote, songId: params.songId };
 };
 
+export const deleteVote = async (versionId: string, name: string): Promise<void> => {
+  await sql`
+    delete from votes
+    where version_id = ${versionId}
+      and name = ${name}
+  `;
+};
+
 export const getVotesSummary = async (versionId: string): Promise<{ votes: VoteRecord[]; total: number; }> => {
   const votes = await listVotesForVersion(versionId);
   const total = sumBy(votes, 'weight');
