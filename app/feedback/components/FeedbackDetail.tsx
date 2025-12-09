@@ -26,14 +26,20 @@ type SongVersion = {
 type FeedbackDetailProps = {
   version: VersionOption;
   onClose: () => void;
+  cachedVersion?: SongVersion;
 };
 
-const FeedbackDetail = ({ version, onClose }: FeedbackDetailProps) => {
-  const [fullVersion, setFullVersion] = useState<SongVersion | null>(null);
-  const [loading, setLoading] = useState(true);
+const FeedbackDetail = ({ version, onClose, cachedVersion }: FeedbackDetailProps) => {
+  const [fullVersion, setFullVersion] = useState<SongVersion | null>(cachedVersion || null);
+  const [loading, setLoading] = useState(!cachedVersion);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (cachedVersion) {
+      setFullVersion(cachedVersion);
+      setLoading(false);
+      return;
+    }
     const loadVersion = async () => {
       setLoading(true);
       setError(null);
@@ -52,7 +58,7 @@ const FeedbackDetail = ({ version, onClose }: FeedbackDetailProps) => {
       }
     };
     loadVersion();
-  }, [version.id]);
+  }, [version.id, cachedVersion]);
 
   const isSpeech = version.tags?.includes('speech');
   const content = fullVersion?.content || '';

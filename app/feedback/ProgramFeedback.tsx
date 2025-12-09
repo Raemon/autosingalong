@@ -14,6 +14,14 @@ type VersionOption = {
   tags: string[];
 };
 
+type FullVersion = {
+  id: string;
+  songId: string;
+  label: string;
+  createdAt: string;
+  content?: string | null;
+};
+
 type SimpleProgramProps = {
   initialProgramId?: string;
 };
@@ -26,6 +34,7 @@ const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
   const [dataError, setDataError] = useState<string | null>(null);
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(initialProgramId ?? null);
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
+  const [versionCache, setVersionCache] = useState<Record<string, FullVersion>>({});
 
   const loadPrograms = useCallback(async () => {
     setIsLoadingPrograms(true);
@@ -72,6 +81,25 @@ const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
   useEffect(() => {
     loadVersionOptions();
   }, [loadVersionOptions]);
+
+  useEffect(() => {
+    if (versions.length === 0) return;
+    const preloadVersions = async () => {
+      const versionIds = versions.map(v => v.id);
+      for (const versionId of versionIds) {
+        try {
+          const response = await fetch(`/api/songs/versions/${versionId}`);
+          if (response.ok) {
+            const data = await response.json();
+            setVersionCache(prev => ({ ...prev, [versionId]: data.version }));
+          }
+        } catch (err) {
+          console.error(`Failed to preload version ${versionId}:`, err);
+        }
+      }
+    };
+    preloadVersions();
+  }, [versions]);
 
   const loading = isLoadingPrograms || isLoadingVersions;
 
@@ -149,6 +177,7 @@ const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
               <FeedbackDetail
                 version={selectedVersion}
                 onClose={() => setSelectedVersionId(null)}
+                cachedVersion={versionCache[selectedVersion.id]}
               />
             </div>
           )}
