@@ -178,7 +178,6 @@ const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
 
   return (
     <div className="p-4">
-      <PrivacySettings privacy={privacy} setPrivacy={setPrivacy} />
       <div className="flex gap-4">
         {selectedVersion && (
             <div className="flex-1 max-w-xl">
@@ -190,6 +189,9 @@ const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
             </div>
           )}
         <div className="flex flex-col gap-1 w-full lg:max-w-4xl mx-auto">
+          <h2 className="text-4xl text-center my-12 font-semibold font-georgia">{selectedProgram?.title} Feedback</h2>
+          <p className="text-center text-gray-400">All responses are public but anonymous except to site admins.</p>
+
           {/* <div className="mb-4">
             <select
               value={selectedProgramId || ''}
@@ -204,7 +206,7 @@ const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
           <div>
             {selectedProgram?.elementIds && selectedProgram.elementIds.length > 0 && (
               <>
-                <div className="grid grid-cols-[275px_310px_200px_1fr] items-center gap-4 text-sm px-2 py-1 border-b border-gray-700 text-gray-400 font-medium">
+                <div className="hidden md:grid grid-cols-[275px_310px_200px_1fr] items-center gap-4 text-sm px-2 py-1 border-b border-gray-700 text-gray-400 font-medium">
                   <div>Song/Speech</div>
                   <div className="pl-1">Quality</div>
                   <div className="pl-2">Singability</div>
@@ -230,7 +232,7 @@ const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
               return (
                 <div key={subProgramId} className="mb-3">
                   <div className="font-georgia text-2xl text-center my-12">{subProgram.title}</div>
-                  <div className="grid gap-4 text-sm px-2 py-1 border-b border-gray-700 text-gray-400 font-medium" style={{ gridTemplateColumns: gridCols }}>
+                  <div className="hidden md:grid gap-4 text-sm px-2 py-1 border-b border-gray-700 text-gray-400 font-medium" style={{ gridTemplateColumns: gridCols }}>
                     <div>Song/Speech</div>
                     <div className="pl-1">Quality</div>
                     <div className="pl-2">Singability</div>

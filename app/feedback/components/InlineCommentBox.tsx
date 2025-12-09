@@ -39,15 +39,8 @@ const InlineCommentBox = ({ versionId, onCommentPosted }: InlineCommentBoxProps)
     setIsExpanded(true);
   };
 
-  const handleBlur = () => {
-    if (!newComment.trim()) {
-      setIsExpanded(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newComment.trim() || !userName) return;
+  const submitComment = async () => {
+    if (!newComment.trim() || !userName || isSubmitting) return;
 
     setIsSubmitting(true);
     setError(null);
@@ -81,10 +74,23 @@ const InlineCommentBox = ({ versionId, onCommentPosted }: InlineCommentBoxProps)
     }
   };
 
+  const handleBlur = () => {
+    if (newComment.trim()) {
+      submitComment();
+    } else {
+      setIsExpanded(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submitComment();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+    if (e.key === 'Enter') {
       e.preventDefault();
-      handleSubmit(e);
+      submitComment();
     }
     if (e.key === 'Escape') {
       setNewComment('');

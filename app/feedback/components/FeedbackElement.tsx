@@ -28,16 +28,25 @@ const FeedbackElement = ({ version, index, onClick, isSelected }: FeedbackElemen
 
   return (
     <div
-      className="grid relative group/feedback-element items-center gap-4 text-sm px-2 py-1 cursor-pointer border-b border-gray-500"
-      style={{ gridTemplateColumns: gridCols }}
+      className="relative group/feedback-element cursor-pointer border-b border-gray-500 px-2 py-1 flex flex-col gap-2 md:grid md:items-center md:gap-4 text-sm"
+      style={{ gridTemplateColumns: `var(--md-grid, ${gridCols})` }}
     >
       <div className={`${isSelected ? 'text-primary' : ''} font-georgia text-base ${isSpeech ? 'italic' : ''}`} onClick={() => {setSelected(!selected); onClick();}}>
         {version?.songTitle}
       </div>
-      <VoteWidget versionId={version?.id} songId={version?.songId} category="quality" hideVotes/>
-      <VoteWidget versionId={version?.id} songId={version?.songId} category="singability" hideVotes/>
-      <div className="col-span-1">
-        <InlineCommentBox versionId={version?.id} />
+      <div className="flex flex-col gap-2 md:contents">
+        <div className="flex items-center gap-2">
+          <span className="text-gray-400 md:hidden">Quality:</span>
+          <VoteWidget versionId={version?.id} songId={version?.songId} category="quality" hideVotes/>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-gray-400 md:hidden">Singability:</span>
+          <VoteWidget versionId={version?.id} songId={version?.songId} category="singability" hideVotes/>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-gray-400 md:hidden">Comments:</span>
+          <InlineCommentBox versionId={version?.id} />
+        </div>
       </div>
     </div>
   );
