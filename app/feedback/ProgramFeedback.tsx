@@ -55,6 +55,10 @@ const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
     }
   }, []);
 
+  useEffect(() => {
+    loadPrograms();
+  }, [loadPrograms]);
+
   const loadVersionOptions = useCallback(async () => {
     setIsLoadingVersions(true);
     try {
@@ -64,7 +68,8 @@ const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
         throw new Error(errorData.error || 'Failed to load song versions');
       }
       const data = await response.json();
-      setVersions(data.versions || []);
+      const versionsData = data.versions || [];
+      setVersions(versionsData);
       setDataError(null);
     } catch (err) {
       console.error('Failed to load song versions:', err);
@@ -75,30 +80,28 @@ const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
   }, []);
 
   useEffect(() => {
-    loadPrograms();
-  }, [loadPrograms]);
-
-  useEffect(() => {
     loadVersionOptions();
   }, [loadVersionOptions]);
 
   useEffect(() => {
     if (versions.length === 0) return;
-    const preloadVersions = async () => {
-      const versionIds = versions.map(v => v.id);
-      for (const versionId of versionIds) {
-        try {
-          const response = await fetch(`/api/songs/versions/${versionId}`);
-          if (response.ok) {
-            const data = await response.json();
-            setVersionCache(prev => ({ ...prev, [versionId]: data.version }));
-          }
-        } catch (err) {
-          console.error(`Failed to preload version ${versionId}:`, err);
+    const loadVersionsContent = async () => {
+      try {
+        const versionIds = versions.map(v => v.id);
+        const response = await fetch('/api/songs/versions/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ versionIds })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setVersionCache(data.versions || {});
         }
+      } catch (err) {
+        console.error('Failed to load version content:', err);
       }
     };
-    preloadVersions();
+    loadVersionsContent();
   }, [versions]);
 
   const loading = isLoadingPrograms || isLoadingVersions;
@@ -181,7 +184,7 @@ const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
               />
             </div>
           )}
-        <div className="flex flex-col gap-1 w-full max-w-2xl mx-auto">
+        <div className="flex flex-col gap-1 w-full lg:max-w-3xl mx-auto">
           <div className="mb-4">
             <select
               value={selectedProgramId || ''}

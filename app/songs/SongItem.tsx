@@ -51,7 +51,7 @@ const SongItem = ({song, selectedVersionId, onVersionClick, onCreateNewVersion}:
 
   return (
     <div className="flex">
-      <div className="group flex items-center w-2/3 justify-between px-2 py-1 text-lg font-medium border-b border-gray-200 font-georgia">
+      <div className="group flex items-center w-2/3 justify-between px-2 py-1 text-lg font-medium border-b border-gray-500 font-georgia">
         <div className="flex flex-col">
           <span>{song.title.replace(/_/g, ' ')}</span>
           <span className="text-[10px] text-gray-400 font-mono">{tagsMinusSong.join(', ')}</span>
@@ -66,7 +66,7 @@ const SongItem = ({song, selectedVersionId, onVersionClick, onCreateNewVersion}:
           </button>
         )}
       </div>
-      <div className="border-b border-gray-200 w-1/3">
+      <div className="border-b border-gray-500 w-1/3">
         {mostRecentVersions.length === 0 ? (
           <p className="px-2 py-1 text-xs text-gray-500">No versions stored yet.</p>
         ) : (

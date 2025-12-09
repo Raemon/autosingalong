@@ -100,7 +100,7 @@ const InlineCommentBox = ({ versionId, onCommentPosted }: InlineCommentBoxProps)
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder="comment..."
-        className="w-64 bg-transparent px-2 py-1 text-xs border-top border-gray-600 outline-none focus:outline-gray-500 focus:outline-1 resize-none transition-all rounded-sm"
+        className="w-64 bg-transparent px-2 py-1 text-xs border-top border-gray-600 outline-none focus:outline-gray-500 focus:outline-1 resize-none transition-all rounded-sm placeholder:text-gray-600"
         rows={isExpanded ? 3 : 1}
         disabled={isSubmitting}
       />
@@ -131,6 +131,7 @@ const InlineCommentBox = ({ versionId, onCommentPosted }: InlineCommentBoxProps)
 };
 
 export default InlineCommentBox;
+
 
 
 

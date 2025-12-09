@@ -127,10 +127,9 @@ const VoteWidget = ({ versionId, songId, hideVotes = false }: {versionId: string
         {voteOptions.map((option) => (
             <button
               onClick={() => handleVote(option)}
-              disabled={isSaving || isLoading}
               aria-label={option.label}
               aria-pressed={currentWeight === option.weight}
-              className={`p-1 rounded-full disabled:opacity-50 ${currentWeight === option.weight ? 'bg-gray-200' : ''}`}
+              className={`px-2 py-1 rounded-md disabled:opacity-50 border border-gray-500 ${currentWeight === option.weight ? 'bg-gray-500' : ''}`}
             >
               {option.label}
             </button>
