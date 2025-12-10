@@ -188,6 +188,13 @@ export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
     }
   };
 
+  const handleCommentPosted = (versionId: string) => (comment: Comment) => {
+    setUserComments(prev => ({
+      ...prev,
+      [versionId]: [comment]
+    }));
+  };
+
   return (
     <div className="p-4">
       <div className="flex gap-4">
@@ -232,6 +239,7 @@ export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
                 </div>
                 {selectedProgram.elementIds.map((elementId, index) => {
                   const version = versionMap[elementId];
+                  const existingComment = userComments[elementId]?.[0] || null;
                   return (
                     <FeedbackItem
                       key={elementId}
@@ -239,6 +247,8 @@ export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
                       index={index}
                       onClick={() => setSelectedVersionId(elementId)}
                       isSelected={selectedVersionId === elementId}
+                      existingComment={existingComment}
+                      onCommentPosted={handleCommentPosted(elementId)}
                     />
                   );
                 })}
@@ -259,6 +269,7 @@ export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
                   <div className="flex flex-col">
                     {subProgram.elementIds.map((elementId, index) => {
                       const version = versionMap[elementId];
+                      const existingComment = userComments[elementId]?.[0] || null;
                       return (
                         <FeedbackItem
                           key={elementId}
@@ -266,6 +277,8 @@ export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
                           index={index}
                           onClick={() => setSelectedVersionId(elementId)}
                           isSelected={selectedVersionId === elementId}
+                          existingComment={existingComment}
+                          onCommentPosted={handleCommentPosted(elementId)}
                         />
                       );
                     })}

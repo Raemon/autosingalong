@@ -13,16 +13,26 @@ type VersionOption = {
   tags: string[];
 };
 
+type Comment = {
+  id: string;
+  version_id: string;
+  content: string;
+  created_by: string;
+  created_at: string;
+};
+
 type FeedbackItemProps = {
   version: VersionOption;
   index: number;
   onClick: () => void;
   isSelected: boolean;
+  existingComment?: Comment | null;
+  onCommentPosted?: (comment: Comment) => void;
 };
 
 export const gridCols = '190px 210px 120px 1fr'
 
-const FeedbackItem = ({ version, index, onClick, isSelected }: FeedbackItemProps) => {
+const FeedbackItem = ({ version, index, onClick, isSelected, existingComment, onCommentPosted }: FeedbackItemProps) => {
   const isSpeech = version?.tags?.includes('speech');
   const isSong = version?.tags?.includes('song');
   const [selected, setSelected] = useState(false);
@@ -41,7 +51,7 @@ const FeedbackItem = ({ version, index, onClick, isSelected }: FeedbackItemProps
       <div className="flex items-center gap-2">
         {isSong && <VoteWidget versionId={version?.id} songId={version?.songId} category="singability" hideVotes/>}
       </div>
-      <InlineCommentBox versionId={version?.id} />
+      <InlineCommentBox versionId={version?.id} existingComment={existingComment} onCommentPosted={onCommentPosted} />
     </div>
   );
 };

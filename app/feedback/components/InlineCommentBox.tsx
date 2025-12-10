@@ -5,6 +5,13 @@ import { useUser } from '../../contexts/UserContext';
 
 interface InlineCommentBoxProps {
   versionId: string;
+  existingComment?: {
+    id: string;
+    version_id: string;
+    content: string;
+    created_by: string;
+    created_at: string;
+  } | null;
   onCommentPosted?: (comment: {
     id: string;
     version_id: string;
@@ -14,7 +21,7 @@ interface InlineCommentBoxProps {
   }) => void;
 }
 
-const InlineCommentBox = ({ versionId, onCommentPosted }: InlineCommentBoxProps) => {
+const InlineCommentBox = ({ versionId, existingComment, onCommentPosted }: InlineCommentBoxProps) => {
   const [newComment, setNewComment] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,6 +44,9 @@ const InlineCommentBox = ({ versionId, onCommentPosted }: InlineCommentBoxProps)
 
   const handleFocus = () => {
     setIsExpanded(true);
+    if (existingComment && !newComment) {
+      setNewComment(existingComment.content);
+    }
   };
 
   const submitComment = async (e: React.FormEvent) => {
@@ -92,14 +102,16 @@ const InlineCommentBox = ({ versionId, onCommentPosted }: InlineCommentBoxProps)
     return null;
   }
 
+  const displayText = existingComment ? existingComment.content : newComment;
+
   return (
     <form onSubmit={submitComment} className="w-full h-full" onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }}>
       <textarea
         ref={textareaRef}
-        value={newComment}
+        value={isExpanded ? newComment : displayText}
         onChange={(e) => setNewComment(e.target.value)}
         onFocus={handleFocus}
-        onBlur={() => setIsExpanded(false)}
+        onBlur={() => { setNewComment(''); setIsExpanded(false); }}
         onKeyDown={handleKeyDown}
         placeholder="comment..."
         className="w-full bg-transparent px-2 py-1 text-xs border-top border-gray-600 outline-none resize-none transition-all rounded-sm placeholder:text-gray-600"
@@ -108,7 +120,7 @@ const InlineCommentBox = ({ versionId, onCommentPosted }: InlineCommentBoxProps)
       />
       {isExpanded && (
         <button type="button" onMouseDown={(e) => { e.preventDefault(); submitComment(e); }} disabled={isSubmitting} className="absolute bottom-0 right-0 text-xs px-2 py-1 text-white disabled:opacity-50">
-          {isSubmitting ? '...' : 'Post'}
+          {isSubmitting ? '...' : (!!existingComment ? 'Edit' : 'Post')}
         </button>
       )}
       {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
