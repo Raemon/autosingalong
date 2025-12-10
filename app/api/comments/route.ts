@@ -48,18 +48,25 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { versionId, content, createdBy } = body;
+    const { versionId, content, userId, createdBy } = body;
 
-    if (!versionId || !content || !createdBy) {
+    if (!versionId || !content) {
       return NextResponse.json(
-        { error: 'versionId, content, and createdBy are required' },
+        { error: 'versionId and content are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'userId is required' },
         { status: 400 }
       );
     }
 
     const result = await sql`
-      INSERT INTO comments (version_id, content, created_by)
-      VALUES (${versionId}, ${content}, ${createdBy})
+      INSERT INTO comments (version_id, content, created_by, user_id)
+      VALUES (${versionId}, ${content}, ${createdBy || ''}, ${userId})
       RETURNING id, version_id, content, created_by, created_at
     `;
 

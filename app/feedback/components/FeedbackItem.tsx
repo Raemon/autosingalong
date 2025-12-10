@@ -21,6 +21,14 @@ type Comment = {
   created_at: string;
 };
 
+type Vote = {
+  version_id: string;
+  weight: number;
+  type: string;
+  category: string;
+  created_at: string;
+};
+
 type FeedbackItemProps = {
   version: VersionOption;
   index: number;
@@ -28,14 +36,18 @@ type FeedbackItemProps = {
   isSelected: boolean;
   existingComment?: Comment | null;
   onCommentPosted?: (comment: Comment) => void;
+  userVotes?: Vote[];
 };
 
 export const gridCols = '190px 210px 120px 1fr'
 
-const FeedbackItem = ({ version, index, onClick, isSelected, existingComment, onCommentPosted }: FeedbackItemProps) => {
+const FeedbackItem = ({ version, index, onClick, isSelected, existingComment, onCommentPosted, userVotes }: FeedbackItemProps) => {
   const isSpeech = version?.tags?.includes('speech');
   const isSong = version?.tags?.includes('song');
   const [selected, setSelected] = useState(false);
+
+  const qualityVote = userVotes?.find(v => v.category === 'quality');
+  const singabilityVote = userVotes?.find(v => v.category === 'singability');
 
   return (
     <div
@@ -46,10 +58,10 @@ const FeedbackItem = ({ version, index, onClick, isSelected, existingComment, on
         {version?.songTitle}
       </div>
       <div className="flex items-center gap-2">
-        <VoteWidget versionId={version?.id} songId={version?.songId} category="quality" hideVotes/>
+        <VoteWidget versionId={version?.id} songId={version?.songId} category="quality" hideVotes preloadedUserVote={qualityVote}/>
       </div>
       <div className="flex items-center gap-2">
-        {isSong && <VoteWidget versionId={version?.id} songId={version?.songId} category="singability" hideVotes/>}
+        {isSong && <VoteWidget versionId={version?.id} songId={version?.songId} category="singability" hideVotes preloadedUserVote={singabilityVote}/>}
       </div>
       <InlineCommentBox versionId={version?.id} existingComment={existingComment} onCommentPosted={onCommentPosted} />
     </div>

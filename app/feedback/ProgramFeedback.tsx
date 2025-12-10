@@ -34,6 +34,14 @@ type Comment = {
   created_at: string;
 };
 
+type Vote = {
+  version_id: string;
+  weight: number;
+  type: string;
+  category: string;
+  created_at: string;
+};
+
 type SimpleProgramProps = {
   initialProgramId?: string;
 };
@@ -41,7 +49,7 @@ type SimpleProgramProps = {
 type PrivacyMode = 'private' | 'anonymous' | 'public';
 
 export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
-  const { userName } = useUser();
+  const { userId, userName } = useUser();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [versions, setVersions] = useState<VersionOption[]>([]);
   const [isLoadingPrograms, setIsLoadingPrograms] = useState(true);
@@ -51,6 +59,7 @@ export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
   const [versionCache, setVersionCache] = useState<Record<string, FullVersion>>({});
   const [userComments, setUserComments] = useState<Record<string, Comment[]>>({});
+  const [userVotes, setUserVotes] = useState<Record<string, Vote[]>>({});
 
   const loadPrograms = useCallback(async () => {
     setIsLoadingPrograms(true);
@@ -119,6 +128,40 @@ export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
     };
     loadVersionsContent();
   }, [versions]);
+
+  const loadUserFeedback = useCallback(async () => {
+    if (!selectedProgramId || !userId) return;
+    try {
+      const response = await fetch(`/api/programs/user-feedback?programId=${selectedProgramId}&userId=${encodeURIComponent(userId)}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to load user feedback');
+      }
+      const data = await response.json();
+      const commentsMap: Record<string, Comment[]> = {};
+      data.comments?.forEach((comment: Comment) => {
+        if (!commentsMap[comment.version_id]) {
+          commentsMap[comment.version_id] = [];
+        }
+        commentsMap[comment.version_id].push(comment);
+      });
+      const votesMap: Record<string, Vote[]> = {};
+      data.votes?.forEach((vote: Vote) => {
+        if (!votesMap[vote.version_id]) {
+          votesMap[vote.version_id] = [];
+        }
+        votesMap[vote.version_id].push(vote);
+      });
+      setUserComments(commentsMap);
+      setUserVotes(votesMap);
+    } catch (err) {
+      console.error('Failed to load user feedback:', err);
+    }
+  }, [selectedProgramId, userId]);
+
+  useEffect(() => {
+    loadUserFeedback();
+  }, [loadUserFeedback]);
 
   const loading = isLoadingPrograms || isLoadingVersions;
 
@@ -241,6 +284,7 @@ export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
                 {selectedProgram.elementIds.map((elementId, index) => {
                   const version = versionMap[elementId];
                   const existingComment = userComments[elementId]?.[0] || null;
+                  const votes = userVotes[elementId] || [];
                   return (
                     <FeedbackItem
                       key={elementId}
@@ -250,6 +294,7 @@ export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
                       isSelected={selectedVersionId === elementId}
                       existingComment={existingComment}
                       onCommentPosted={handleCommentPosted(elementId)}
+                      userVotes={votes}
                     />
                   );
                 })}
@@ -271,6 +316,7 @@ export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
                     {subProgram.elementIds.map((elementId, index) => {
                       const version = versionMap[elementId];
                       const existingComment = userComments[elementId]?.[0] || null;
+                      const votes = userVotes[elementId] || [];
                       return (
                         <FeedbackItem
                           key={elementId}
@@ -280,6 +326,7 @@ export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
                           isSelected={selectedVersionId === elementId}
                           existingComment={existingComment}
                           onCommentPosted={handleCommentPosted(elementId)}
+                          userVotes={votes}
                         />
                       );
                     })}

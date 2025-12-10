@@ -11,13 +11,13 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const versionId = searchParams.get('versionId');
     const category = searchParams.get('category');
-    const userName = searchParams.get('userName'); // Optional: for checking if user has voted
+    const userId = searchParams.get('userId'); // Optional: for checking if user has voted
 
     if (!versionId) {
       return NextResponse.json({ error: 'versionId is required' }, { status: 400 });
     }
 
-    const summary = await getVotesSummary(versionId, category || undefined, userName || undefined);
+    const summary = await getVotesSummary(versionId, category || undefined, userId || undefined);
     return NextResponse.json(summary);
   } catch (error) {
     console.error('Failed to load votes:', error);
@@ -28,10 +28,14 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { versionId, songId, name, weight, type, category } = body;
+    const { versionId, songId, userId, name, weight, type, category } = body;
 
     if (!versionId) {
       return NextResponse.json({ error: 'versionId is required' }, { status: 400 });
+    }
+
+    if (!userId || typeof userId !== 'string') {
+      return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
 
     if (!name || typeof name !== 'string' || name.trim().length < 3) {
@@ -62,13 +66,14 @@ export async function POST(request: Request) {
     await upsertVote({
       versionId,
       songId: resolvedSongId,
+      userId,
       name: name.trim(),
       weight,
       type,
       category,
     });
 
-    const summary = await getVotesSummary(versionId, category, name.trim());
+    const summary = await getVotesSummary(versionId, category, userId);
     return NextResponse.json(summary);
   } catch (error) {
     console.error('Failed to save vote:', error);
@@ -80,25 +85,25 @@ export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const versionId = searchParams.get('versionId');
-    const name = searchParams.get('name');
+    const userId = searchParams.get('userId');
     const category = searchParams.get('category');
 
     if (!versionId) {
       return NextResponse.json({ error: 'versionId is required' }, { status: 400 });
     }
 
-    if (!name || name.trim().length < 3) {
-      return NextResponse.json({ error: 'name is required and must be at least 3 characters' }, { status: 400 });
+    if (!userId) {
+      return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
 
     if (!category || !VALID_CATEGORIES.has(category)) {
       return NextResponse.json({ error: 'category is invalid' }, { status: 400 });
     }
 
-    await deleteVote(versionId, name.trim(), category);
+    await deleteVote(versionId, userId, category);
 
-    // CRITICAL: Pass username to get user's vote status, but never send names in response
-    const summary = await getVotesSummary(versionId, category, name.trim());
+    // Pass userId to get user's vote status
+    const summary = await getVotesSummary(versionId, category, userId);
     return NextResponse.json(summary);
   } catch (error) {
     console.error('Failed to delete vote:', error);

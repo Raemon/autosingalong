@@ -36,8 +36,24 @@ export const voteOptions: Record<string, VoteOption[]> = {
   ],
 };
 
-const VoteWidget = ({ versionId, songId, category, hideVotes = false }: {versionId: string; songId: string, category: 'quality' | 'singability', hideVotes?: boolean}) => {
-  const { userName } = useUser();
+export type PreloadedVote = {
+  version_id: string;
+  weight: number;
+  type: string;
+  category: string;
+  created_at: string;
+};
+
+export type VoteWidgetProps = {
+  versionId: string;
+  songId: string;
+  category: 'quality' | 'singability';
+  hideVotes?: boolean;
+  preloadedUserVote?: PreloadedVote | null;
+};
+
+const VoteWidget: React.FC<VoteWidgetProps> = ({ versionId, songId, category, hideVotes = false, preloadedUserVote }) => {
+  const { userId, userName } = useUser();
   const [votes, setVotes] = useState<VoteRecord[]>([]);
   const [currentUserVote, setCurrentUserVote] = useState<VoteRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,12 +61,14 @@ const VoteWidget = ({ versionId, songId, category, hideVotes = false }: {version
   const [error, setError] = useState<string | null>(null);
 
   const loadVotes = useCallback(async () => {
-    if (hideVotes) return
+    if (hideVotes) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
-      const trimmedName = userName.trim();
-      const userParam = trimmedName.length >= 3 ? `&userName=${encodeURIComponent(trimmedName)}` : '';
+      const userParam = userId ? `&userId=${encodeURIComponent(userId)}` : '';
       const response = await fetch(`/api/votes?versionId=${versionId}&category=${category}${userParam}`);
       if (!response.ok) {
         throw new Error('Failed to load votes');
@@ -65,16 +83,35 @@ const VoteWidget = ({ versionId, songId, category, hideVotes = false }: {version
     } finally {
       setIsLoading(false);
     }
-  }, [versionId, category, userName]);
+  }, [versionId, category, userId, hideVotes]);
 
   useEffect(() => {
     loadVotes();
   }, [loadVotes]);
 
+  useEffect(() => {
+    if (preloadedUserVote) {
+      setCurrentUserVote({
+        id: preloadedUserVote.version_id,
+        weight: preloadedUserVote.weight,
+        type: preloadedUserVote.type,
+        versionId: preloadedUserVote.version_id,
+        songId: songId,
+        createdAt: preloadedUserVote.created_at,
+        category: preloadedUserVote.category,
+      });
+    }
+  }, [preloadedUserVote, songId]);
+
   const handleVote = async (option: { weight: number; label: string; }) => {
     const trimmedName = userName.trim();
     if (trimmedName.length < 3) {
       setError('Set your name (3+ chars) to vote');
+      return;
+    }
+
+    if (!userId) {
+      setError('User not authenticated');
       return;
     }
 
@@ -89,7 +126,7 @@ const VoteWidget = ({ versionId, songId, category, hideVotes = false }: {version
       setIsSaving(true);
 
       try {
-        const response = await fetch(`/api/votes?versionId=${versionId}&name=${encodeURIComponent(trimmedName)}&category=${category}`, {
+        const response = await fetch(`/api/votes?versionId=${versionId}&userId=${encodeURIComponent(userId)}&category=${category}`, {
           method: 'DELETE',
         });
 
@@ -132,6 +169,7 @@ const VoteWidget = ({ versionId, songId, category, hideVotes = false }: {version
         body: JSON.stringify({
           versionId,
           songId,
+          userId,
           name: trimmedName,
           weight: option.weight,
           type: option.label,
@@ -215,3 +253,4 @@ const VoteDots = ({votes, isLoading}: {votes: VoteRecord[]; isLoading: boolean})
 };
 
 export default VoteWidget;
+

@@ -26,7 +26,7 @@ const InlineCommentBox = ({ versionId, existingComment, onCommentPosted }: Inlin
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { userName } = useUser();
+  const { userId, userName } = useUser();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -51,7 +51,7 @@ const InlineCommentBox = ({ versionId, existingComment, onCommentPosted }: Inlin
 
   const submitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim() || !userName || isSubmitting) return;
+    if (!newComment.trim() || !userName || !userId || isSubmitting) return;
 
     setIsSubmitting(true);
     setError(null);
@@ -65,6 +65,7 @@ const InlineCommentBox = ({ versionId, existingComment, onCommentPosted }: Inlin
         body: JSON.stringify({
           versionId: versionId,
           content: newComment.trim(),
+          userId: userId,
           createdBy: userName,
         }),
       });

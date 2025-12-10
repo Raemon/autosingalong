@@ -80,16 +80,17 @@ export const listVotesForVersion = async (versionId: string, category?: string):
   return rows as VoteRecord[];
 };
 
-export const upsertVote = async (params: { versionId: string; songId: string; name: string; weight: number; type: string; category: string }): Promise<VoteRecord> => {
+export const upsertVote = async (params: { versionId: string; songId: string; userId: string; name: string; weight: number; type: string; category: string }): Promise<VoteRecord> => {
   const hasSongId = await ensureSongIdColumn();
   if (hasSongId) {
     const rows = await sql`
-      insert into votes (name, weight, type, version_id, song_id, category)
-      values (${params.name}, ${params.weight}, ${params.type}, ${params.versionId}, ${params.songId}, ${params.category})
+      insert into votes (name, user_id, weight, type, version_id, song_id, category)
+      values (${params.name}, ${params.userId}, ${params.weight}, ${params.type}, ${params.versionId}, ${params.songId}, ${params.category})
       on conflict (version_id, name, category) do update
         set weight = excluded.weight,
             type = excluded.type,
             song_id = excluded.song_id,
+            user_id = excluded.user_id,
             created_at = now()
       returning id, name, weight, type, version_id as "versionId", song_id as "songId", created_at as "createdAt", category
     `;
@@ -104,8 +105,8 @@ export const upsertVote = async (params: { versionId: string; songId: string; na
       returning 1
     ),
     inserted as (
-      insert into votes (name, weight, type, version_id, category)
-      values (${params.name}, ${params.weight}, ${params.type}, ${params.versionId}, ${params.category})
+      insert into votes (name, user_id, weight, type, version_id, category)
+      values (${params.name}, ${params.userId}, ${params.weight}, ${params.type}, ${params.versionId}, ${params.category})
       returning id, name, weight, type, version_id as "versionId", created_at as "createdAt", category
     )
     select * from inserted
@@ -114,11 +115,11 @@ export const upsertVote = async (params: { versionId: string; songId: string; na
   return { ...vote, songId: params.songId };
 };
 
-export const deleteVote = async (versionId: string, name: string, category: string): Promise<void> => {
+export const deleteVote = async (versionId: string, userId: string, category: string): Promise<void> => {
   await sql`
     delete from votes
     where version_id = ${versionId}
-      and name = ${name}
+      and user_id = ${userId}
       and category = ${category}
   `;
 };
@@ -139,21 +140,29 @@ export const assertNoNames = (votes: any[]): votes is PublicVoteRecord[] => {
   return true;
 };
 
-export const getVotesSummary = async (versionId: string, category?: string, currentUserName?: string): Promise<{ votes: PublicVoteRecord[]; total: number; hasVoted: boolean; currentUserVote?: PublicVoteRecord; }> => {
+export const getVotesSummary = async (versionId: string, category?: string, currentUserId?: string): Promise<{ votes: PublicVoteRecord[]; total: number; hasVoted: boolean; currentUserVote?: PublicVoteRecord; }> => {
   const votes = await listVotesForVersion(versionId, category);
   const total = sumBy(votes, 'weight');
   
   // CRITICAL: NEVER send names in the API response
   const publicVotes = stripVoteNames(votes);
   
-  // Check if current user has voted (if username provided)
+  // Check if current user has voted (if userId provided)
   let hasVoted = false;
   let currentUserVote: PublicVoteRecord | undefined;
-  if (currentUserName) {
-    const userVote = votes.find(v => v.name === currentUserName);
-    if (userVote) {
+  if (currentUserId) {
+    // First check by user_id, then fall back to name for backwards compatibility
+    const userVoteById = await sql`
+      select id, weight, type, version_id as "versionId", song_id as "songId", created_at as "createdAt", category
+      from votes
+      where version_id = ${versionId}
+        and user_id = ${currentUserId}
+        ${category ? sql`and category = ${category}` : sql``}
+      limit 1
+    `;
+    if (userVoteById.length > 0) {
       hasVoted = true;
-      currentUserVote = stripVoteNames([userVote])[0];
+      currentUserVote = userVoteById[0] as PublicVoteRecord;
     }
   }
   

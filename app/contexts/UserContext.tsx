@@ -11,6 +11,7 @@ type User = {
 
 type UserContextType = {
   user: User | null;
+  userId: string | null;
   userName: string;
   setUserName: (name: string) => void;
   canEdit: boolean;
@@ -100,7 +101,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const canEdit = userName.length >= 3;
 
   return (
-    <UserContext.Provider value={{ user, userName, setUserName, canEdit, loading }}>
+    <UserContext.Provider value={{ user, userId: user?.id || null, userName, setUserName, canEdit, loading }}>
       {children}
     </UserContext.Provider>
   );
