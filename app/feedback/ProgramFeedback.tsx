@@ -5,6 +5,8 @@ import type { Program } from '../programs/types';
 import FeedbackElement, { gridCols } from './components/FeedbackElement';
 import FeedbackDetail from './components/FeedbackDetail';
 import PrivacySettings from './components/PrivacySettings';
+import UsernameInput from './components/UsernameInput';
+import Link from 'next/link';
 
 type VersionOption = {
   id: string;
@@ -190,7 +192,13 @@ const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
           )}
         <div className="flex flex-col gap-1 w-full lg:max-w-4xl mx-auto">
           <h2 className="text-4xl text-center my-12 font-semibold font-georgia">{selectedProgram?.title} Feedback</h2>
-          <p className="text-center text-gray-400">All responses are public but anonymous except to site admins.</p>
+          <p className="text-center text-gray-400">
+            All responses are public, and anonymous except to site admins.<br/>
+            Choose a random name if you want to be anonymous to admins.<br/>
+          </p>
+          <div className="flex justify-center my-4">
+            <UsernameInput />
+          </div>
 
           {/* <div className="mb-4">
             <select
@@ -256,8 +264,10 @@ const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
               );
             })}
           </div>
-        </div>
+          <p className="text-center text-gray-400">View Results <Link href={`/programs/${selectedProgram?.id}/results`} className="text-blue-500 hover:underline">here</Link>
+        </p>
 
+        </div>
       </div>
     </div>
   );
