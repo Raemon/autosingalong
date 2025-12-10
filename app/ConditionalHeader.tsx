@@ -5,7 +5,8 @@ import Header from './Header';
 
 const ConditionalHeader = () => {
   const pathname = usePathname();
-  const hideHeader = pathname === '/feedback' || pathname?.includes('/results');
+  console.log(pathname);
+  const hideHeader = pathname.includes('/feedback') || pathname?.includes('/results');
   if (hideHeader) return null;
   return <Header />;
 };

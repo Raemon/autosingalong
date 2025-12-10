@@ -93,7 +93,7 @@ const InlineCommentBox = ({ versionId, onCommentPosted }: InlineCommentBoxProps)
   }
 
   return (
-    <form onSubmit={submitComment} className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+    <form onSubmit={submitComment} className="w-full h-full" onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }}>
       <textarea
         ref={textareaRef}
         value={newComment}

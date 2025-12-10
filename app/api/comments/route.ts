@@ -5,12 +5,31 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const songId = searchParams.get('songId');
+    const songIds = searchParams.get('songIds');
 
-    if (!songId) {
-      return NextResponse.json({ error: 'songId is required' }, { status: 400 });
+    if (!songId && !songIds) {
+      return NextResponse.json({ error: 'songId or songIds is required' }, { status: 400 });
     }
 
-    // Get all comments for versions of this song
+    // Handle batch request with multiple songIds
+    if (songIds) {
+      const songIdArray = songIds.split(',').filter(Boolean);
+      if (songIdArray.length === 0) {
+        return NextResponse.json({ error: 'songIds cannot be empty' }, { status: 400 });
+      }
+
+      const result = await sql`
+        SELECT c.id, c.version_id, c.content, c.created_by, c.created_at, sv.label as version_label
+        FROM comments c
+        JOIN song_versions sv ON c.version_id = sv.id
+        WHERE sv.song_id = ANY(${songIdArray}) AND sv.archived = false
+        ORDER BY c.created_at DESC
+      `;
+
+      return NextResponse.json(result);
+    }
+
+    // Handle single songId request
     const result = await sql`
       SELECT c.id, c.version_id, c.content, c.created_by, c.created_at, sv.label as version_label
       FROM comments c

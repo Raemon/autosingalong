@@ -11,12 +11,13 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const versionId = searchParams.get('versionId');
     const category = searchParams.get('category');
+    const userName = searchParams.get('userName'); // Optional: for checking if user has voted
 
     if (!versionId) {
       return NextResponse.json({ error: 'versionId is required' }, { status: 400 });
     }
 
-    const summary = await getVotesSummary(versionId, category || undefined);
+    const summary = await getVotesSummary(versionId, category || undefined, userName || undefined);
     return NextResponse.json(summary);
   } catch (error) {
     console.error('Failed to load votes:', error);
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
       category,
     });
 
-    const summary = await getVotesSummary(versionId, category);
+    const summary = await getVotesSummary(versionId, category, name.trim());
     return NextResponse.json(summary);
   } catch (error) {
     console.error('Failed to save vote:', error);
@@ -96,7 +97,8 @@ export async function DELETE(request: Request) {
 
     await deleteVote(versionId, name.trim(), category);
 
-    const summary = await getVotesSummary(versionId, category);
+    // CRITICAL: Pass username to get user's vote status, but never send names in response
+    const summary = await getVotesSummary(versionId, category, name.trim());
     return NextResponse.json(summary);
   } catch (error) {
     console.error('Failed to delete vote:', error);

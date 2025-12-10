@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Program } from '../programs/types';
-import FeedbackElement, { gridCols } from './components/FeedbackElement';
+import FeedbackItem, { gridCols } from './components/FeedbackItem';
 import FeedbackDetail from './components/FeedbackDetail';
 import UsernameInput from './components/UsernameInput';
 import ProgramTitle from './components/ProgramTitle';
@@ -233,7 +233,7 @@ export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
                 {selectedProgram.elementIds.map((elementId, index) => {
                   const version = versionMap[elementId];
                   return (
-                    <FeedbackElement
+                    <FeedbackItem
                       key={elementId}
                       version={version}
                       index={index}
@@ -260,7 +260,7 @@ export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
                     {subProgram.elementIds.map((elementId, index) => {
                       const version = versionMap[elementId];
                       return (
-                        <FeedbackElement
+                        <FeedbackItem
                           key={elementId}
                           version={version}
                           index={index}

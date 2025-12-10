@@ -12,6 +12,16 @@ export type VoteRecord = {
   category: string;
 };
 
+export type PublicVoteRecord = {
+  id: string;
+  weight: number;
+  type: string;
+  versionId: string;
+  songId: string;
+  createdAt: string;
+  category: string;
+};
+
 let hasSongIdColumn: boolean | null = null;
 
 const ensureSongIdColumn = async (): Promise<boolean> => {
@@ -113,8 +123,45 @@ export const deleteVote = async (versionId: string, name: string, category: stri
   `;
 };
 
-export const getVotesSummary = async (versionId: string, category?: string): Promise<{ votes: VoteRecord[]; total: number; }> => {
+// CRITICAL: Strip names from votes before sending over API
+// This function ensures voter privacy by removing identifying information
+const stripVoteNames = (votes: VoteRecord[]): PublicVoteRecord[] => {
+  return votes.map(({ name, ...rest }) => rest);
+};
+
+// Type guard to ensure a vote record does not contain a name field
+// Use this before sending any vote data over the API
+export const assertNoNames = (votes: any[]): votes is PublicVoteRecord[] => {
+  const hasName = votes.some(vote => 'name' in vote && vote.name !== undefined);
+  if (hasName) {
+    throw new Error('CRITICAL PRIVACY VIOLATION: Attempted to send vote names over API!');
+  }
+  return true;
+};
+
+export const getVotesSummary = async (versionId: string, category?: string, currentUserName?: string): Promise<{ votes: PublicVoteRecord[]; total: number; hasVoted: boolean; currentUserVote?: PublicVoteRecord; }> => {
   const votes = await listVotesForVersion(versionId, category);
   const total = sumBy(votes, 'weight');
-  return { votes, total };
+  
+  // CRITICAL: NEVER send names in the API response
+  const publicVotes = stripVoteNames(votes);
+  
+  // Check if current user has voted (if username provided)
+  let hasVoted = false;
+  let currentUserVote: PublicVoteRecord | undefined;
+  if (currentUserName) {
+    const userVote = votes.find(v => v.name === currentUserName);
+    if (userVote) {
+      hasVoted = true;
+      currentUserVote = stripVoteNames([userVote])[0];
+    }
+  }
+  
+  // CRITICAL: Assert that no names are being returned (runtime safety check)
+  assertNoNames(publicVotes);
+  if (currentUserVote) {
+    assertNoNames([currentUserVote]);
+  }
+  
+  return { votes: publicVotes, total, hasVoted, currentUserVote };
 };
