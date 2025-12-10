@@ -255,12 +255,12 @@ export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
           <p className="text-center text-gray-400">
             All responses are public, and anonymous except to site admins.<br/>
             Choose a random name if you want to be anonymous to admins.<br/>
+            Responses are logged immediately. You can edit later.
           </p>
-          <div className="flex justify-center my-4">
+                    <div className="flex justify-center items-center my-4">
             <label htmlFor="username-input" className="text-sm text-gray-400 mr-2">Your name:</label>
             <UsernameInput />
           </div>
-
           {/* <div className="mb-4">
             <select
               value={selectedProgramId || ''}

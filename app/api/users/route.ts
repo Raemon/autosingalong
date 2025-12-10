@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const result = await sql`SELECT id, username, is_guest, created_at FROM users WHERE id = ${userId}`;
+    const result = await sql`SELECT id, username, created_at FROM users WHERE id = ${userId}`;
     
     if (result.length === 0) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -30,8 +30,7 @@ export async function POST(request: NextRequest) {
 
     // Generate a random username if none provided
     const usernameValue = username || generateUsername();
-    const isGuest = !username;
-    const result = await sql`INSERT INTO users (username, is_guest) VALUES (${usernameValue}, ${isGuest}) RETURNING id, username, is_guest, created_at`;
+    const result = await sql`INSERT INTO users (username) VALUES (${usernameValue}) RETURNING id, username, created_at`;
 
     return NextResponse.json(result[0]);
   } catch (error) {
@@ -49,7 +48,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'userId and username are required' }, { status: 400 });
     }
 
-    const result = await sql`UPDATE users SET username = ${username}, is_guest = false WHERE id = ${userId} RETURNING id, username, is_guest, created_at`;
+    const result = await sql`UPDATE users SET username = ${username} WHERE id = ${userId} RETURNING id, username, created_at`;
     
     if (result.length === 0) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });

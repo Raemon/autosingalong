@@ -195,8 +195,8 @@ const FeedbackResults = ({ programId }: FeedbackResultsProps) => {
               })
             )}
           </div>
-          <div className="text-base">
-            {singabilityAvg > 0 ? singabilityAvg.toFixed(1) : '-'}
+          <div className="text-sm">
+            {singabilityAvg > 0 ? `${(singabilityAvg).toFixed(0)}/3` : <span className="text-gray-400 text-[11px]">No votes</span>}
           </div>
           <div className="text-base flex-2 w-full">
             {versionComments.length > 0 && (

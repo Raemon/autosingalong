@@ -5,9 +5,9 @@ import { useUser } from '../../contexts/UserContext';
 
 const UsernameInput = () => {
   const { userName, setUserName, user } = useUser();
-  
+  console.log(user);
   return (
-    <Tooltip content={user?.id || 'Loading...'} placement="bottom">  
+    // <Tooltip content={user?.id || 'Loading...'} placement="bottom">  
       <input
         id="username-input"
         type="text"
@@ -16,7 +16,7 @@ const UsernameInput = () => {
         placeholder="Enter your name"
         className="px-2 py-1 bg-black text-sm w-[200px] border-none radius-sm"
       />
-    </Tooltip>
+    // </Tooltip>
   );
 };
 
