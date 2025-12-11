@@ -76,7 +76,6 @@ const FeedbackItem = ({ version, index, onClick, isSelected, existingComment, on
             <FeedbackDetail
               version={version}
               content={content}
-              onClose={() => setSelected(false)}
             />
           </div>
       )}
