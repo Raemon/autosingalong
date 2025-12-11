@@ -43,7 +43,7 @@ export async function GET(request: NextRequest, {params}: {params: Promise<{id: 
 
     // Fetch votes for all element IDs in a single query
     // For each version in the program, find all versions with the same label and aggregate votes
-    const votesData: Record<string, PublicVoteRecord[]> = {};
+    const votesData: Record<string, Array<PublicVoteRecord & {userId: string | null; isPerformer: boolean}>> = {};
     if (allElementIds.length > 0 && versions.length > 0) {
       // Get all matching version IDs in a single query (for vote aggregation)
       // We need ALL versions with the same song_id and label as any program version
@@ -76,25 +76,26 @@ export async function GET(request: NextRequest, {params}: {params: Promise<{id: 
       // Collect all unique version IDs we need to query
       const allVersionIdsToQuery = [...new Set(Object.values(versionToMatchingIds).flat())];
 
-      // Fetch all votes in a single query
+      // Fetch all votes in a single query (including user_id for filtering)
       if (allVersionIdsToQuery.length > 0) {
         const allVotesResult = await sql`
           SELECT 
-            id,
-            weight,
-            type,
-            version_id as "versionId",
-            song_id as "songId",
-            created_at as "createdAt",
-            category
-          FROM votes
-          WHERE version_id = ANY(${allVersionIdsToQuery})
-          ORDER BY created_at ASC
+            v.id,
+            v.weight,
+            v.type,
+            v.version_id as "versionId",
+            v.song_id as "songId",
+            v.created_at as "createdAt",
+            v.category,
+            v.user_id as "userId"
+          FROM votes v
+          WHERE v.version_id = ANY(${allVersionIdsToQuery})
+          ORDER BY v.created_at ASC
         `;
-        const allVotes = allVotesResult as PublicVoteRecord[];
+        const allVotes = allVotesResult as Array<PublicVoteRecord & {userId: string | null}>;
 
         // Group votes by version ID
-        const votesByVersionId: Record<string, PublicVoteRecord[]> = {};
+        const votesByVersionId: Record<string, Array<PublicVoteRecord & {userId: string | null}>> = {};
         for (const vote of allVotes) {
           if (!votesByVersionId[vote.versionId]) {
             votesByVersionId[vote.versionId] = [];
@@ -102,14 +103,35 @@ export async function GET(request: NextRequest, {params}: {params: Promise<{id: 
           votesByVersionId[vote.versionId].push(vote);
         }
 
+        // Get all user IDs from votes and check which are performers
+        const userIds = [...new Set(allVotes.map(v => v.userId).filter(Boolean))];
+        const performerUserIds = new Set<string>();
+        if (userIds.length > 0) {
+          const performersResult = await sql`
+            SELECT id
+            FROM users
+            WHERE id = ANY(${userIds})
+              AND ${id} = ANY(performed_program_ids)
+          `;
+          (performersResult as Array<{id: string}>).forEach((row) => {
+            performerUserIds.add(row.id);
+          });
+        }
+
         // Aggregate votes for each element
         for (const versionId of allElementIds) {
           const matchingIds = versionToMatchingIds[versionId] || [];
-          const aggregatedVotes: PublicVoteRecord[] = [];
+          const aggregatedVotes: Array<PublicVoteRecord & {userId: string | null; isPerformer: boolean}> = [];
           
           for (const matchingId of matchingIds) {
             const votesForVersion = votesByVersionId[matchingId] || [];
-            aggregatedVotes.push(...votesForVersion);
+            votesForVersion.forEach(vote => {
+              aggregatedVotes.push({
+                ...vote,
+                userId: vote.userId,
+                isPerformer: vote.userId ? performerUserIds.has(vote.userId) : false
+              });
+            });
           }
           
           votesData[versionId] = aggregatedVotes;

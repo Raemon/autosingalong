@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { Program } from '@/app/programs/types';
-import Tooltip from '@/app/components/Tooltip';
 import ProgramTitle from '@/app/feedback/components/ProgramTitle';
 import Link from 'next/link';
+import FilterCheckbox from './FilterCheckbox';
 
-// Public vote record - user_id is never sent from API for privacy
+// Vote record with performer info for filtering
 type VoteRecord = {
   id: string;
   weight: number;
@@ -15,6 +15,8 @@ type VoteRecord = {
   songId: string;
   createdAt: string;
   category: string;
+  userId?: string | null;
+  isPerformer?: boolean;
 };
 
 type VersionOption = {
@@ -56,6 +58,9 @@ const FeedbackResults = ({ programId }: FeedbackResultsProps) => {
   const [sortBy, setSortBy] = useState<SortOption>('program');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showSongs, setShowSongs] = useState(true);
+  const [showSpeeches, setShowSpeeches] = useState(true);
+  const [showPerformerFeedback, setShowPerformerFeedback] = useState(true);
 
   useEffect(() => {
     const loadAllData = async () => {
@@ -88,7 +93,11 @@ const FeedbackResults = ({ programId }: FeedbackResultsProps) => {
   }, [versions]);
 
   const getVotesByCategory = (versionId: string, category: string) => {
-    return (votes[versionId] || []).filter(v => v.category === category);
+    let filteredVotes = (votes[versionId] || []).filter(v => v.category === category);
+    if (!showPerformerFeedback) {
+      filteredVotes = filteredVotes.filter(v => !v.isPerformer);
+    }
+    return filteredVotes;
   };
 
   const getQualityScore = (versionId: string) => {
@@ -119,7 +128,18 @@ const FeedbackResults = ({ programId }: FeedbackResultsProps) => {
   }, [allElementIds]);
 
   const sortedElementIds = useMemo(() => {
-    const ids = [...allElementIds];
+    let ids = [...allElementIds];
+    
+    // Filter by showSongs and showSpeeches
+    ids = ids.filter(id => {
+      const version = versionMap[id];
+      if (!version) return false;
+      const isSpeech = version.tags?.includes('speech');
+      if (isSpeech && !showSpeeches) return false;
+      if (!isSpeech && !showSongs) return false;
+      return true;
+    });
+    
     if (sortBy === 'quality') {
       ids.sort((a, b) => getQualityScore(b) - getQualityScore(a));
     } else if (sortBy === 'singability') {
@@ -142,7 +162,7 @@ const FeedbackResults = ({ programId }: FeedbackResultsProps) => {
       // Keep original program order (no sorting needed)
     }
     return ids;
-  }, [allElementIds, sortBy, votes, comments, positionMap]);
+  }, [allElementIds, sortBy, votes, comments, positionMap, showSongs, showSpeeches, versionMap, showPerformerFeedback]);
 
   if (isLoading) {
     return <div>loading...</div>;
@@ -238,6 +258,12 @@ const FeedbackResults = ({ programId }: FeedbackResultsProps) => {
       <div className="max-w-5xl mx-auto">
         <ProgramTitle title={program.title} suffix="Results" />
 
+        <div className="flex gap-4 text-sm justify-center mb-12 text-gray-500">
+          <FilterCheckbox checked={showSongs} onChange={() => setShowSongs(!showSongs)} label="Songs" />
+          <FilterCheckbox checked={showSpeeches} onChange={() => setShowSpeeches(!showSpeeches)} label="Speeches" />
+          <FilterCheckbox checked={showPerformerFeedback} onChange={() => setShowPerformerFeedback(!showPerformerFeedback)} label="Performer Feedback" tooltip="Show feedback from people who performed at this program" />
+        </div>
+
         {allElementIds.length > 0 && (
           <div className="mb-8">
             <div className="grid items-center gap-4 text-sm px-2 py-1 border-b border-gray-700 text-gray-400 font-medium" style={{ gridTemplateColumns: gridColumns }}>
@@ -250,7 +276,10 @@ const FeedbackResults = ({ programId }: FeedbackResultsProps) => {
             {sortedElementIds.map(renderSongRow)}
           </div>
         )}
-        <Link href={`/feedback/${programId}`} className="text-primary hover:underline block text-center my-24">Back to Feedback</Link>
+        <div className="flex justify-center">
+          <Link href={`/feedback/${programId}`} className="text-primary hover:underline block text-center my-24 outline outline-1 outline-gray-500 rounded-md px-4 py-2">Back to Feedback</Link>
+
+        </div>
       </div>
     </div>
   );
