@@ -25,11 +25,11 @@ type SongVersion = {
 
 type FeedbackDetailProps = {
   version: VersionOption;
-  onClose: () => void;
   cachedVersion?: SongVersion;
+  content?: string;
 };
 
-const FeedbackDetail = ({ version, onClose, cachedVersion }: FeedbackDetailProps) => {
+const FeedbackDetail = ({ version, cachedVersion, content="" }: FeedbackDetailProps) => {
   const [fullVersion, setFullVersion] = useState<SongVersion | null>(cachedVersion || null);
   const [loading, setLoading] = useState(!cachedVersion);
   const [error, setError] = useState<string | null>(null);
@@ -60,8 +60,6 @@ const FeedbackDetail = ({ version, onClose, cachedVersion }: FeedbackDetailProps
     loadVersion();
   }, [version.id, cachedVersion]);
 
-  const isSpeech = version.tags?.includes('speech');
-  const content = fullVersion?.content || '';
   const fileType = detectFileType(fullVersion?.label || version.label, content);
   const isChordmarkFile = fileType === 'chordmark';
   const chordmarkRender = useMemo(() => isChordmarkFile ? generateChordmarkRenderedContent(content) : null, [isChordmarkFile, content]);

@@ -18,7 +18,7 @@ type VersionOption = {
   tags: string[];
 };
 
-type FullVersion = {
+export type FullVersion = {
   id: string;
   songId: string;
   label: string;
@@ -241,15 +241,6 @@ export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
   return (
     <div className="p-4">
       <div className="flex gap-4">
-        {selectedVersion && (
-            <div className="flex-1 max-w-xl">
-              <FeedbackDetail
-                version={selectedVersion}
-                onClose={() => setSelectedVersionId(null)}
-                cachedVersion={versionCache[selectedVersion.id]}
-              />
-            </div>
-          )}
         <div className="flex flex-col gap-1 w-full lg:max-w-4xl mx-auto">
           <ProgramTitle title={selectedProgram?.title || ''} suffix="Feedback" />
           <p className="text-center text-white mt-9 mb-2">
@@ -278,7 +269,7 @@ export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
           <div>
             {selectedProgram?.elementIds && selectedProgram.elementIds.length > 0 && (
               <>
-                <div className="hidden md:grid grid-cols-[275px_310px_200px_1fr] items-center gap-4 text-sm px-2 py-1 border-b border-gray-700 text-gray-400 font-medium">
+                <div className="hidden md:grid grid-cols-[20px_275px_310px_200px_1fr] items-center gap-4 text-sm px-2 py-1 border-b border-gray-700 text-gray-400 font-medium">
                   <div>Song/Speech</div>
                   <div className="pl-1">Quality</div>
                   <div className="pl-2">Singability</div>
@@ -324,6 +315,7 @@ export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
                         <FeedbackItem
                           key={elementId}
                           version={version}
+                          content={versionCache[elementId]?.content || ''}
                           index={index}
                           onClick={() => setSelectedVersionId(elementId)}
                           isSelected={selectedVersionId === elementId}

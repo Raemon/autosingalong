@@ -176,16 +176,17 @@ const FeedbackResults = ({ programId }: FeedbackResultsProps) => {
           <div className={`font-georgia text-base ${isSpeech ? 'italic' : ''}`}>
             {version.songTitle}
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 max-w-[200px] flex-wrap">
             {qualityVotes.length === 0 ? (
               <span className="text-gray-400 text-[11px]">No votes</span>
             ) : (
-              qualityVotes.map((vote) => {
+              qualityVotes.sort((a, b) => b.weight - a.weight).map((vote) => {
                 const size = Math.abs(vote.weight) === 3 ? 12 : 6;
                 const color = vote.weight > 0 ? 'var(--primary)' : vote.weight === 0 ? '#fff' : '#9ca3af';
                 const tooltip = `${vote.type} (${vote.weight > 0 ? '+' : ''}${vote.weight})`;
                 return (
                     <span
+                      key={vote.id}
                       className="inline-block rounded-full"
                       title={tooltip}
                       style={{ width: `${size}px`, height: `${size}px`, backgroundColor: color }}
