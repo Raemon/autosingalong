@@ -42,19 +42,35 @@ export async function GET(request: NextRequest, {params}: {params: Promise<{id: 
     ];
 
     // Fetch votes for all element IDs
+    // For each version in the program, find all versions with the same label and aggregate votes
     // listVotesForVersion already excludes user_id for privacy
     const votesData: Record<string, PublicVoteRecord[]> = {};
     if (allElementIds.length > 0) {
       await Promise.all(
         allElementIds.map(async (versionId) => {
-          const [qualityVotes, singabilityVotes] = await Promise.all([
-            listVotesForVersion(versionId, 'quality'),
-            listVotesForVersion(versionId, 'singability')
-          ]);
-          votesData[versionId] = [
-            ...qualityVotes,
-            ...singabilityVotes
-          ];
+          const version = versions.find(v => v.id === versionId);
+          if (!version) {
+            votesData[versionId] = [];
+            return;
+          }
+
+          // Find all versions with the same label (for the same song)
+          const matchingVersionIds = versions
+            .filter(v => v.songId === version.songId && v.label === version.label)
+            .map(v => v.id);
+
+          // Fetch votes for all matching versions
+          const allVotesForLabel = await Promise.all(
+            matchingVersionIds.flatMap(async (matchingVersionId) => {
+              const [qualityVotes, singabilityVotes] = await Promise.all([
+                listVotesForVersion(matchingVersionId, 'quality'),
+                listVotesForVersion(matchingVersionId, 'singability')
+              ]);
+              return [...qualityVotes, ...singabilityVotes];
+            })
+          );
+
+          votesData[versionId] = allVotesForLabel.flat();
         })
       );
     }
