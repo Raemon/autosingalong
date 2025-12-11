@@ -25,6 +25,7 @@ const MyTooltip = ({
   noBox = false,
   wrapperClassName = '',
   noMargin=true,
+  inlineBlock = false,
 }: {
   children: ReactElement;
   content: React.ReactNode;
@@ -34,6 +35,7 @@ const MyTooltip = ({
   noBox?: boolean;
   wrapperClassName?: string;
   noMargin?: boolean;
+  inlineBlock?: boolean;
 }) => {
 
   const positionClasses = placement.includes('top')
@@ -70,7 +72,7 @@ const MyTooltip = ({
 
   return (
     <span
-      className={`relative inline-block group focus:outline-none ${wrapperClassName}`}
+      className={`relative ${inlineBlock ? 'inline-block' : 'inline'} group focus:outline-none ${wrapperClassName}`}
       tabIndex={0}
     >
       {children}

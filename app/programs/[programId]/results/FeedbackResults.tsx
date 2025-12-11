@@ -185,22 +185,23 @@ const FeedbackResults = ({ programId }: FeedbackResultsProps) => {
                 const color = vote.weight > 0 ? 'var(--primary)' : vote.weight === 0 ? '#fff' : '#9ca3af';
                 const tooltip = `${vote.type} (${vote.weight > 0 ? '+' : ''}${vote.weight})`;
                 return (
-                  <Tooltip key={vote.id} content={tooltip}>
                     <span
                       className="inline-block rounded-full"
+                      title={tooltip}
                       style={{ width: `${size}px`, height: `${size}px`, backgroundColor: color }}
                     />
-                  </Tooltip>
                 );
               })
             )}
           </div>
           <div className="text-sm">
-            {singabilityAvg > 0 ? `${(singabilityAvg).toFixed(0)}/3` : <span className="text-gray-400 text-[11px]">No votes</span>}
+            {singabilityAvg > 0 ? `${(singabilityAvg).toFixed(0)}/3` : <span className="text-gray-400 text-[11px]">
+                {!isSpeech && 'No votes'}
+              </span>}
           </div>
           <div className="text-base flex-2 w-full">
             {versionComments.length > 0 && (
-            <div className="mt-2 ml-2 space-y-1">
+            <div className="space-y-3">
               {versionComments.map((comment) => (
                 <div key={comment.id} className="text-xs text-gray-300">
                   {comment.content}
