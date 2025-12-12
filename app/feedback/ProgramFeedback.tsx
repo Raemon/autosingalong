@@ -268,7 +268,7 @@ export const ProgramFeedback = ({ initialProgramId }: SimpleProgramProps) => {
           </div>
           <div className="flex justify-center items-center flex-col gap-2 mb-4">
             <PerformerCheckbox programId={selectedProgramId} /> 
-            {user?.performed_program_ids.includes(selectedProgramId) && <div className="text-gray-300 text-[13px]">(Please enter your name)</div>}
+            {user?.performed_program_ids.includes(selectedProgramId) && <div className="text-gray-500 text-[13px]">(Please enter your name, or at least something only a performer would know)</div>}
           </div>
           {/* <div className="mb-4">
             <select 
