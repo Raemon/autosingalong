@@ -55,6 +55,7 @@ const FeedbackResults = ({ programId }: FeedbackResultsProps) => {
   const [versions, setVersions] = useState<VersionOption[]>([]);
   const [votes, setVotes] = useState<Record<string, VoteRecord[]>>({});
   const [comments, setComments] = useState<Record<string, Comment[]>>({});
+  const [showComments, setShowComments] = useState(true);
   const [sortBy, setSortBy] = useState<SortOption>('program');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -210,7 +211,7 @@ const FeedbackResults = ({ programId }: FeedbackResultsProps) => {
           <div className={`font-georgia text-base ${isSpeech ? 'italic' : ''}`}>
             {version.songTitle}
           </div>
-          <div className="flex items-center gap-1 max-w-[200px] flex-wrap">
+          <div className="flex items-center gap-1 flex-wrap">
             {qualityVotes.length === 0 ? (
               <span className="text-gray-400 text-[11px]">No votes</span>
             ) : (
@@ -234,7 +235,7 @@ const FeedbackResults = ({ programId }: FeedbackResultsProps) => {
                 {!isSpeech && 'No votes'}
               </span>}
           </div>
-          <div className="text-base flex-2 w-full">
+          {showComments && <div className="text-base flex-2 w-full">
             {versionComments.length > 0 && (
             <div className="space-y-3">
               {versionComments.map((comment) => (
@@ -244,13 +245,13 @@ const FeedbackResults = ({ programId }: FeedbackResultsProps) => {
               ))}
             </div>
           )}
-          </div>
+          </div>}
         </div>
       </div>
     );
   };
 
-  const gridColumns = '25px 300px 1fr 50px 2fr';
+  const gridColumns = showComments ? '25px 300px 1fr 50px 2fr' : '25px 300px 1fr 50px';
 
 
   return (
@@ -262,6 +263,8 @@ const FeedbackResults = ({ programId }: FeedbackResultsProps) => {
           <FilterCheckbox checked={showSongs} onChange={() => setShowSongs(!showSongs)} label="Songs" />
           <FilterCheckbox checked={showSpeeches} onChange={() => setShowSpeeches(!showSpeeches)} label="Speeches" />
           <FilterCheckbox checked={showPerformerFeedback} onChange={() => setShowPerformerFeedback(!showPerformerFeedback)} label="Performer Feedback" tooltip="Show feedback from people who performed at this program" />
+          <FilterCheckbox checked={showComments} onChange={() => setShowComments(!showComments)} label="Comments" tooltip="Show comments from people who performed at this program" />
+
         </div>
 
         {allElementIds.length > 0 && (
