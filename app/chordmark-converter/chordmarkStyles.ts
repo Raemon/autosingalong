@@ -58,8 +58,3 @@ export const CHORDMARK_STYLES = `
 
 
 
-
-
-
-
-

@@ -29,7 +29,7 @@ const VersionContent = ({version, print}: {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 max-w-4xl">
       {hasAudio && (
         isAudioFile ? (
           <audio controls src={version.audioUrl || undefined} className="w-full">

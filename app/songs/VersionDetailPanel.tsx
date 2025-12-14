@@ -88,7 +88,7 @@ const VersionDetailPanel = ({songTitle, version, isCreatingVersion, newVersionFo
   }
 
   return (
-    <div className="border-l border-gray-200 pl-4 w-full lg:p-20 relative ">
+    <div className="border-l border-gray-200 pl-4 w-full lg:p-20 relative max-w-4xl mx-auto">
       <h2 className="font-georgia -ml-8 text-2xl mb-2 flex items-center gap-3">
         <button
           onClick={() => !isCreatingVersion && onClose()}
@@ -102,6 +102,25 @@ const VersionDetailPanel = ({songTitle, version, isCreatingVersion, newVersionFo
         <SongTitle songId={songId} title={songTitle} onTitleChange={onTitleChange} />
       </h2>
       <SongTags songId={songId} initialTags={initialTags} />
+
+      <div className="mt-4 pt-4 flex gap-4">
+        <a
+          href={`/songs/${version.id}/print`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-400 text-xs hover:text-blue-600 underline"
+        >
+          Print View
+        </a>
+        <a
+          href={`/songs/${version.id}/slides`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-400 text-xs hover:text-blue-600 underline"
+        >
+          Slides View
+        </a>
+      </div>
       <div className="mb-2 flex items-center justify-between sticky top-[-80px]">
         <VersionHeader version={version} />
           {canEdit ? (
@@ -151,24 +170,6 @@ const VersionDetailPanel = ({songTitle, version, isCreatingVersion, newVersionFo
           {songId && version.id && version.id !== 'new' && (
             <Comments songId={songId} currentVersionId={version.id} />
           )}
-          <div className="mt-4 pt-4 border-t border-gray-200 flex gap-4">
-            <a
-              href={`/songs/${version.id}/print`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-400 text-xs hover:text-blue-600 underline"
-            >
-              Print View
-            </a>
-            <a
-              href={`/songs/${version.id}/slides`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-400 text-xs hover:text-blue-600 underline"
-            >
-              Slides View
-            </a>
-          </div>
           {songId && (
             <div className="mt-4 pt-4 border-t border-gray-200">
               <h3 className="text-xs text-gray-400 mb-2">History</h3>
