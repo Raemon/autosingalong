@@ -251,11 +251,11 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
     }
   }, [programMap]);
 
-  const handleCreateSubprogram = useCallback(async () => {
-    if (!selectedProgramId || !userName) {
+  const handleCreateSubprogram = useCallback(async (programId: string) => {
+    if (!programId || !userName) {
       return;
     }
-    const parentProgram = programMap[selectedProgramId];
+    const parentProgram = programMap[programId];
     if (!parentProgram) {
       return;
     }
@@ -300,7 +300,7 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
       console.error('Failed to create subprogram:', err);
       setDataError(err instanceof Error ? err.message : 'Failed to create subprogram');
     }
-  }, [programMap, selectedProgramId, userName]);
+  }, [programMap, userName]);
 
   const containsVersion = useCallback(
     (program: Program | null, targetVersionId: string, visited: Set<string>): boolean => {
@@ -394,15 +394,6 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
                 onProgramCreated={(program) => setPrograms((prev) => prev.some((p) => p.id === program.id) ? prev : [...prev, program])}
               />
               <div className="flex items-center gap-2">
-                {canEdit && userName && selectedProgramId && (
-                  <button
-                    type="button"
-                    onClick={handleCreateSubprogram}
-                    className="text-sm px-2 py-1 underline"
-                  >
-                    Create subprogram
-                  </button>
-                )}
                 <ProgramViews programId={selectedProgramId} />
               </div>
             </div>
@@ -419,6 +410,7 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
               onRemoveElement={handleRemoveElement}
               canEdit={canEdit}
               onSongCreated={loadVersionOptions}
+              onCreateSubprogram={handleCreateSubprogram}
             />
           </div>  
           {selectedVersion ? (

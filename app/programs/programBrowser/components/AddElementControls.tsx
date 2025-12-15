@@ -11,9 +11,10 @@ export type AddElementControlsProps = {
   versions: VersionOption[];
   onAddElement: (programId: string, versionId: string) => void | Promise<void>;
   onSongCreated?: (data?: { song?: SongRecord; version?: SongVersionRecord }) => Promise<void> | void;
+  onCreateSubprogram?: (programId: string) => void | Promise<void>;
 };
 
-const AddElementControls = ({ programId, versions, onAddElement, onSongCreated }: AddElementControlsProps) => {
+const AddElementControls = ({ programId, versions, onAddElement, onSongCreated, onCreateSubprogram }: AddElementControlsProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -113,6 +114,15 @@ const AddElementControls = ({ programId, versions, onAddElement, onSongCreated }
           }
         }}
       />
+      {onCreateSubprogram && (
+        <button
+          type="button"
+          onClick={() => { void onCreateSubprogram(programId); }}
+          className="text-xs px-2 py-1 border border-gray-500 rounded-sm text-white whitespace-nowrap"
+        >
+          + Subprogram
+        </button>
+      )}
     </div>
   );
 };
