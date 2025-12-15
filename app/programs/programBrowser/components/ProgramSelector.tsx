@@ -45,7 +45,7 @@ const ProgramSelector = ({programs, selectedProgramId, onSelect, onProgramCreate
   return (
     <div className="flex items-center gap-1">
       {selectedProgram && (
-        <div className="text-2xl mb-1" style={{fontFamily: 'Georgia, serif'}}>
+        <div className="text-4xl mb-1" style={{fontFamily: 'Georgia, serif'}}>
           {selectedProgram.title}
         </div>
       )}

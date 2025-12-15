@@ -393,10 +393,10 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
                 onSelect={handleProgramSelect}
                 onProgramCreated={(program) => setPrograms((prev) => prev.some((p) => p.id === program.id) ? prev : [...prev, program])}
               />
-              <div className="flex items-center gap-2">
+            </div>
+            <div className="flex items-center gap-2">
                 <ProgramViews programId={selectedProgramId} />
               </div>
-            </div>
             <ProgramStructurePanel
               program={selectedProgram}
               programMap={programMap}
