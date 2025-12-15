@@ -72,14 +72,21 @@ const getFileCreatedAt = async (filePath: string) => {
 const timestampsMatch = (existing: string, candidate: string) => new Date(existing).toISOString() === new Date(candidate).toISOString();
 
 const findExistingVersion = async (songTitle: string, labels: string[], createdAt: string) => {
+  let firstExisting: Awaited<ReturnType<typeof findVersionBySongTitleAndLabel>> = null;
   for (const label of labels) {
     const existing = await findVersionBySongTitleAndLabel(songTitle, label);
-    if (existing) {
-      const matches = existing.createdAt ? timestampsMatch(existing.createdAt, createdAt) : false;
+    if (!existing) {
+      continue;
+    }
+    if (!firstExisting) {
+      firstExisting = existing;
+    }
+    const matches = existing.createdAt ? timestampsMatch(existing.createdAt, createdAt) : false;
+    if (matches) {
       return { existing, matches };
     }
   }
-  return null;
+  return firstExisting ? { existing: firstExisting, matches: false } : null;
 };
 
 const versionUrl = (versionId: string | null | undefined) => versionId ? `/songs/${versionId}` : undefined;

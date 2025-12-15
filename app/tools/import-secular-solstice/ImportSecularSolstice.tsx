@@ -11,15 +11,15 @@ const ImportSecularSolstice = () => {
   const [progress, setProgress] = useState('');
   const [liveItems, setLiveItems] = useState<any[]>([]);
 
-  const runImport = async () => {
+  const runImport = async (dryRun: boolean) => {
     setIsRunning(true);
     setStatus('');
     setResult(null);
     setLiveItems([]);
-    setProgress('Starting dry run...');
+    setProgress(dryRun ? 'Starting dry run...' : 'Starting import...');
     const startedAt = performance.now();
     try {
-      const response = await fetch('/api/admin/import-secular-solstice?dryRun=true&stream=true', { method: 'POST' });
+      const response = await fetch(`/api/admin/import-secular-solstice?dryRun=${dryRun ? 'true' : 'false'}&stream=true`, { method: 'POST' });
       if (!response.body) {
         setStatus('No response body');
         return;
@@ -46,7 +46,7 @@ const ImportSecularSolstice = () => {
             if (parsed.type === 'summary') {
               setResult({ speechResults: parsed.speechResults, songResults: parsed.songResults });
               const durationMs = performance.now() - startedAt;
-              setProgress(`Done in ${Math.round(durationMs)}ms`);
+              setProgress(`${dryRun ? 'Dry run' : 'Import'} done in ${Math.round(durationMs)}ms`);
             } else if (parsed.type === 'speech' || parsed.type === 'song') {
               count += 1;
               setLiveItems((prev) => [...prev, parsed]);
@@ -78,13 +78,22 @@ const ImportSecularSolstice = () => {
 
   return (
     <div className="p-4 space-y-2">
-      <button
-        onClick={runImport}
-        disabled={!canEdit || isRunning}
-        className="text-xs px-2 py-1 bg-blue-600 text-white disabled:opacity-50"
-      >
-        {isRunning ? 'Importing...' : 'Import Secular Solstice'}
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={() => runImport(true)}
+          disabled={!canEdit || isRunning}
+          className="text-xs px-2 py-1 bg-blue-600 text-white disabled:opacity-50"
+        >
+          {isRunning ? 'Working...' : 'Dry run'}
+        </button>
+        <button
+          onClick={() => runImport(false)}
+          disabled={!canEdit || isRunning}
+          className="text-xs px-2 py-1 bg-blue-600 text-white disabled:opacity-50"
+        >
+          {isRunning ? 'Working...' : 'Import for real'}
+        </button>
+      </div>
       {progress && <div className="text-xs">{progress}</div>}
       {liveItems.length > 0 && (
         <ul className="text-xs list-disc list-inside space-y-0.5">
