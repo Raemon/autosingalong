@@ -28,7 +28,8 @@ export type ProgramElementItemProps = {
 const ProgramElementItem = ({id, version, allVersions, onRemove, onChangeVersion, onClick, onCreateNewVersion, canEdit, selectedVersionId}: ProgramElementItemProps) => {
   const songVersions = version ? allVersions.filter(v => v.songId === version.songId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : [];
   const dropdownOptions = songVersions.map(v => ({value: v.id, label: `${v.label} - ${formatRelativeTimestamp(v.createdAt)}`}));
-  const isLatestVersion = songVersions.length === 0 || version?.id === songVersions[0]?.id;
+  const sameLabelVersions = version ? songVersions.filter(v => v.label === version.label) : [];
+  const isLatestVersion = sameLabelVersions.length === 0 || version?.id === sameLabelVersions[0]?.id;
   const isSpeech = version?.tags?.includes('speech');
 
   return (

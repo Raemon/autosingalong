@@ -13,6 +13,9 @@ const ProgramViews = ({programId}:{programId: string | null}) => {
       <a href={`/programs/${programId}/edit`} className="text-sm hover:opacity-50">
         Edit
       </a>
+      <a href={`/feedback?programId=${programId}`} className="text-sm hover:opacity-50">
+        Feedback
+      </a>
     </div>
   );
 };
