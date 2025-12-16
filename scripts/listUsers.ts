@@ -27,18 +27,3 @@ run().catch((error) => {
   console.error('Failed to list users:', error);
   process.exit(1);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
