@@ -1,10 +1,10 @@
 import path from 'path';
 import dotenv from 'dotenv';
-import sql from '../lib/db';
 
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const query = async <T>(strings: TemplateStringsArray, ...values: unknown[]): Promise<T[]> => {
+  const { default: sql } = await import('../lib/db');
   const result = await sql(strings, ...values);
   return result as T[];
 };
@@ -17,7 +17,6 @@ const run = async () => {
   users.forEach((user, index) => {
     console.log(`${index + 1}. ID: ${user.id}`);
     console.log(`   Username: ${user.username || '(no username)'}`);
-    console.log(`   Created: ${user.created_at.toISOString()}`);
     console.log(`   Admin: ${user.is_admin}`);
     console.log('');
   });

@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import sql from '../lib/db';
 import { AUDIO_EXTENSION_SET } from '../lib/audioExtensions';
 
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const SONGS_DIR = path.join(process.cwd(), 'songs');
 const TEXT_EXTENSIONS = new Set(['.txt', '.ugc', '.md', '.lrc', '.ly', '.json', '.abc', '.rtf']);
@@ -96,4 +96,3 @@ run().catch((error) => {
   console.error('Import failed:', error);
   process.exit(1);
 });
-

@@ -7,6 +7,7 @@ type User = {
   username: string | null;
   created_at: string;
   performed_program_ids: string[];
+  is_admin: boolean;
 };
 
 type UserContextType = {
@@ -15,6 +16,7 @@ type UserContextType = {
   userName: string;
   setUserName: (name: string) => void;
   canEdit: boolean;
+  isAdmin: boolean;
   loading: boolean;
   togglePerformedProgram: (programId: string) => Promise<void>;
 };
@@ -159,6 +161,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const canEdit = userName.length >= 3;
+  const isAdmin = user?.is_admin ?? false;
 
   const togglePerformedProgram = async (programId: string) => {
     if (!user) return;
@@ -185,7 +188,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <UserContext.Provider value={{ user, userId: user?.id || null, userName, setUserName, canEdit, loading, togglePerformedProgram }}>
+    <UserContext.Provider value={{ user, userId: user?.id || null, userName, setUserName, canEdit, isAdmin, loading, togglePerformedProgram }}>
       {children}
     </UserContext.Provider>
   );

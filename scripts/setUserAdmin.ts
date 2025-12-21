@@ -1,10 +1,10 @@
 import path from 'path';
 import dotenv from 'dotenv';
-import sql from '../lib/db';
 
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const query = async <T>(strings: TemplateStringsArray, ...values: unknown[]): Promise<T[]> => {
+  const { default: sql } = await import('../lib/db');
   const result = await sql(strings, ...values);
   return result as T[];
 };
@@ -36,12 +36,3 @@ run().catch((error) => {
   console.error('Failed to set user as admin:', error);
   process.exit(1);
 });
-
-
-
-
-
-
-
-
-

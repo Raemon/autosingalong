@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const result = await sql`SELECT id, username, created_at, performed_program_ids FROM users WHERE id = ${userId}`;
+    const result = await sql`SELECT id, username, created_at, performed_program_ids, is_admin FROM users WHERE id = ${userId}`;
     
     if (result.length === 0) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     while (attempts < maxAttempts) {
       try {
-        const result = await sql`INSERT INTO users (username) VALUES (${usernameValue}) RETURNING id, username, created_at, performed_program_ids`;
+        const result = await sql`INSERT INTO users (username) VALUES (${usernameValue}) RETURNING id, username, created_at, performed_program_ids, is_admin`;
         return NextResponse.json(result[0]);
       } catch (insertError: any) {
         // Check if it's a duplicate key error
@@ -77,11 +77,11 @@ export async function PATCH(request: NextRequest) {
     let result;
     try {
       if (username !== undefined && performedProgramIds !== undefined) {
-        result = await sql`UPDATE users SET username = ${username}, performed_program_ids = ${performedProgramIds} WHERE id = ${userId} RETURNING id, username, created_at, performed_program_ids`;
+        result = await sql`UPDATE users SET username = ${username}, performed_program_ids = ${performedProgramIds} WHERE id = ${userId} RETURNING id, username, created_at, performed_program_ids, is_admin`;
       } else if (username !== undefined) {
-        result = await sql`UPDATE users SET username = ${username} WHERE id = ${userId} RETURNING id, username, created_at, performed_program_ids`;
+        result = await sql`UPDATE users SET username = ${username} WHERE id = ${userId} RETURNING id, username, created_at, performed_program_ids, is_admin`;
       } else if (performedProgramIds !== undefined) {
-        result = await sql`UPDATE users SET performed_program_ids = ${performedProgramIds} WHERE id = ${userId} RETURNING id, username, created_at, performed_program_ids`;
+        result = await sql`UPDATE users SET performed_program_ids = ${performedProgramIds} WHERE id = ${userId} RETURNING id, username, created_at, performed_program_ids, is_admin`;
       } else {
         return NextResponse.json({ error: 'username or performedProgramIds is required' }, { status: 400 });
       }

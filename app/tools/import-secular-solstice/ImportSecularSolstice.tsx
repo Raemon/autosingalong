@@ -5,7 +5,7 @@ import { useUser } from '../../contexts/UserContext';
 import { detectFileType } from '@/lib/lyricsExtractor';
 
 const ImportSecularSolstice = () => {
-  const { canEdit } = useUser();
+  const { userId, isAdmin, loading: userLoading } = useUser();
   const [isRunning, setIsRunning] = useState(false);
   const [status, setStatus] = useState('');
   const [result, setResult] = useState<any>(null);
@@ -40,7 +40,7 @@ const ImportSecularSolstice = () => {
     setProgress(dryRun ? 'Starting dry run...' : 'Starting import...');
     const startedAt = performance.now();
     try {
-      const response = await fetch(`/api/admin/import-secular-solstice?dryRun=${dryRun ? 'true' : 'false'}&stream=true`, { method: 'POST' });
+      const response = await fetch(`/api/admin/import-secular-solstice?dryRun=${dryRun ? 'true' : 'false'}&stream=true&requestingUserId=${userId}`, { method: 'POST' });
       if (!response.body) {
         setStatus('No response body');
         return;
@@ -162,26 +162,34 @@ const ImportSecularSolstice = () => {
     }
   };
 
+  if (userLoading) {
+    return <div className="p-4 text-gray-400">Loading...</div>;
+  }
+
+  if (!isAdmin) {
+    return <div className="p-4 text-gray-400">You must be an admin to use this tool.</div>;
+  }
+
   return (
     <div className="p-4 space-y-2">
       <div className="flex gap-2">
         <button
           onClick={() => runImport(true)}
-          disabled={!canEdit || isRunning}
+          disabled={!isAdmin || isRunning}
           className="text-xs px-2 py-1 bg-blue-600 text-white disabled:opacity-50"
         >
           {isRunning ? 'Working...' : 'Dry run'}
         </button>
         <button
           onClick={() => runImport(false)}
-          disabled={!canEdit || isRunning}
+          disabled={!isAdmin || isRunning}
           className="text-xs px-2 py-1 bg-blue-600 text-white disabled:opacity-50"
         >
           {isRunning ? 'Working...' : 'Import for real'}
         </button>
         <button
           onClick={renderMissingLilypond}
-          disabled={!canEdit || isRunning || isRenderingLilypond}
+          disabled={!isAdmin || isRunning || isRenderingLilypond}
           className="text-xs px-2 py-1 bg-blue-600 text-white disabled:opacity-50"
         >
           {isRenderingLilypond ? 'Rendering...' : 'Render missing lilypond'}

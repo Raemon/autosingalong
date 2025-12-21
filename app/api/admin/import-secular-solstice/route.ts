@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { createSong, createVersionWithLineage, findVersionBySongTitleAndLabel } from '@/lib/songsRepository';
 import { AUDIO_EXTENSION_SET } from '@/lib/audioExtensions';
+import { requireAdmin } from '@/lib/adminAuth';
 
 const IMPORT_USER = 'secularsolstice-import';
 const SECULAR_ROOT = path.join(process.cwd(), 'SecularSolstice.github.io-master');
@@ -273,6 +274,8 @@ const importSongFiles = async (dryRun: boolean, onResult?: (result: { title: str
 export async function POST(request: Request) {
   try {
     const url = new URL(request.url);
+    const authError = await requireAdmin(url.searchParams.get('requestingUserId'));
+    if (authError) return authError;
     const dryRun = url.searchParams.get('dryRun') === 'true';
     const stream = url.searchParams.get('stream') === 'true';
 
