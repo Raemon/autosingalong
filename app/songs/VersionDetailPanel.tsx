@@ -96,8 +96,10 @@ const VersionDetailPanel = ({songTitle, version, previousVersions = [], isCreati
         onClose={onClose}
         disableClose={isCreatingVersion}
       />
-
-      <div className="mt-4 pt-4 flex gap-4">
+      <div className="flex items-end justify-end gap-4 sticky top-[-80px] my-4 border-b border-gray-500 pb-2">
+        <div className="mr-auto">
+          <VersionHeader version={version} />
+        </div>
         <a
           href={`/songs/${version.id}/print`}
           target="_blank"
@@ -115,9 +117,6 @@ const VersionDetailPanel = ({songTitle, version, previousVersions = [], isCreati
           Slides View
         </a>
         <GithubIOLink songTitle={songTitle} tags={initialTags} version={version} previousVersions={previousVersions} />
-      </div>
-      <div className="mb-2 flex items-center justify-between sticky top-[-80px]">
-        <VersionHeader version={version} />
           {canEdit ? (
             <VersionActionButtons
               isCreatingVersion={isCreatingVersion}

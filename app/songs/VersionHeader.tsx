@@ -1,23 +1,21 @@
 import type { SongVersion } from './types';
 import Tooltip from '../components/Tooltip';
 
-const VersionHeader = ({songTitle, version, showTitle = false, className = ''}: {
+const VersionHeader = ({songTitle, version, showTitle = false}: {
   songTitle?: string;
   version: SongVersion;
   showTitle?: boolean;
-  className?: string;
 }) => {
   const createdDate = new Date(version?.createdAt || '');
   return (
-    <div className={className}>
+    <div>
       {showTitle && songTitle && <h1 className="text-2xl font-georgia">{songTitle}</h1>}
-      <div className="text-sm flex items-center gap-4 text-gray-400">
-        <span className="font-mono">{version.label}</span> 
-        <Tooltip content={createdDate.toLocaleString()}>
-          <span>{createdDate.toLocaleDateString()}</span>
+      {version.label && <h1 className="text-base font-mono">{version.label}</h1>}
+      <div className="text-sm flex items-center gap-1 text-gray-400">
+        Version last edited <Tooltip content={createdDate.toLocaleString()}>
+          <span className="text-white">{createdDate.toLocaleDateString()}</span>
         </Tooltip>
-        <span>{version.bpm ? `BPM: ${version.bpm}` : ''}</span> 
-        <span>{version.createdBy ? version.createdBy : ''}</span>
+        by <span className="text-white">{version.createdBy ? version.createdBy : ''}</span>
       </div>
     </div>
   );

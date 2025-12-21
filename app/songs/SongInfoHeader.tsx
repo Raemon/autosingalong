@@ -35,7 +35,7 @@ const SongInfoHeader = ({songId, title, tags = [], onClose, disableClose = false
   };
   return (
     <>
-      <h2 className="font-georgia -ml-8 text-2xl mb-2 flex items-center gap-3">
+      <h2 className="font-georgia -ml-8 text-4xl mb-2 flex items-center gap-3">
         <button
           onClick={() => !disableClose && onClose()}
           className="text-gray-400 hover:text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-400"
@@ -46,7 +46,8 @@ const SongInfoHeader = ({songId, title, tags = [], onClose, disableClose = false
           </svg>
         </button>
         <SongTitle songId={songId} title={title} />
-        {songId && canEdit && (
+        {/* commented out until I can make archiving a bit more safe --Ray */}
+        {/* {songId && canEdit && (
           <button
             onClick={handleArchive}
             disabled={isArchiving}
@@ -55,7 +56,7 @@ const SongInfoHeader = ({songId, title, tags = [], onClose, disableClose = false
           >
             {isArchiving ? '...' : 'archive'}
           </button>
-        )}
+        )} */}
       </h2>
       <SongTags songId={songId} initialTags={tags} />
     </>
