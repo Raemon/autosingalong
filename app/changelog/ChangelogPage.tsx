@@ -63,18 +63,19 @@ const ChangelogPage = ({songId, filename, compact = false}: {songId?: string; fi
           const { added, removed } = calculateDiff(version.content, version.previousContent);
           const changedText = version.content !== version.previousContent ? (version.content || '').slice(0, 80) : '';
           return (
-            <div key={version.id} className={`flex items-center gap-3 ${compact ? 'py-0.5 text-xs' : 'py-1 text-sm'} font-mono`}>
+            <div key={version.id} className={`flex items-center gap-4 ${compact ? 'py-0.5 text-xs' : 'py-1 text-sm'} font-mono`}>
               <span className="w-16 shrink-0 text-right">
                 {added > 0 && <span className="text-green-500">+{added}</span>}
                 {added > 0 && removed > 0 && <span className="text-gray-500">/</span>}
                 {removed > 0 && <span className="text-red-500">-{removed}</span>}
                 {added === 0 && removed === 0 && version.previousContent !== null && <span className="text-gray-500">±0</span>}
               </span>
-              <span className="text-gray-500 w-10 text-right shrink-0">{formatRelativeTimestamp(version.createdAt)}</span>
+              <span className="text-gray-600 w-6 text-right shrink-0 text-[11px]">{formatRelativeTimestamp(version.createdAt)}</span>
+              <span className="text-gray-500">{version.createdBy || 'anonymous'}</span>
+
               <Link href={`/songs/${version.id}`} className="text-gray-200 hover:underline shrink-0">
                 {compact ? version.label : `${version.songTitle} / ${version.label}`}
               </Link>
-              <span className="text-gray-500 shrink-0">{version.createdBy || 'anonymous'}</span>
               {changedText && <span className={`truncate ${removed > added ? 'text-red-500' : 'text-green-500'}`}>{changedText}</span>}
               {version.previousVersionId && <Link href={`/changelog/${version.previousVersionId}/${version.id}`} className="text-gray-400 hover:text-gray-200 text-xs">diff</Link>}
             </div>
