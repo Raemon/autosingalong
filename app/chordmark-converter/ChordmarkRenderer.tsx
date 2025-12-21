@@ -331,7 +331,7 @@ const ChordmarkRenderer = ({
         {!print && <div className="flex flex-col bg-gray-900 border-r border-gray-700">
           {lineNumbers}
         </div>}
-        <div ref={contentRef} className="text-gray-200 p-2 flex-1">
+        <div ref={contentRef} className={`${print ? 'text-black' : 'text-gray-200'} p-2 flex-1`}>
           <ChordmarkContent error={error} content={content} mode={mode} finalOutputs={finalOutputs} />
         </div>
       </div>

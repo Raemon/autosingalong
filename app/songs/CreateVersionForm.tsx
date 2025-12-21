@@ -17,6 +17,9 @@ export type CreateVersionFormProps = {
 const CreateVersionForm = ({form, onFormChange, onSubmit, onCancel, isSubmitting, error, autosaveKey, versionCreatedAt, songId}: CreateVersionFormProps) => {
   const fileType = detectFileType(form.label, form.content);
   const isChordmarkFile = fileType === 'chordmark';
+  const isLilypondFile = fileType === 'lilypond';
+  const isUltimateGuitarFile = fileType === 'ultimateguitar';
+  const isMusicFile = isChordmarkFile || isLilypondFile || isUltimateGuitarFile
 
   return (
     <div className="space-y-2">
@@ -30,7 +33,8 @@ const CreateVersionForm = ({form, onFormChange, onSubmit, onCancel, isSubmitting
           placeholder="Version label"
         />
       </div>
-      <div>
+      {isMusicFile && (
+        <div>
         <label className="text-xs text-gray-400">BPM (optional)</label>
         <input
           type="number"
@@ -39,8 +43,8 @@ const CreateVersionForm = ({form, onFormChange, onSubmit, onCancel, isSubmitting
           className="w-full px-2 py-1 text-xs border border-gray-300 bg-black"
           placeholder="BPM"
         />
-      </div>
-      {!isChordmarkFile && (
+      </div>)}
+      {!isChordmarkFile && isMusicFile && (
         <div>
           <label className="text-xs text-gray-400">Transpose (optional)</label>
           <input
