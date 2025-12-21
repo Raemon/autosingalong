@@ -196,7 +196,7 @@ const FeedbackResults = ({ programId }: FeedbackResultsProps) => {
     );
   }
 
-  const renderSongRow = (versionId: string) => {
+  const renderSongRow = (versionId: string, index: number, showIndex: boolean) => {
     const version = versionMap[versionId];
     if (!version) return null;
 
@@ -204,7 +204,7 @@ const FeedbackResults = ({ programId }: FeedbackResultsProps) => {
     const singabilityAvg = getSingabilityAvg(versionId);
     const isSpeech = version.tags?.includes('speech');
     const versionComments = comments[versionId] || [];
-    const position = positionMap[versionId];
+    const position = showIndex ? index + 1 : positionMap[versionId];
 
     return (
       <div
@@ -287,7 +287,7 @@ const FeedbackResults = ({ programId }: FeedbackResultsProps) => {
               <SortButton sortOption="singability" currentSort={sortBy} onSort={setSortBy} label="Singability" />
               {showComments && <SortButton sortOption="comments" currentSort={sortBy} onSort={setSortBy} label="Comments" />}
             </div>
-            {sortedElementIds.map(renderSongRow)}
+            {sortedElementIds.map((versionId, index) => renderSongRow(versionId, index, sortBy !== 'position'))}
           </div>
         )}
         <div className="flex justify-center">
