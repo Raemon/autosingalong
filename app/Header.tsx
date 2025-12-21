@@ -17,7 +17,7 @@ const Header = () => {
       <h1 className="font-georgia text-2xl text-nowrap mr-auto lg:mr-0"><Link href="/">Secular Solstice</Link></h1>
       <nav className="flex gap-6 items-center">
         <Link href="/feedback" className="hover:underline text-sm">Feedback</Link>
-        <Link href="/songs" className="hover:underline text-sm">Songs</Link>
+        <Link href="/songs" className="hover:underline text-sm">Songs/Speeches</Link>
         <Link href="/programs" className="hover:underline text-sm">Programs</Link>
         <Link href="/changelog" className="hover:underline text-sm">Changelog</Link>
         <UsernameInput />

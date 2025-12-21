@@ -2,6 +2,7 @@
 
 import maxBy from 'lodash/maxBy';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import SearchInput from './SearchInput';
 import SongItem from './SongItem';
 import VersionDetailPanel from './VersionDetailPanel';
@@ -21,6 +22,7 @@ type SongsFileListProps = {
 
 const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
   console.log('SongsFileList component rendering');
+  const pathname = usePathname();
   const { userName } = useUser();
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
@@ -191,6 +193,12 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
     handleSongVersionClick(targetVersion, { skipUrlUpdate: true });
     hasAppliedInitialVersionRef.current = true;
   }, [handleSongVersionClick, initialVersionId, selectedVersion?.id, songs]);
+
+  useEffect(() => {
+    if (pathname === '/songs') {
+      clearSelection();
+    }
+  }, [pathname, clearSelection]);
 
   const handleCreateNewVersionForSong = (song: Song) => {
     setCreatingVersionForSong(song);
