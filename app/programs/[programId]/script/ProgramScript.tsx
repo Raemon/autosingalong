@@ -226,15 +226,15 @@ const ProgramScript = async ({ programId }: ProgramScriptProps) => {
   const contentEntries = buildProgramEntries(selectedProgram, versions, programMap, false);
 
   return (
-    <div className="min-h-screen bg-white text-black flex mx-auto justify-center">
+    <div className="min-h-screen bg-white text-black flex mx-auto justify-center print:block">
       <style dangerouslySetInnerHTML={{ __html: CHORDMARK_STYLES }} />
       <ScrollHandler />
-      <div className="max-w-lg p-8 font-georgia fixed top-[50px] left-0">
+      <div className="max-w-lg p-8 font-georgia fixed top-[50px] left-0 print:static print:max-w-none print:w-full print:top-auto print:left-auto" style={{ breakAfter: 'page' }}>
         {tocEntries.length > 0 && (
           <TableOfContents entries={tocEntries} programId={selectedProgram.id} />
         )}
       </div>
-      <div className="max-w-3xl p-8 font-georgia">
+      <div className="max-w-3xl p-8 font-georgia print:max-w-none print:w-full">
         {contentEntries.map((entry) => {
           if (entry.type === 'programHeading') {
             return (

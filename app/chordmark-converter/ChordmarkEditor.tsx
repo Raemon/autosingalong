@@ -235,10 +235,10 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm, autosav
 
       <ChordButtons startCollapsed />
       <div className="flex w-full items-center justify-between">
-          <h3 className="text-xs font-semibold mb-1 text-gray-400">Chordmark Input</h3>
+          <h3 className="text-xs font-semibold mb-1 text-gray-400 hidden sm:block">Chordmark Input</h3>
           <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-2">
-            <div className="flex gap-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex gap-1 flex-wrap">
               <button
                 onClick={() => setPreviewMode('full')}
                 className={`px-2 py-0.5 text-xs ${previewMode === 'full' ? 'bg-blue-600 text-white' : 'bg-gray-800'}`}
@@ -275,8 +275,8 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm, autosav
           </div>
         </div>
 
-      <div className="flex gap-2 max-w-full">
-        <div className="flex flex-col flex-1 w-1/2">
+      <div className="flex gap-2 max-w-full max-w-[calc(100vw-16px)] overflow-x-scroll">
+        <div className="flex flex-col flex-1 w-[90vw] sm:w-[calc(50vw-8px)]">
           <div className="flex flex-1 border relative" style={{ maxWidth: '800px' }}>
             <div className="flex flex-col bg-gray-900 border-r border-gray-700">
               {lineNumbers}
@@ -292,7 +292,7 @@ const ChordmarkEditor = ({ value, onChange, showSyntaxHelp = false, bpm, autosav
           </div>
         </div>
 
-        <div className="flex flex-col flex-1 w-1/2">
+        <div className="flex flex-col flex-1 sm:w-[calc(50%-8px)]">
           <div ref={previewRef} className="flex-1 p-2 border overflow-auto text-xs font-mono">
             {previewMode === 'slides' && <SlideDisplay slides={slides} />}
             {previewMode === 'side-by-side' && (

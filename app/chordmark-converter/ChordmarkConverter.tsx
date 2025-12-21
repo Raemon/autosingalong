@@ -83,7 +83,7 @@ const ChordmarkConverter = () => {
           <div className="mb-4 p-3 text-xs">
             <div className="font-semibold mb-2">Chordmark Syntax:</div>
             <div className="space-y-1">
-              <div><strong>Chords:</strong> Use bars <code>|C|G|Am|F|</code> or chord names <code>C G Am F</code></div>
+              <div><strong>Chords:</strong> Use or chord names <code>C G Am F</code></div>
               <div><strong>Lyrics:</strong> Plain text lines. Use <code>_</code> to align chords with lyrics</div>
               <div><strong>Sections:</strong> <code>#v</code> (verse), <code>#c</code> (chorus), <code>#b</code> (bridge), <code>#i</code> (intro), <code>#o</code> (outro). Use <code>#v2</code> for numbered sections, <code>#c x2</code> for repetition</div>
               <div><strong>Key:</strong> <code>{'{key: C}'}</code> or <code>{'{key: Am}'}</code></div>

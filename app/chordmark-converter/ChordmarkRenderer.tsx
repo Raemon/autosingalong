@@ -180,7 +180,7 @@ const ChordmarkTabs = ({mode, onModeChange}: {mode: ChordmarkViewMode, onModeCha
   ];
 
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1 flex-wrap">
       {tabs.map(tab => (
         <button
           key={tab.id}

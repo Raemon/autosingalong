@@ -96,7 +96,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions = [], isCreati
         onClose={onClose}
         disableClose={isCreatingVersion}
       />
-      <div className="flex items-end flex-wrap justify-end gap-4 sticky top-[-80px] my-4 border-b border-gray-500 pb-2">
+      <div className="flex items-end flex-wrap justify-start sm:justify-end gap-4 sticky top-[-80px] my-4 border-b border-gray-500 pb-2">
         <div className="lg:mr-auto w-full lg:w-auto">
           <VersionHeader version={version} />
         </div>
