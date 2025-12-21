@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createSong, findVersionBySongTitleAndLabel, listSongsWithVersions, createVersionWithLineage } from '@/lib/songsRepository';
+import { createSong, findVersionBySongTitleAndLabel, listSongsWithVersions, listSongsWithVersionsPaginated, createVersionWithLineage } from '@/lib/songsRepository';
 
 export async function GET(request: Request) {
   try {
@@ -19,6 +19,18 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'No content available' }, { status: 404 });
       }
       return NextResponse.json({ content: version.content });
+    }
+
+    // Support pagination with limit/offset
+    const limitParam = searchParams.get('limit');
+    const offsetParam = searchParams.get('offset');
+    const excludeIdsParam = searchParams.get('excludeIds');
+    if (limitParam !== null || offsetParam !== null) {
+      const limit = limitParam ? parseInt(limitParam, 10) : undefined;
+      const offset = offsetParam ? parseInt(offsetParam, 10) : 0;
+      const excludeIds = excludeIdsParam ? excludeIdsParam.split(',').filter(Boolean) : [];
+      const result = await listSongsWithVersionsPaginated({ limit, offset, excludeIds });
+      return NextResponse.json(result);
     }
 
     const songs = await listSongsWithVersions();

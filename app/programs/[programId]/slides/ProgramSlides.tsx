@@ -8,6 +8,7 @@ import type { Slide } from '../../../../src/components/slides/types';
 import { extractLyrics } from '../../../../lib/lyricsExtractor';
 import type { Program, VersionOption, SongSlideData } from '../../types';
 import type { SongVersion } from '../../../songs/types';
+import DownloadSlidesButton from './DownloadSlidesButton';
 
 type ProgramSlidesProps = {
   programId: string;
@@ -519,6 +520,7 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
         <button onClick={() => setShowUploader(!showUploader)} className="text-white text-xs bg-black bg-opacity-50 px-3 py-1 rounded">
           {showUploader ? 'Close' : 'Video Backgrounds'}
         </button>
+        <DownloadSlidesButton slides={flattenedSlides} programTitle={selectedProgram.title} getBackgroundForSlide={getBackgroundForSlide} programTitleSlideIndices={programTitleSlideIndices} />
         <button onClick={toggleFullscreen} className="text-white text-xs bg-black bg-opacity-50 px-3 py-1 rounded">
           {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
         </button>

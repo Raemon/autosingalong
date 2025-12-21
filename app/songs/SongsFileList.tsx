@@ -11,6 +11,7 @@ import SongInfoHeader from './SongInfoHeader';
 import type { Song, SongVersion } from './types';
 import { useUser } from '../contexts/UserContext';
 import useVersionPanelManager from '../hooks/useVersionPanelManager';
+import useSongsProgressiveLoad from '../hooks/useSongsProgressiveLoad';
 import CreateSongButton from '../components/CreateSongButton';
 import DownloadAllSongsButton from './DownloadAllSongsButton';
 
@@ -24,9 +25,8 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
   console.log('SongsFileList component rendering');
   const pathname = usePathname();
   const { userName } = useUser();
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [listError, setListError] = useState<string | null>(null);
+  const { songs, loading, loadingMore, error: listError, refetch: fetchSongs } = useSongsProgressiveLoad();
+  const [localError, setLocalError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [creatingVersionForSong, setCreatingVersionForSong] = useState<Song | null>(null);
@@ -34,34 +34,6 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
   const [isListCollapsed, setIsListCollapsed] = useState(false);
   const hasAppliedInitialVersionRef = useRef(false);
   const [selectedSongOnly, setSelectedSongOnly] = useState<Song | null>(null);
-  const fetchSongs = useCallback(async () => {
-    console.log('fetchSongs called');
-    try {
-      setLoading(true);
-      console.log('About to fetch from /api/songs');
-      const response = await fetch('/api/songs');
-      console.log('Got response:', response.status, response.statusText);
-      if (!response.ok) {
-        console.error('Response not OK:', response.status);
-        throw new Error(`Failed to fetch songs: ${response.status}`);
-      }
-      console.log('Response OK, parsing JSON');
-      const data = await response.json();
-      console.log('Parsed data:', data);
-      setSongs(data.songs);
-      setListError(null);
-    } catch (err) {
-      console.error('Fetch error:', err);
-      setListError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      console.log('Setting loading to false');
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchSongs();
-  }, [fetchSongs]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -255,11 +227,12 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
     );
   }
 
-  if (listError) {
+  const displayError = listError || localError;
+  if (displayError) {
     return (
       <div className="min-h-screen p-4">
         <div className="max-w-5xl mx-auto">
-          <p className="text-red-600">Error: {listError}</p>
+          <p className="text-red-600">Error: {displayError}</p>
         </div>
       </div>
     );
@@ -329,9 +302,10 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
               </div>
               <CreateSongButton
                 onSongCreated={fetchSongs}
-                onError={setListError}
+                onError={setLocalError}
               />
               <DownloadAllSongsButton />
+              {loadingMore && <span className="text-xs text-gray-500">loading...</span>}
               {selectedVersion && <button
                 onClick={() => setIsListCollapsed(true)}
                 className="text-xl px-2 py-1 text-gray-400 whitespace-nowrap"

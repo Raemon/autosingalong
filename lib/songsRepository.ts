@@ -178,6 +178,167 @@ export const listSongsWithVersions = async (): Promise<SongWithVersions[]> => {
   }));
 };
 
+export type PaginatedSongsResult = {
+  songs: SongWithVersions[];
+  total: number;
+  hasMore: boolean;
+};
+
+export const listSongsWithVersionsPaginated = async (options: { limit?: number; offset?: number; excludeIds?: string[] } = {}): Promise<PaginatedSongsResult> => {
+  const { limit, offset = 0, excludeIds = [] } = options;
+  // Get total count first
+  const countResult = await sql`
+    select count(*)::int as total from songs where archived = false
+  `;
+  const total = (countResult as { total: number }[])[0].total;
+  // Build the query - order by most recent version update
+  const rows = limit !== undefined
+    ? excludeIds.length > 0
+      ? await sql`
+          with ranked_songs as (
+            select
+              s.id as song_id,
+              s.title,
+              s.created_by as song_created_by,
+              s.created_at as song_created_at,
+              s.archived as song_archived,
+              s.tags as song_tags,
+              max(v.created_at) as latest_version_at
+            from songs s
+            left join song_versions v on v.song_id = s.id and v.next_version_id is null and v.archived = false
+            where s.archived = false and s.id != ALL(${excludeIds})
+            group by s.id
+            order by latest_version_at desc nulls last
+            limit ${limit} offset ${offset}
+          )
+          select
+            rs.song_id,
+            rs.title,
+            rs.song_created_by,
+            rs.song_created_at,
+            rs.song_archived,
+            rs.song_tags,
+            v.id as version_id,
+            v.label,
+            v.content,
+            v.audio_url,
+            v.slides_movie_url,
+            v.slide_movie_start,
+            v.previous_version_id,
+            v.next_version_id,
+            v.original_version_id,
+            v.rendered_content,
+            v.bpm,
+            v.transpose,
+            v.archived,
+            v.created_by as version_created_by,
+            v.created_at as version_created_at,
+            v.slide_credits,
+            v.program_credits
+          from ranked_songs rs
+          left join song_versions v on v.song_id = rs.song_id and v.next_version_id is null and v.archived = false
+          order by rs.latest_version_at desc nulls last, v.created_at desc nulls last
+        `
+      : await sql`
+          with ranked_songs as (
+            select
+              s.id as song_id,
+              s.title,
+              s.created_by as song_created_by,
+              s.created_at as song_created_at,
+              s.archived as song_archived,
+              s.tags as song_tags,
+              max(v.created_at) as latest_version_at
+            from songs s
+            left join song_versions v on v.song_id = s.id and v.next_version_id is null and v.archived = false
+            where s.archived = false
+            group by s.id
+            order by latest_version_at desc nulls last
+            limit ${limit} offset ${offset}
+          )
+          select
+            rs.song_id,
+            rs.title,
+            rs.song_created_by,
+            rs.song_created_at,
+            rs.song_archived,
+            rs.song_tags,
+            v.id as version_id,
+            v.label,
+            v.content,
+            v.audio_url,
+            v.slides_movie_url,
+            v.slide_movie_start,
+            v.previous_version_id,
+            v.next_version_id,
+            v.original_version_id,
+            v.rendered_content,
+            v.bpm,
+            v.transpose,
+            v.archived,
+            v.created_by as version_created_by,
+            v.created_at as version_created_at,
+            v.slide_credits,
+            v.program_credits
+          from ranked_songs rs
+          left join song_versions v on v.song_id = rs.song_id and v.next_version_id is null and v.archived = false
+          order by rs.latest_version_at desc nulls last, v.created_at desc nulls last
+        `
+    : await sql`
+        with ranked_songs as (
+          select
+            s.id as song_id,
+            s.title,
+            s.created_by as song_created_by,
+            s.created_at as song_created_at,
+            s.archived as song_archived,
+            s.tags as song_tags,
+            max(v.created_at) as latest_version_at
+          from songs s
+          left join song_versions v on v.song_id = s.id and v.next_version_id is null and v.archived = false
+          where s.archived = false
+          group by s.id
+          order by latest_version_at desc nulls last
+        )
+        select
+          rs.song_id,
+          rs.title,
+          rs.song_created_by,
+          rs.song_created_at,
+          rs.song_archived,
+          rs.song_tags,
+          v.id as version_id,
+          v.label,
+          v.content,
+          v.audio_url,
+          v.slides_movie_url,
+          v.slide_movie_start,
+          v.previous_version_id,
+          v.next_version_id,
+          v.original_version_id,
+          v.rendered_content,
+          v.bpm,
+          v.transpose,
+          v.archived,
+          v.created_by as version_created_by,
+          v.created_at as version_created_at,
+          v.slide_credits,
+          v.program_credits
+        from ranked_songs rs
+        left join song_versions v on v.song_id = rs.song_id and v.next_version_id is null and v.archived = false
+        order by rs.latest_version_at desc nulls last, v.created_at desc nulls last
+      `;
+
+  const typedRows = rows as SongVersionQueryRow[];
+  const grouped = groupBy(typedRows, (row) => row.song_id);
+  const songs = Object.values(grouped).map((group) => ({
+    ...mapSongRow(group[0]!),
+    versions: group.filter(hasVersionData).map(mapVersionRow),
+  }));
+  const loadedCount = offset + songs.length + excludeIds.length;
+  return { songs, total, hasMore: loadedCount < total };
+};
+
 export const listSongsWithAllVersions = async (): Promise<SongWithVersions[]> => {
   const rows = await sql`
     select
