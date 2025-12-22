@@ -2,6 +2,7 @@ import type { SongVersion } from './types';
 import ChordmarkRenderer from '../chordmark-converter/ChordmarkRenderer';
 import LilypondViewer from './LilypondViewer';
 import MarkdownRenderer from './MarkdownRenderer';
+import BlobAttachment from './BlobAttachment';
 import { AUDIO_EXTENSIONS } from '../../lib/audioExtensions';
 import { detectFileType } from '../../lib/lyricsExtractor';
 
@@ -25,14 +26,6 @@ const VersionContent = ({version, print}: {
   const normalizedMovieUrl = movieUrl.toLowerCase();
   const videoExtensions = ['.mp4', '.mov', '.webm', '.m4v'];
   const isVideoFile = normalizedMovieUrl ? videoExtensions.some(ext => normalizedMovieUrl.endsWith(ext)) : false;
-  const blobFilename = version.blobUrl ? (() => {
-    try {
-      const pathname = new URL(version.blobUrl).pathname;
-      return pathname.split('/').pop() || 'Attached file';
-    } catch {
-      return version.blobUrl.split('/').pop() || 'Attached file';
-    }
-  })() : null;
 
   if (!hasAudio && !hasSlidesMovie && !hasBlob && !hasContent) {
     return <p className="text-gray-500 text-xs">No stored content for this version.</p>;
@@ -74,11 +67,7 @@ const VersionContent = ({version, print}: {
           </a>
         )
       )}
-      {hasBlob && (
-        <a href={version.blobUrl || undefined} target="_blank" rel="noreferrer" className="text-blue-400 underline text-xs">
-          📎 {blobFilename || 'Attached file'}
-        </a>
-      )}
+      {hasBlob && <BlobAttachment blobUrl={version.blobUrl!} defaultExpanded={!hasContent} />}
     </div>
   );
 };
