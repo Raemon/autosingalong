@@ -1,25 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { timingSafeEqual } from 'crypto';
 import { listSongsWithAllVersions } from '@/lib/songsRepository';
 import { generateSongsExportBuffer } from '@/lib/exportUtils';
 import { requireAdmin } from '@/lib/adminAuth';
-
-export const dynamic = 'force-dynamic';
-
-const isValidBackupSecret = (request: NextRequest): boolean => {
-  const authHeader = request.headers.get('authorization');
-  const backupSecret = process.env.BACKUP_SECRET;
-  if (!backupSecret || !authHeader) return false;
-  const expected = Buffer.from(`Bearer ${backupSecret}`);
-  const received = Buffer.from(authHeader);
-  if (expected.length !== received.length) return false;
-  return timingSafeEqual(expected, received);
-};
+import { validateBearerSecret } from '@/lib/authUtils';
 
 export async function POST(request: NextRequest) {
   try {
     // Check for backup secret (for GitHub Actions) or admin auth
-    const hasValidSecret = isValidBackupSecret(request);
+    const hasValidSecret = validateBearerSecret(request, process.env.BACKUP_SECRET);
     if (!hasValidSecret) {
       const { searchParams } = new URL(request.url);
       const requestingUserId = searchParams.get('requestingUserId');

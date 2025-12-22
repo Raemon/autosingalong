@@ -1,15 +1,20 @@
 import path from 'path';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
+import { validateBearerSecret } from '@/lib/authUtils';
 import { importFromDirectories } from '@/lib/importUtils';
 
 const SONGS_DIR = path.join(process.cwd(), 'songs');
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const url = new URL(request.url);
-    const authError = await requireAdmin(url.searchParams.get('requestingUserId'));
-    if (authError) return authError;
+    // Check for import secret (for GitHub Actions) or admin auth
+    const hasValidSecret = validateBearerSecret(request, process.env.IMPORT_SECRET);
+    if (!hasValidSecret) {
+      const authError = await requireAdmin(url.searchParams.get('requestingUserId'));
+      if (authError) return authError;
+    }
     const dryRun = url.searchParams.get('dryRun') === 'true';
     const stream = url.searchParams.get('stream') === 'true';
 
