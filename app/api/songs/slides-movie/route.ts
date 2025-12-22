@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
+import { getSongBlobPrefix } from '@/lib/blobUtils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,9 +17,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Blob storage token not configured' }, { status: 500 });
     }
 
+    const prefix = await getSongBlobPrefix(songId);
     const buffer = Buffer.from(await movieFile.arrayBuffer());
     const extension = movieFile.name.includes('.') ? movieFile.name.split('.').pop() : 'mp4';
-    const prefix = songId ? `song-${songId}` : 'song-unknown';
     const blob = await put(`${prefix}/slides-movie-${Date.now()}.${extension}`, buffer, { access: 'public', contentType: movieFile.type, token });
 
     return NextResponse.json({ url: blob.url });

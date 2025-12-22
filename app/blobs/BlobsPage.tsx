@@ -5,6 +5,7 @@ import ChevronArrow from '@/app/components/ChevronArrow';
 
 interface BlobItem {
   pathname: string;
+  displayName: string;
   url: string;
   size: number;
   uploadedAt: string;
@@ -76,7 +77,7 @@ const BlobRow = ({ blob }: { blob: BlobItem }) => {
               <span className="w-3" />
             )}
             <a href={blob.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
-              {blob.pathname}
+              {blob.displayName}
             </a>
           </div>
         </td>
@@ -147,7 +148,7 @@ const BlobsPage = () => {
   const sortedBlobs = [...blobs].sort((a, b) => {
     let cmp = 0;
     switch (sortColumn) {
-      case 'path': cmp = a.pathname.localeCompare(b.pathname); break;
+      case 'path': cmp = a.displayName.localeCompare(b.displayName); break;
       case 'size': cmp = a.size - b.size; break;
       case 'uploaded': cmp = new Date(a.uploadedAt).getTime() - new Date(b.uploadedAt).getTime(); break;
     }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import { updateProgramVideoUrl } from '@/lib/programsRepository';
+import { getProgramBlobPrefix } from '@/lib/blobUtils';
 
 export async function POST(request: NextRequest, {params}: {params: Promise<{id: string}>}) {
   try {
@@ -17,8 +18,9 @@ export async function POST(request: NextRequest, {params}: {params: Promise<{id:
       return NextResponse.json({error: 'Blob storage token not configured'}, {status: 500});
     }
 
+    const prefix = await getProgramBlobPrefix(programId);
     const buffer = Buffer.from(await videoFile.arrayBuffer());
-    const blob = await put(`program-${programId}/video-${Date.now()}.${videoFile.name.split('.').pop()}`, buffer, {access: 'public', contentType: videoFile.type, token});
+    const blob = await put(`${prefix}/video-${Date.now()}.${videoFile.name.split('.').pop()}`, buffer, {access: 'public', contentType: videoFile.type, token});
 
     const updatedProgram = await updateProgramVideoUrl(programId, blob.url);
 

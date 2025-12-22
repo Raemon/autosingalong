@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import path from 'path';
+import { getSongBlobPrefix } from '@/lib/blobUtils';
 
 const MAX_FILE_SIZE_MB = 4.5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -24,9 +25,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Blob storage token not configured' }, { status: 500 });
     }
 
+    const prefix = await getSongBlobPrefix(songId);
     const buffer = Buffer.from(await file.arrayBuffer());
     const extension = path.extname(file.name).slice(1) || 'bin';
-    const prefix = songId ? `song-${songId}` : 'song-unknown';
     const blob = await put(`${prefix}/blob-${Date.now()}.${extension}`, buffer, { access: 'public', contentType: file.type, token });
 
     return NextResponse.json({ url: blob.url });
