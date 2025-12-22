@@ -154,6 +154,7 @@ export const importSongDirectory = async (
     const createdAt = await getFileCreatedAt(file.fullPath);
     const existingVersion = await findExistingVersion(songTitle, [label, sourceLabel], createdAt);
 
+    // If timestamps match exactly, the file hasn't changed since import
     if (existingVersion?.matches) {
       const url = versionUrl(existingVersion.existing?.id);
       const result = { title: songTitle, label, status: 'exists', url };
@@ -162,11 +163,35 @@ export const importSongDirectory = async (
       continue;
     }
 
+    // If version exists but timestamps don't match, compare content
+    if (existingVersion?.existing) {
+      const existingContent = existingVersion.existing.content;
+      const newContent = file.isText ? file.buffer.toString('utf-8') : null;
+      // For text files, compare content; for binary, compare by blob existence
+      const contentMatches = file.isText
+        ? existingContent === newContent
+        : Boolean(existingVersion.existing.blobUrl); // Binary exists = assume unchanged
+      if (contentMatches) {
+        const url = versionUrl(existingVersion.existing.id);
+        const result = { title: songTitle, label, status: 'exists', url };
+        results.push(result);
+        onResult?.(result);
+        continue;
+      }
+      // Content differs - would update (create new version in lineage)
+      if (dryRun) {
+        const url = versionUrl(existingVersion.existing.id);
+        const result = { title: songTitle, label, status: 'would-update', url };
+        results.push(result);
+        onResult?.(result);
+        continue;
+      }
+    }
+
     try {
-      const existingUrl = existingVersion ? versionUrl(existingVersion.existing?.id) : undefined;
       if (dryRun) {
         const statusType = file.isText ? 'would-create' : 'would-create-binary';
-        const result = { title: songTitle, label, status: statusType, url: existingUrl };
+        const result = { title: songTitle, label, status: statusType };
         results.push(result);
         onResult?.(result);
       } else {
@@ -236,6 +261,7 @@ export const importSpeechFile = async (
   const createdAt = await getFileCreatedAt(filePath);
   const existingVersion = await findExistingVersion(title, [label, sourceLabel], createdAt);
 
+  // If timestamps match exactly, the file hasn't changed since import
   if (existingVersion?.matches) {
     const url = versionUrl(existingVersion.existing?.id);
     const result = { title, label, status: 'exists', url };
@@ -243,10 +269,27 @@ export const importSpeechFile = async (
     return result;
   }
 
-  try {
-    const existingUrl = existingVersion ? versionUrl(existingVersion.existing?.id) : undefined;
+  // If version exists but timestamps don't match, compare content
+  if (existingVersion?.existing) {
+    const existingContent = existingVersion.existing.content;
+    if (existingContent === content) {
+      const url = versionUrl(existingVersion.existing.id);
+      const result = { title, label, status: 'exists', url };
+      onResult?.(result);
+      return result;
+    }
+    // Content differs - would update
     if (dryRun) {
-      const result = { title, label, status: 'would-create', url: existingUrl };
+      const url = versionUrl(existingVersion.existing.id);
+      const result = { title, label, status: 'would-update', url };
+      onResult?.(result);
+      return result;
+    }
+  }
+
+  try {
+    if (dryRun) {
+      const result = { title, label, status: 'would-create' };
       onResult?.(result);
       return result;
     } else {

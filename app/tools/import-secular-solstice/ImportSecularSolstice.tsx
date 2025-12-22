@@ -186,9 +186,9 @@ const ImportSecularSolstice = () => {
       </div>
       {progress && <div className="text-xs">{progress}</div>}
       {lilypondStatus && <div className="text-xs">{lilypondStatus}</div>}
-      {liveItems.length > 0 && (
+      {liveItems.filter(r => r.status !== 'exists').length > 0 && (
         <ul className="text-xs list-disc list-inside space-y-0.5">
-          {liveItems.map((r, index) => (
+          {liveItems.filter(r => r.status !== 'exists').map((r, index) => (
             <li key={`${r.title}-${r.label || ''}-${r.status}-${index}`}>
               {r.type}: {r.title}{r.label ? ` / ${r.label}` : ''} - {r.status}{r.elementCount ? ` (${r.elementCount} elements)` : ''}{' '}
               {r.missingElements && r.missingElements.length > 0 && <span className="text-yellow-500">[missing: {r.missingElements.join(', ')}]</span>}
@@ -201,40 +201,45 @@ const ImportSecularSolstice = () => {
       )}
       {result && (
         <div className="text-xs space-y-1">
-          <div>Speech results ({result.speechResults?.length ?? 0})</div>
-          <ul className="list-disc list-inside space-y-0.5">
-            {result.speechResults?.map((r, index) => (
-              <li key={`${r.title}-${r.label}-${index}`}>
-                {r.title} / {r.label} - {r.status}{' '}
-                {r.url && (
-                  <a className="underline text-blue-600" href={r.url} target="_blank" rel="noreferrer">open</a>
-                )}
-              </li>
-            ))}
-          </ul>
-          <div>Song results ({result.songResults?.length ?? 0})</div>
-          <ul className="list-disc list-inside space-y-0.5">
-            {result.songResults?.map((r, index) => (
-              <li key={`${r.title}-${r.label}-${index}`}>
-                {r.title} / {r.label} - {r.status}{' '}
-                {r.url && (
-                  <a className="underline" href={r.url} target="_blank" rel="noreferrer">open</a>
-                )}
-              </li>
-            ))}
-          </ul>
-          <div>Program results ({result.programResults?.length ?? 0})</div>
-          <ul className="list-disc list-inside space-y-0.5">
-            {result.programResults?.map((r, index) => (
-              <li key={`${r.title}-${index}`}>
-                {r.title} - {r.status}{r.elementCount ? ` (${r.elementCount} elements)` : ''}{' '}
-                {r.missingElements && r.missingElements.length > 0 && <span className="text-yellow-500">[missing: {r.missingElements.join(', ')}]</span>}
-                {r.url && (
-                  <a className="underline text-blue-600" href={r.url} target="_blank" rel="noreferrer">open</a>
-                )}
-              </li>
-            ))}
-          </ul>
+          {(result.speechResults?.filter(r => r.status !== 'exists').length ?? 0) > 0 && (<>
+            <div>Speeches to import ({result.speechResults?.filter(r => r.status !== 'exists').length})</div>
+            <ul className="list-disc list-inside space-y-0.5">
+              {result.speechResults?.filter(r => r.status !== 'exists').map((r, index) => (
+                <li key={`${r.title}-${r.label}-${index}`}>
+                  {r.title} / {r.label} - {r.status}{' '}
+                  {r.url && (<a className="underline text-blue-600" href={r.url} target="_blank" rel="noreferrer">open</a>)}
+                </li>
+              ))}
+            </ul>
+          </>)}
+          {(result.songResults?.filter(r => r.status !== 'exists').length ?? 0) > 0 && (<>
+            <div>Songs to import ({result.songResults?.filter(r => r.status !== 'exists').length})</div>
+            <ul className="list-disc list-inside space-y-0.5">
+              {result.songResults?.filter(r => r.status !== 'exists').map((r, index) => (
+                <li key={`${r.title}-${r.label}-${index}`}>
+                  {r.title} / {r.label} - {r.status}{' '}
+                  {r.url && (<a className="underline" href={r.url} target="_blank" rel="noreferrer">open</a>)}
+                </li>
+              ))}
+            </ul>
+          </>)}
+          {(result.programResults?.filter(r => r.status !== 'exists').length ?? 0) > 0 && (<>
+            <div>Programs to import ({result.programResults?.filter(r => r.status !== 'exists').length})</div>
+            <ul className="list-disc list-inside space-y-0.5">
+              {result.programResults?.filter(r => r.status !== 'exists').map((r, index) => (
+                <li key={`${r.title}-${index}`}>
+                  {r.title} - {r.status}{r.elementCount ? ` (${r.elementCount} elements)` : ''}{' '}
+                  {r.missingElements && r.missingElements.length > 0 && <span className="text-yellow-500">[missing: {r.missingElements.join(', ')}]</span>}
+                  {r.url && (<a className="underline text-blue-600" href={r.url} target="_blank" rel="noreferrer">open</a>)}
+                </li>
+              ))}
+            </ul>
+          </>)}
+          {(result.speechResults?.filter(r => r.status !== 'exists').length ?? 0) === 0 &&
+           (result.songResults?.filter(r => r.status !== 'exists').length ?? 0) === 0 &&
+           (result.programResults?.filter(r => r.status !== 'exists').length ?? 0) === 0 && (
+            <div>Nothing to import - all items already exist</div>
+          )}
         </div>
       )}
       {lilypondResults.length > 0 && (

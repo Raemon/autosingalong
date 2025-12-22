@@ -21,7 +21,7 @@ const UsernameInput = ({lightMode = false}: {lightMode?: boolean}) => {
       {isGuest ? (
         <>
           <button onClick={() => openModal('login')} className="text-xs text-primary hover:bg-primary/25 whitespace-nowrap border border-primary rounded-md px-2 py-1">Sign In</button>
-          <button onClick={() => openModal('register')} className="text-xs text-green-500 hover:bg-green-500/25 whitespace-nowrap border border-green-500 rounded-md px-2 py-1">Create Account</button>
+          <button onClick={() => openModal('register')} className="text-xs text-white hover:bg-white/25 whitespace-nowrap border border-white rounded-md px-2 py-1">Create Account</button>
         </>
       ) : (
         <Tooltip content="Logout" placement="bottom"><button onClick={logout} className="text-xs text-gray-200 hover:text-gray-300" title="Logout">⏻</button></Tooltip>
