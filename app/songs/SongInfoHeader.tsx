@@ -35,7 +35,7 @@ const SongInfoHeader = ({songId, title, tags = [], onClose, disableClose = false
   };
   return (
     <>
-      <h2 className="font-georgia -ml-8 text-4xl mb-2 flex items-center gap-3">
+      <h2 className="font-georgia -ml-8 text-4xl mb-2 flex items-center gap-3 text-balance">
         <button
           onClick={() => !disableClose && onClose()}
           className="text-gray-400 hover:text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-gray-400"

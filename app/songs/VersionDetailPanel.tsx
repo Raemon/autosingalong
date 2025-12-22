@@ -88,7 +88,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions = [], isCreati
   }
 
   return (
-    <div className="md:pl-4 w-full lg:p-20 relative xl:max-w-4xl mx-auto">
+    <div className="md:pl-4 w-full lg:p-20 relative xl:max-w-4xl mx-auto overflow-x-hidden">
       <SongInfoHeader
         songId={songId}
         title={songTitle}

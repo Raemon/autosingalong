@@ -239,7 +239,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
   }
 
   return (
-    <div className="min-h-screen p-4 relative">
+    <div className="min-h-screen p-4 relative overflow-x-scroll">
       <div className="flex gap-4  justify-center">
         {isListCollapsed ? (
           <div className={`w-[70px] flex flex-col items-center gap-2 ${isCreatingVersion ? 'opacity-50 pointer-events-none' : ''} ${selectedVersion ? 'hidden xl:flex' : ''}`}>
@@ -331,7 +331,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
         {selectedVersion && (() => {
           const song = songs.find(s => s.versions.some(v => v.id === selectedVersion.id));
           return (
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <VersionDetailPanel
                 songTitle={song?.title || ''}
                 version={selectedVersion}
