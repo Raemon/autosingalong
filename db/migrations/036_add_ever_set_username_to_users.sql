@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN IF NOT EXISTS ever_set_username boolean NOT NULL DEFAULT false;

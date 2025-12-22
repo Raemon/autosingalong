@@ -52,7 +52,7 @@ export type VoteWidgetProps = {
 };
 
 const VoteWidget: React.FC<VoteWidgetProps> = ({ versionId, songId, category, hideVotes = false, preloadedUserVote }) => {
-  const { userId, canEdit } = useUser();
+  const { userId, canVoteAndComment } = useUser();
   const [votes, setVotes] = useState<VoteRecord[]>([]);
   const [currentUserVote, setCurrentUserVote] = useState<VoteRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -103,8 +103,8 @@ const VoteWidget: React.FC<VoteWidgetProps> = ({ versionId, songId, category, hi
   }, [preloadedUserVote, songId]);
 
   const handleVote = async (option: { weight: number; label: string; }) => {
-    if (!canEdit) {
-      setError('Set your name (3+ chars) to vote');
+    if (!canVoteAndComment) {
+      setError('Loading user...');
       return;
     }
 

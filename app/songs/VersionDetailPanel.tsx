@@ -130,7 +130,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions = [], isCreati
               onCancelCreateVersion={onCancelCreateVersion}
             />
           ) : (
-            <Tooltip content="to edit, type your name in the top-right">
+            <Tooltip content="To edit, update your name in the top-right corner">
               <VersionActionButtons
                 isCreatingVersion={isCreatingVersion}
                 version={version}
