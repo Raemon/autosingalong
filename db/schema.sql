@@ -115,13 +115,16 @@ create table if not exists votes (
   category text not null default 'quality'::text,
   privacy text not null default 'public'::text,
   user_id uuid,
+  program_id uuid,
   constraint votes_pkey PRIMARY KEY (id),
+  constraint votes_program_id_fkey FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE SET NULL,
   constraint votes_song_id_fkey FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE,
   constraint votes_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
   constraint votes_version_id_fkey FOREIGN KEY (version_id) REFERENCES song_versions(id) ON DELETE CASCADE
 );
 
 CREATE INDEX if not exists votes_privacy_idx on votes USING btree (privacy);
+CREATE INDEX if not exists votes_program_id_idx on votes USING btree (program_id);
 CREATE INDEX if not exists votes_song_id_idx on votes USING btree (song_id);
 CREATE INDEX if not exists votes_user_id_idx on votes USING btree (user_id);
 CREATE INDEX if not exists votes_version_id_idx on votes USING btree (version_id);
