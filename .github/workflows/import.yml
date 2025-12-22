@@ -1,0 +1,25 @@
+name: Daily Import
+
+on:
+  schedule:
+    # Run daily at 5 AM UTC (1 hour before backup at 6 AM)
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+    # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger import from Secular Solstice
+        run: |
+          HTTP_CODE=$(curl -s -w "%{http_code}" -o response.txt -X POST \
+            -H "Authorization: Bearer ${{ secrets.IMPORT_SECRET }}" \
+            "${{ secrets.APP_URL }}/api/admin/import-secular-solstice")
+          echo "HTTP Code: $HTTP_CODE"
+          cat response.txt
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Import API returned error"
+            exit 1
+          fi
+          echo "Import completed successfully"
