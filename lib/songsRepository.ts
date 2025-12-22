@@ -863,7 +863,7 @@ export type ChangelogVersionRecord = {
   createdAt: string;
 };
 
-export const listVersionsForChangelog = async (songId?: string, filename?: string): Promise<ChangelogVersionRecord[]> => {
+export const listVersionsForChangelog = async (songId?: string, filename?: string, username?: string): Promise<ChangelogVersionRecord[]> => {
   const rows = songId
     ? await sql`
         select
@@ -881,6 +881,7 @@ export const listVersionsForChangelog = async (songId?: string, filename?: strin
         left join song_versions prev on prev.id = v.previous_version_id
         where v.archived = false and s.archived = false and v.song_id = ${songId}
           ${filename ? sql`and v.label = ${filename}` : sql``}
+          ${username ? sql`and v.created_by = ${username}` : sql``}
         order by v.created_at desc
       `
     : await sql`
@@ -899,6 +900,7 @@ export const listVersionsForChangelog = async (songId?: string, filename?: strin
         left join song_versions prev on prev.id = v.previous_version_id
         where v.archived = false and s.archived = false
           ${filename ? sql`and v.label = ${filename}` : sql``}
+          ${username ? sql`and v.created_by = ${username}` : sql``}
         order by v.created_at desc
       `;
   return rows as ChangelogVersionRecord[];

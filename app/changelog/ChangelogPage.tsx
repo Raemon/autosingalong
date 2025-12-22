@@ -90,7 +90,7 @@ const ChangelogPage = ({songId, filename, compact = false}: {songId?: string; fi
                 {added === 0 && removed === 0 && version.previousContent !== null && <span className="text-gray-500">±0</span>}
               </span>
               <span className={`text-gray-600 w-6 text-right shrink-0 text-[11px] ${compact ? 'hidden sm:inline' : ''}`}>{formatRelativeTimestamp(version.createdAt)}</span>
-              <span className={`text-gray-500 ${compact ? 'hidden sm:inline' : ''}`}>{version.createdBy || 'anonymous'}</span>
+              {version.createdBy ? <Link href={`/users/${version.createdBy}`} className={`text-gray-500 hover:text-gray-300 ${compact ? 'hidden sm:inline' : ''}`}>{version.createdBy}</Link> : <span className={`text-gray-500 ${compact ? 'hidden sm:inline' : ''}`}>anonymous</span>}
               <Link href={`/songs/${version.id}`} className="text-gray-200 hover:underline truncate min-w-0">
                 {compact ? version.label : `${version.songTitle} / ${version.label}`}
               </Link>
