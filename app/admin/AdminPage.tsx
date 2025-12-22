@@ -21,13 +21,14 @@ const CreateBackupButton = ({ userId }: { userId: string }) => {
       const filename = response.headers.get('X-Backup-Filename') || `songs-export-${new Date().toISOString().split('T')[0]}.zip`;
       const songsCount = response.headers.get('X-Songs-Count');
       const versionsCount = response.headers.get('X-Versions-Count');
+      const programsCount = response.headers.get('X-Programs-Count');
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = filename;
       link.click();
       URL.revokeObjectURL(downloadUrl);
-      setBackupStatus({ success: true, message: `Downloaded ${filename} (${songsCount} songs, ${versionsCount} versions)` });
+      setBackupStatus({ success: true, message: `Downloaded ${filename} (${songsCount} songs, ${versionsCount} versions, ${programsCount} programs)` });
     } catch (err: unknown) {
       console.error('Backup failed:', err);
       setBackupStatus({ success: false, message: err instanceof Error ? err.message : 'Unknown error' });
@@ -234,7 +235,7 @@ const AdminPage = () => {
       {userId && (
         <section>
           <h2 className="text-lg font-semibold mb-3">Backup</h2>
-          <p className="text-gray-400 text-sm mb-2">Download a zip file containing all songs and versions.</p>
+          <p className="text-gray-400 text-sm mb-2">Download a zip file containing all songs, versions, blob files, and programs.</p>
           <CreateBackupButton userId={userId} />
         </section>
       )}

@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import type { SongWithVersions } from '@/lib/songsRepository';
+import type { ProgramRecord } from '@/lib/programsRepository';
 
 export const sanitizeFileName = (name: string) => {
   const cleaned = name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_').trim();
@@ -7,7 +8,20 @@ export const sanitizeFileName = (name: string) => {
   return collapsedSpaces || 'untitled';
 };
 
-const buildExportZip = (songs: SongWithVersions[]): JSZip => {
+type BlobFile = { url: string; data: ArrayBuffer; filename: string };
+type VersionBlobs = Record<string, BlobFile[]>; // versionId -> files
+
+const getFilenameFromUrl = (url: string): string => {
+  try {
+    const pathname = new URL(url).pathname;
+    const filename = pathname.split('/').pop() || 'file';
+    return filename;
+  } catch {
+    return 'file';
+  }
+};
+
+const buildExportZip = (songs: SongWithVersions[], programs?: ProgramRecord[], versionBlobs?: VersionBlobs): JSZip => {
   const zip = new JSZip();
   const rootFolder = zip.folder('songs_export');
   if (!rootFolder) {
@@ -28,10 +42,30 @@ const buildExportZip = (songs: SongWithVersions[]): JSZip => {
       if (!versionFolder) return;
 
       const contentText = version.content ?? '';
-      versionFolder.file('content.txt', contentText || 'No stored content for this version.');
+      const labelFilename = `${sanitizeFileName(version.label)}.txt`;
+      versionFolder.file(labelFilename, contentText || 'No stored content for this version.');
       versionFolder.file('data.json', JSON.stringify(version, null, 2));
+
+      // Add blob files if available
+      const blobs = versionBlobs?.[version.id];
+      if (blobs && blobs.length > 0) {
+        const filesFolder = versionFolder.folder('files');
+        if (filesFolder) {
+          blobs.forEach((blob) => {
+            filesFolder.file(blob.filename, blob.data);
+          });
+        }
+      }
     });
   });
+
+  // Add programs folder if provided
+  if (programs && programs.length > 0) {
+    const programsFolder = rootFolder.folder('programs');
+    if (programsFolder) {
+      programsFolder.file('data.json', JSON.stringify(programs, null, 2));
+    }
+  }
 
   return zip;
 };
@@ -42,4 +76,39 @@ export const generateSongsExportZip = async (songs: SongWithVersions[]): Promise
 
 export const generateSongsExportBuffer = async (songs: SongWithVersions[]): Promise<Buffer> => {
   return buildExportZip(songs).generateAsync({ type: 'nodebuffer' });
+};
+
+// Fetch blob files for all versions that have a blobUrl
+export const fetchVersionBlobs = async (songs: SongWithVersions[]): Promise<VersionBlobs> => {
+  const versionBlobs: VersionBlobs = {};
+  const fetchPromises: Promise<void>[] = [];
+
+  for (const song of songs) {
+    for (const version of song.versions) {
+      if (version.blobUrl) {
+        const promise = (async () => {
+          try {
+            const response = await fetch(version.blobUrl!);
+            if (response.ok) {
+              const data = await response.arrayBuffer();
+              const filename = getFilenameFromUrl(version.blobUrl!);
+              versionBlobs[version.id] = versionBlobs[version.id] || [];
+              versionBlobs[version.id].push({ url: version.blobUrl!, data, filename });
+            }
+          } catch (err) {
+            console.error(`Failed to fetch blob for version ${version.id}:`, err);
+          }
+        })();
+        fetchPromises.push(promise);
+      }
+    }
+  }
+
+  await Promise.all(fetchPromises);
+  return versionBlobs;
+};
+
+export const generateFullExportBuffer = async (songs: SongWithVersions[], programs: ProgramRecord[]): Promise<Buffer> => {
+  const versionBlobs = await fetchVersionBlobs(songs);
+  return buildExportZip(songs, programs, versionBlobs).generateAsync({ type: 'nodebuffer' });
 };

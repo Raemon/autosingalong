@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listSongsWithAllVersions } from '@/lib/songsRepository';
-import { generateSongsExportBuffer } from '@/lib/exportUtils';
+import { listPrograms } from '@/lib/programsRepository';
+import { generateFullExportBuffer } from '@/lib/exportUtils';
 import { requireAdmin } from '@/lib/adminAuth';
 import { validateBearerSecret } from '@/lib/authUtils';
 
@@ -15,16 +16,19 @@ export async function POST(request: NextRequest) {
       if (adminError) return adminError;
     }
 
-    const songs = await listSongsWithAllVersions();
+    const [songs, programs] = await Promise.all([
+      listSongsWithAllVersions(),
+      listPrograms()
+    ]);
     if (!songs.length) {
       return NextResponse.json({ error: 'No songs available to backup' }, { status: 400 });
     }
 
-    const buffer = await generateSongsExportBuffer(songs);
+    const buffer = await generateFullExportBuffer(songs, programs);
     const date = new Date().toISOString().split('T')[0];
     const filename = `songs-export-${date}.zip`;
 
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/zip',
@@ -32,6 +36,7 @@ export async function POST(request: NextRequest) {
         'X-Backup-Filename': filename,
         'X-Songs-Count': String(songs.length),
         'X-Versions-Count': String(songs.reduce((acc, s) => acc + s.versions.length, 0)),
+        'X-Programs-Count': String(programs.length),
       },
     });
   } catch (error) {
