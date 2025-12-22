@@ -10,6 +10,7 @@ type ProgramImportResult = { title: string; status: string; url?: string; error?
 type ResyncResult = { title: string; status: string; url?: string; error?: string; addedElements?: number; createdPlaceholders?: string[] };
 type LiveItem = { type: 'song' | 'speech' | 'activity' | 'program' | 'resync'; title: string; label?: string; status: string; url?: string; elementCount?: number; missingElements?: string[]; addedElements?: number; createdPlaceholders?: string[] };
 type ImportResults = { speechResults: ImportResult[]; songResults: ImportResult[]; activityResults: ImportResult[]; programResults: ProgramImportResult[]; resyncResults: ResyncResult[] };
+type ImportType = 'songs' | 'speeches' | 'activities' | 'programs' | 'resync';
 
 const ImportSecularSolstice = () => {
   const { userId, isAdmin, loading: userLoading } = useUser();
@@ -22,15 +23,17 @@ const ImportSecularSolstice = () => {
   const [lilypondStatus, setLilypondStatus] = useState('');
   const [lilypondResults, setLilypondResults] = useState<any[]>([]);
 
-  const runImport = async (dryRun: boolean) => {
+  const runImport = async (dryRun: boolean, types?: ImportType[]) => {
     setIsRunning(true);
     setStatus('');
     setResult(null);
     setLiveItems([]);
-    setProgress(dryRun ? 'Starting dry run...' : 'Starting import...');
+    const typeLabel = types ? types.join(', ') : 'all';
+    setProgress(dryRun ? `Starting dry run for ${typeLabel}...` : `Starting import for ${typeLabel}...`);
     const startedAt = performance.now();
     try {
-      const response = await fetch(`/api/admin/import-secular-solstice?dryRun=${dryRun ? 'true' : 'false'}&stream=true&requestingUserId=${userId}`, { method: 'POST' });
+      const typesParam = types ? `&types=${types.join(',')}` : '';
+      const response = await fetch(`/api/admin/import-secular-solstice?dryRun=${dryRun ? 'true' : 'false'}&stream=true&requestingUserId=${userId}${typesParam}`, { method: 'POST' });
       if (!response.body) {
         setStatus('No response body');
         return;
@@ -160,29 +163,28 @@ const ImportSecularSolstice = () => {
     return <div className="p-4 text-gray-400">You must be an admin to use this tool.</div>;
   }
 
+  const ImportButton = ({ types, label }: { types?: ImportType[]; label: string }) => (
+    <div className="flex gap-1">
+      <button onClick={() => runImport(true, types)} disabled={!isAdmin || isRunning} className="text-xs px-2 py-0.5 bg-gray-600 text-white disabled:opacity-50">
+        {isRunning ? '...' : `${label} (dry)`}
+      </button>
+      <button onClick={() => runImport(false, types)} disabled={!isAdmin || isRunning} className="text-xs px-2 py-0.5 bg-blue-600 text-white disabled:opacity-50">
+        {isRunning ? '...' : label}
+      </button>
+    </div>
+  );
+
   return (
     <div className="p-4 space-y-2">
-      <div className="flex gap-2">
-        <button
-          onClick={() => runImport(true)}
-          disabled={!isAdmin || isRunning}
-          className="text-xs px-2 py-1 bg-blue-600 text-white disabled:opacity-50"
-        >
-          {isRunning ? 'Working...' : 'Dry run'}
-        </button>
-        <button
-          onClick={() => runImport(false)}
-          disabled={!isAdmin || isRunning}
-          className="text-xs px-2 py-1 bg-blue-600 text-white disabled:opacity-50"
-        >
-          {isRunning ? 'Working...' : 'Import for real'}
-        </button>
-        <button
-          onClick={renderMissingLilypond}
-          disabled={!isAdmin || isRunning || isRenderingLilypond}
-          className="text-xs px-2 py-1 bg-blue-600 text-white disabled:opacity-50"
-        >
-          {isRenderingLilypond ? 'Rendering...' : 'Render missing lilypond'}
+      <div className="flex flex-wrap gap-2">
+        <ImportButton label="All" />
+        <ImportButton types={['songs']} label="Songs" />
+        <ImportButton types={['speeches']} label="Speeches" />
+        <ImportButton types={['activities']} label="Activities" />
+        <ImportButton types={['programs']} label="Programs" />
+        <ImportButton types={['resync']} label="Resync" />
+        <button onClick={renderMissingLilypond} disabled={!isAdmin || isRunning || isRenderingLilypond} className="text-xs px-2 py-0.5 bg-purple-600 text-white disabled:opacity-50">
+          {isRenderingLilypond ? 'Rendering...' : 'Render Lilypond'}
         </button>
       </div>
       {progress && <div className="text-xs">{progress}</div>}
@@ -229,9 +231,9 @@ const ImportSecularSolstice = () => {
             <div>Activities to import ({result.activityResults?.filter(r => r.status !== 'exists').length})</div>
             <ul className="list-disc list-inside space-y-0.5">
               {result.activityResults?.filter(r => r.status !== 'exists').map((r, index) => (
-                <li key={`${r.title}-${r.label}-${index}`}>
+                <li key={`activity-${r.title}-${r.label}-${index}`}>
                   {r.title} / {r.label} - {r.status}{' '}
-                  {r.url && (<a className="underline" href={r.url} target="_blank" rel="noreferrer">open</a>)}
+                  {r.url && (<a className="underline text-blue-600" href={r.url} target="_blank" rel="noreferrer">open</a>)}
                 </li>
               ))}
             </ul>

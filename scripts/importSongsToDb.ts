@@ -1,21 +1,23 @@
 import path from 'path';
 import dotenv from 'dotenv';
 import { importFromDirectories, ProgramImportResult } from '../lib/importUtils';
+import { downloadSecularSolsticeRepo } from '../lib/githubDownloader';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-const SONGS_DIR = path.join(process.cwd(), 'songs');
-
 const run = async () => {
-  const config = {
-    songsDirs: [{ path: SONGS_DIR, tags: ['song'] }],
-    speechesDirs: [],
-    activitiesDirs: [],
-    programsDirs: [],
-  };
-
   console.log('Starting import...');
-  console.log('Songs directory:', SONGS_DIR);
+  console.log('Downloading SecularSolstice repo from GitHub...');
+
+  const repo = await downloadSecularSolsticeRepo();
+  console.log('Downloaded to:', repo.basePath);
+
+  const config = {
+    songsDirs: [{ path: repo.songsDir, tags: ['song'] }],
+    speechesDirs: [repo.speechesDir],
+    programsDirs: [repo.listsDir],
+    activitiesConfig: { listFile: repo.activitiesListFile, speechesDir: repo.speechesDir },
+  };
 
   const { songResults, speechResults, activityResults, programResults, resyncResults } = await importFromDirectories(
     config,
@@ -26,6 +28,7 @@ const run = async () => {
         : result.status === 'failed' ? '✗'
         : '?';
       if (type === 'program' || type === 'resync') {
+        // @ts-ignore - ProgramImportResult is compatible
         const pr = result as ProgramImportResult;
         const extra = pr.missingElements?.length ? ` (missing: ${pr.missingElements.join(', ')})` : '';
         console.log(`  ${statusIcon} [${type}] ${pr.title} - ${pr.status}${pr.elementCount ? ` (${pr.elementCount} elements)` : ''}${extra}${pr.error ? ` (${pr.error})` : ''}`);
@@ -55,6 +58,10 @@ const run = async () => {
   console.log(`Resynced: ${resyncResults.length} programs`);
   console.log(`  Resynced: ${resyncResults.filter(r => r.status === 'resynced').length}`);
   console.log(`  Failed: ${resyncResults.filter(r => r.status === 'failed').length}`);
+
+  console.log('\nCleaning up temporary files...');
+  await repo.cleanup();
+  console.log('Done!');
 };
 
 run().catch((error) => {

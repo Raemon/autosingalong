@@ -1,12 +1,11 @@
-import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
 import { validateBearerSecret } from '@/lib/authUtils';
 import { importFromDirectories } from '@/lib/importUtils';
-
-const SONGS_DIR = path.join(process.cwd(), 'songs');
+import { downloadSecularSolsticeRepo } from '@/lib/githubDownloader';
 
 export async function POST(request: NextRequest) {
+  let cleanup: (() => Promise<void>) | null = null;
   try {
     const url = new URL(request.url);
     // Check for import secret (for GitHub Actions) or admin auth
@@ -18,11 +17,18 @@ export async function POST(request: NextRequest) {
     const dryRun = url.searchParams.get('dryRun') === 'true';
     const stream = url.searchParams.get('stream') === 'true';
 
+    // Download and extract the SecularSolstice repo from GitHub
+    const repo = await downloadSecularSolsticeRepo();
+    cleanup = repo.cleanup;
+
+    // Parse which types to import (default: all)
+    const importTypes = url.searchParams.get('types')?.split(',') || ['songs', 'speeches', 'activities', 'programs', 'resync'];
+
     const config = {
-      songsDirs: [{ path: SONGS_DIR, tags: ['song'] }],
-      speechesDirs: [],
-      activitiesDirs: [],
-      programsDirs: [],
+      songsDirs: importTypes.includes('songs') ? [{ path: repo.songsDir, tags: ['song'] }] : [],
+      speechesDirs: importTypes.includes('speeches') ? [repo.speechesDir] : [],
+      programsDirs: (importTypes.includes('programs') || importTypes.includes('resync')) ? [repo.listsDir] : [],
+      activitiesConfig: importTypes.includes('activities') ? { listFile: repo.activitiesListFile, speechesDir: repo.speechesDir } : undefined,
     };
 
     if (stream) {
@@ -34,12 +40,24 @@ export async function POST(request: NextRequest) {
             const { songResults, speechResults, activityResults, programResults, resyncResults } = await importFromDirectories(
               config,
               dryRun,
-              (type, result) => send({ type, ...result })
+              (type, result) => {
+                // Filter out resync if not requested
+                if (type === 'resync' && !importTypes.includes('resync')) return;
+                // Filter out programs if only resync requested
+                if (type === 'program' && !importTypes.includes('programs')) return;
+                // Filter out activities if not requested
+                if (type === 'activity' && !importTypes.includes('activities')) return;
+                send({ type, ...result });
+              }
             );
-            send({ type: 'summary', speechResults, songResults, activityResults, programResults, resyncResults });
+            const filteredResyncResults = importTypes.includes('resync') ? resyncResults : [];
+            const filteredProgramResults = importTypes.includes('programs') ? programResults : [];
+            const filteredActivityResults = importTypes.includes('activities') ? activityResults : [];
+            send({ type: 'summary', speechResults, songResults, activityResults: filteredActivityResults, programResults: filteredProgramResults, resyncResults: filteredResyncResults });
           } catch (error) {
             send({ type: 'error', error: error instanceof Error ? error.message : 'Failed to import content' });
           } finally {
+            await repo.cleanup();
             controller.close();
           }
         },
@@ -49,8 +67,13 @@ export async function POST(request: NextRequest) {
     }
 
     const { songResults, speechResults, activityResults, programResults, resyncResults } = await importFromDirectories(config, dryRun);
-    return NextResponse.json({ speechResults, songResults, activityResults, programResults, resyncResults });
+    await repo.cleanup();
+    const filteredResyncResults = importTypes.includes('resync') ? resyncResults : [];
+    const filteredProgramResults = importTypes.includes('programs') ? programResults : [];
+    const filteredActivityResults = importTypes.includes('activities') ? activityResults : [];
+    return NextResponse.json({ speechResults, songResults, activityResults: filteredActivityResults, programResults: filteredProgramResults, resyncResults: filteredResyncResults });
   } catch (error) {
+    if (cleanup) await cleanup();
     const message = error instanceof Error ? error.message : 'Failed to import content';
     return NextResponse.json({ error: message }, { status: 500 });
   }

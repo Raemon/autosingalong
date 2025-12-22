@@ -314,8 +314,79 @@ const importTextFile = async (
 export const importSpeechFile = (filePath: string, fileName: string, dryRun: boolean, onResult?: (result: ImportResult) => void) =>
   importTextFile(filePath, fileName, 'speech', dryRun, onResult);
 
-export const importActivityFile = (filePath: string, fileName: string, dryRun: boolean, onResult?: (result: ImportResult) => void) =>
-  importTextFile(filePath, fileName, 'activity', dryRun, onResult);
+// Parse All_Activities.list to get list of activity names
+const parseActivitiesList = (content: string): string[] => {
+  const activities: string[] = [];
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue; // Skip empty lines and section headers
+    activities.push(trimmed);
+  }
+  return activities;
+};
+
+// Import activities by reading the All_Activities.list file and importing those specific speeches as activities
+export const importActivitiesFromList = async (
+  activitiesListFile: string,
+  speechesDir: string,
+  dryRun: boolean,
+  onResult?: (result: ImportResult) => void
+): Promise<ImportResult[]> => {
+  const results: ImportResult[] = [];
+
+  let listContent: string;
+  try {
+    listContent = (await fs.readFile(activitiesListFile)).toString('utf-8');
+  } catch (err) {
+    console.warn(`Failed to read activities list file ${activitiesListFile}:`, err);
+    return results;
+  }
+
+  const activityNames = parseActivitiesList(listContent);
+
+  for (const activityName of activityNames) {
+    // Try to find the file in speeches directory (could be .md or other extension)
+    const possibleExtensions = ['.md', '.txt', '.html', ''];
+    let foundFile: string | null = null;
+
+    for (const ext of possibleExtensions) {
+      const filePath = path.join(speechesDir, activityName + ext);
+      try {
+        await fs.access(filePath);
+        foundFile = filePath;
+        break;
+      } catch {
+        continue;
+      }
+    }
+
+    if (!foundFile) {
+      // Try without extension matching (exact filename)
+      try {
+        const entries = await fs.readdir(speechesDir, { withFileTypes: true });
+        const match = entries.find(e => e.isFile() && e.name.startsWith(activityName));
+        if (match) {
+          foundFile = path.join(speechesDir, match.name);
+        }
+      } catch {
+        // Ignore
+      }
+    }
+
+    if (!foundFile) {
+      const result = { title: normalizeTitle(activityName), label: activityName, status: 'failed', error: 'File not found in speeches directory' };
+      results.push(result);
+      onResult?.(result);
+      continue;
+    }
+
+    const fileName = path.basename(foundFile);
+    const result = await importTextFile(foundFile, fileName, 'activity', dryRun, onResult);
+    if (result) results.push(result);
+  }
+
+  return results;
+};
 
 export type ProgramImportResult = { title: string; status: string; url?: string; error?: string; elementCount?: number; missingElements?: string[]; createdPlaceholders?: string[] };
 
@@ -616,12 +687,12 @@ export const importFromDirectories = async (
   config: {
     songsDirs: { path: string; tags: string[] }[];
     speechesDirs: string[];
-    activitiesDirs?: string[];
     programsDirs?: string[];
+    activitiesConfig?: { listFile: string; speechesDir: string };
   },
   dryRun: boolean,
   onResult?: (type: 'song' | 'speech' | 'activity' | 'program' | 'resync', result: ImportResult | ProgramImportResult | ProgramResyncResult) => void
-): Promise<{ songResults: ImportResult[]; speechResults: ImportResult[]; programResults: ProgramImportResult[]; activityResults: ImportResult[]; resyncResults: ProgramResyncResult[] }> => {
+): Promise<{ songResults: ImportResult[]; speechResults: ImportResult[]; activityResults: ImportResult[]; programResults: ProgramImportResult[]; resyncResults: ProgramResyncResult[] }> => {
   const songResults: ImportResult[] = [];
   const speechResults: ImportResult[] = [];
   const activityResults: ImportResult[] = [];
@@ -648,25 +719,15 @@ export const importFromDirectories = async (
     });
   }
 
-  // Import activities
-  for (const activitiesDir of config.activitiesDirs ?? []) {
-    let entries;
-    try {
-      entries = await fs.readdir(activitiesDir, { withFileTypes: true });
-    } catch (err) {
-      console.warn(`Failed to read activities directory ${activitiesDir}:`, err);
-      continue;
-    }
-
-    await runWithLimit(entries.filter(e => e.isFile()), 8, async (entry) => {
-      const result = await importActivityFile(
-        path.join(activitiesDir, entry.name),
-        entry.name,
-        dryRun,
-        (r) => onResult?.('activity', r)
-      );
-      if (result) activityResults.push(result);
-    });
+  // Import activities (speeches that are listed in All_Activities.list)
+  if (config.activitiesConfig) {
+    const results = await importActivitiesFromList(
+      config.activitiesConfig.listFile,
+      config.activitiesConfig.speechesDir,
+      dryRun,
+      (r) => onResult?.('activity', r)
+    );
+    activityResults.push(...results);
   }
 
   // Import songs
