@@ -22,6 +22,9 @@ const ebGaramond = EB_Garamond({
 
 export const metadata: Metadata = {
   title: "Secular Solstice",
+  icons: {
+    icon: "/favicon.jpg",
+  },
 };
 
 export default function RootLayout({
