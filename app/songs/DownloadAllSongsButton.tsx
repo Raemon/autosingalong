@@ -1,15 +1,9 @@
 'use client';
 
-import JSZip from 'jszip';
 import { useCallback, useState } from 'react';
 import type { Song } from './types';
 import Tooltip from '../components/Tooltip';
-
-const sanitizeFileName = (name: string) => {
-  const cleaned = name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_').trim();
-  const collapsedSpaces = cleaned.replace(/\s+/g, ' ');
-  return collapsedSpaces || 'untitled';
-};
+import { generateSongsExportZip } from '@/lib/exportUtils';
 
 type DownloadAllSongsButtonProps = {
   className?: string;
@@ -33,38 +27,7 @@ const DownloadAllSongsButton = ({ className = '' }: DownloadAllSongsButtonProps)
         throw new Error('No songs available to export');
       }
 
-      const zip = new JSZip();
-      const rootFolder = zip.folder('songs_export');
-      if (!rootFolder) {
-        throw new Error('Could not initialize download archive');
-      }
-
-      songsForExport.forEach((song) => {
-        const songFolderName = `${sanitizeFileName(song.title || 'song')}_${song.id}`;
-        const songFolder = rootFolder.folder(songFolderName);
-        if (!songFolder) {
-          return;
-        }
-
-        const versionsFolder = songFolder.folder('versions');
-        if (!versionsFolder) {
-          return;
-        }
-
-        song.versions.forEach((version) => {
-          const versionFolderName = `${sanitizeFileName(version.label)}_${version.id}`;
-          const versionFolder = versionsFolder.folder(versionFolderName);
-          if (!versionFolder) {
-            return;
-          }
-
-          const contentText = version.content ?? '';
-          versionFolder.file('content.txt', contentText || 'No stored content for this version.');
-          versionFolder.file('data.json', JSON.stringify(version, null, 2));
-        });
-      });
-
-      const blob = await zip.generateAsync({ type: 'blob' });
+      const blob = await generateSongsExportZip(songsForExport);
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;

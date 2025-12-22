@@ -4,6 +4,56 @@ import { useCallback, useEffect, useState } from 'react';
 import { useUser } from '@/app/contexts/UserContext';
 import Link from 'next/link';
 
+const CreateBackupButton = ({ userId }: { userId: string }) => {
+  const [isCreating, setIsCreating] = useState(false);
+  const [backupStatus, setBackupStatus] = useState<{ success?: boolean; message?: string } | null>(null);
+
+  const handleCreateBackup = async () => {
+    setIsCreating(true);
+    setBackupStatus(null);
+    try {
+      const response = await fetch(`/api/admin/backup?requestingUserId=${userId}`, { method: 'POST' });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to create backup');
+      }
+      const blob = await response.blob();
+      const filename = response.headers.get('X-Backup-Filename') || `songs-export-${new Date().toISOString().split('T')[0]}.zip`;
+      const songsCount = response.headers.get('X-Songs-Count');
+      const versionsCount = response.headers.get('X-Versions-Count');
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(downloadUrl);
+      setBackupStatus({ success: true, message: `Downloaded ${filename} (${songsCount} songs, ${versionsCount} versions)` });
+    } catch (err: unknown) {
+      console.error('Backup failed:', err);
+      setBackupStatus({ success: false, message: err instanceof Error ? err.message : 'Unknown error' });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={handleCreateBackup}
+        disabled={isCreating}
+        className={`text-sm px-3 py-1 border border-gray-600 rounded ${isCreating ? 'opacity-50 cursor-not-allowed' : 'text-gray-200 hover:bg-gray-800'}`}
+      >
+        {isCreating ? 'Creating...' : 'Create Backup'}
+      </button>
+      {backupStatus && (
+        <span className={`text-xs ${backupStatus.success ? 'text-green-400' : 'text-red-400'}`}>
+          {backupStatus.message}
+        </span>
+      )}
+    </div>
+  );
+};
+
 interface Admin {
   id: string;
   username: string | null;
@@ -84,9 +134,9 @@ const AdminPage = () => {
       setAdmins(prev => [...prev, newAdmin]);
       setShowUserSearch(false);
       setSearchQuery('');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error adding admin:', err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'Failed to add admin');
     }
   };
 
@@ -169,7 +219,7 @@ const AdminPage = () => {
         )}
       </section>
 
-      <section>
+      <section className="mb-8">
         <h2 className="text-lg font-semibold mb-3">Tools</h2>
         <div className="space-y-1">
           {TOOL_LINKS.map(link => (
@@ -179,6 +229,14 @@ const AdminPage = () => {
           ))}
         </div>
       </section>
+
+      {userId && (
+        <section>
+          <h2 className="text-lg font-semibold mb-3">Backup</h2>
+          <p className="text-gray-400 text-sm mb-2">Download a zip file containing all songs and versions.</p>
+          <CreateBackupButton userId={userId} />
+        </section>
+      )}
     </div>
   );
 };
