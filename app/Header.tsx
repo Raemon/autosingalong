@@ -7,6 +7,7 @@ import UsernameInput from './feedback/components/UsernameInput';
 
 const Header = () => {
   const pathname = usePathname();
+  const { isAdmin } = useUser();
   
   if (pathname?.includes('/print') || pathname?.match(/\/programs\/[^/]+\/slides/)) {
     return null;
@@ -16,6 +17,7 @@ const Header = () => {
   const isSongsPage = pathname?.includes('/songs');
   const isProgramsPage = pathname?.includes('/programs');
   const isChangelogPage = pathname?.includes('/changelog');
+  const isAdminPage = pathname?.includes('/admin');
   const isScriptPage = pathname?.match(/\/programs\/[^/]+\/script/);
 
   const headerClasses = isScriptPage
@@ -33,6 +35,7 @@ const Header = () => {
         <Link href="/programs" className={`hover:underline text-sm ${isProgramsPage ? activeTextClass : inactiveTextClass}`}>Programs</Link>
         <Link href="/feedback" className={`hover:underline text-sm ${isFeedbackPage ? activeTextClass : inactiveTextClass}`}>Feedback</Link>
         <Link href="/changelog" className={`hover:underline text-sm ${isChangelogPage ? activeTextClass : inactiveTextClass}`}>Changelog</Link>
+        {isAdmin && <Link href="/admin" className={`hover:underline text-sm ${isAdminPage ? activeTextClass : inactiveTextClass}`}>Admin</Link>}
       </nav>
       <div className="order-1 lg:order-3">
         <UsernameInput lightMode={!!isScriptPage} />
