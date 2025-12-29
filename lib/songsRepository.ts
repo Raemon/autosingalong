@@ -144,48 +144,106 @@ const mapVersionRow = (row: SongVersionQueryRow): SongVersionRecord => ({
 
 const hasVersionData = (row: SongVersionQueryRow): row is SongVersionQueryRow & Required<Pick<SongVersionQueryRow, 'version_id' | 'label' | 'version_created_at'>> => Boolean(row.version_id);
 
+// Reusable SQL fragments to avoid repetition across queries
+// Version columns with camelCase aliases for SongVersionResult type
+const versionSelectColumns = () => sql`
+  v.id as "id",
+  v.song_id as "songId",
+  v.label,
+  v.content,
+  v.audio_url as "audioUrl",
+  v.slides_movie_url as "slidesMovieUrl",
+  v.slide_movie_start as "slideMovieStart",
+  v.bpm,
+  v.transpose,
+  v.previous_version_id as "previousVersionId",
+  v.next_version_id as "nextVersionId",
+  v.original_version_id as "originalVersionId",
+  v.rendered_content as "renderedContent",
+  v.archived as "archived",
+  v.created_by as "createdBy",
+  v.created_at as "createdAt",
+  v.db_created_at as "dbCreatedAt",
+  v.slide_credits as "slideCredits",
+  v.program_credits as "programCredits",
+  v.blob_url as "blobUrl"
+`;
+
+// Version columns for song+version JOIN queries (snake_case for SongVersionQueryRow)
+const songVersionJoinColumns = () => sql`
+  s.id as song_id,
+  s.title,
+  s.created_by as song_created_by,
+  s.created_at as song_created_at,
+  s.archived as song_archived,
+  s.tags as song_tags,
+  v.id as version_id,
+  v.label,
+  v.content,
+  v.audio_url,
+  v.slides_movie_url,
+  v.slide_movie_start,
+  v.previous_version_id,
+  v.next_version_id,
+  v.original_version_id,
+  v.rendered_content,
+  v.bpm,
+  v.transpose,
+  v.archived,
+  v.created_by as version_created_by,
+  v.created_at as version_created_at,
+  v.db_created_at as version_db_created_at,
+  v.slide_credits,
+  v.program_credits,
+  v.blob_url
+`;
+
+// RETURNING clause for version mutations
+const versionReturningClause = sql`id, song_id as "songId", label, content, audio_url as "audioUrl", slides_movie_url as "slidesMovieUrl", slide_movie_start as "slideMovieStart", bpm, transpose, previous_version_id as "previousVersionId", next_version_id as "nextVersionId", original_version_id as "originalVersionId", rendered_content as "renderedContent", archived, created_by as "createdBy", created_at as "createdAt", db_created_at as "dbCreatedAt", slide_credits as "slideCredits", program_credits as "programCredits", blob_url as "blobUrl"`;
+
+// Helper to group song+version rows into SongWithVersions[]
+const groupSongVersionRows = (rows: SongVersionQueryRow[]): SongWithVersions[] => {
+  const grouped = groupBy(rows, (row: SongVersionQueryRow) => row.song_id);
+  return Object.values(grouped).map((group: SongVersionQueryRow[]) => ({
+    ...mapSongRow(group[0]!),
+    versions: group.filter(hasVersionData).map(mapVersionRow),
+  }));
+};
+
+// Reusable CTE for getting the latest version per (song_id, label) pair based on created_at
+export const latestVersionPerLabelCte = () => sql`
+  select distinct on (song_id, label) *
+  from song_versions
+  where archived = false
+  order by song_id, label, created_at desc
+`;
+
+// Get the ID of the most recently created version for a song (from among latest-per-label versions)
+export const getLatestVersionIdForSong = async (songId: string): Promise<string | null> => {
+  const rows = await sql`
+    with latest_per_label as (
+      ${latestVersionPerLabelCte()}
+    )
+    select id from latest_per_label
+    where song_id = ${songId}
+    order by created_at desc
+    limit 1
+  `;
+  return rows.length > 0 ? (rows[0] as { id: string }).id : null;
+};
+
 export const listSongsWithVersions = async (): Promise<SongWithVersions[]> => {
   const rows = await sql`
-    select
-      s.id as song_id,
-      s.title,
-      s.created_by as song_created_by,
-      s.created_at as song_created_at,
-      s.archived as song_archived,
-      s.tags as song_tags,
-      v.id as version_id,
-      v.label,
-      v.content,
-      v.audio_url,
-      v.slides_movie_url,
-      v.slide_movie_start,
-      v.previous_version_id,
-      v.next_version_id,
-      v.original_version_id,
-      v.rendered_content,
-      v.bpm,
-      v.transpose,
-      v.archived,
-      v.created_by as version_created_by,
-      v.created_at as version_created_at,
-      v.db_created_at as version_db_created_at,
-      v.slide_credits,
-      v.program_credits,
-      v.blob_url
+    with latest_per_label as (
+      ${latestVersionPerLabelCte()}
+    )
+    select ${songVersionJoinColumns()}
     from songs s
-    left join song_versions v on v.song_id = s.id and v.next_version_id is null and v.archived = false
+    left join latest_per_label v on v.song_id = s.id
     where s.archived = false
     order by s.title asc, v.created_at desc nulls last
   `;
-
-  const typedRows = rows as SongVersionQueryRow[];
-  const grouped = groupBy(typedRows, (row) => row.song_id);
-  return Object.values(grouped).map((group) => ({
-    ...mapSongRow(group[0]!),
-    versions: group
-      .filter(hasVersionData)
-      .map(mapVersionRow),
-  }));
+  return groupSongVersionRows(rows as SongVersionQueryRow[]);
 };
 
 export type PaginatedSongsResult = {
@@ -202,249 +260,86 @@ export const listSongsWithVersionsPaginated = async (options: { limit?: number; 
   `;
   const total = (countResult as { total: number }[])[0].total;
   // Build the query - order by most recent version update
-  const rows = limit !== undefined
-    ? excludeIds.length > 0
-      ? await sql`
-          with ranked_songs as (
-            select
-              s.id as song_id,
-              s.title,
-              s.created_by as song_created_by,
-              s.created_at as song_created_at,
-              s.archived as song_archived,
-              s.tags as song_tags,
-              max(v.created_at) as latest_version_at
-            from songs s
-            left join song_versions v on v.song_id = s.id and v.next_version_id is null and v.archived = false
-            where s.archived = false and s.id != ALL(${excludeIds})
-            group by s.id
-            order by latest_version_at desc nulls last
-            limit ${limit} offset ${offset}
-          )
-          select
-            rs.song_id,
-            rs.title,
-            rs.song_created_by,
-            rs.song_created_at,
-            rs.song_archived,
-            rs.song_tags,
-            v.id as version_id,
-            v.label,
-            v.content,
-            v.audio_url,
-            v.slides_movie_url,
-            v.slide_movie_start,
-            v.previous_version_id,
-            v.next_version_id,
-            v.original_version_id,
-            v.rendered_content,
-            v.bpm,
-            v.transpose,
-            v.archived,
-            v.created_by as version_created_by,
-            v.created_at as version_created_at,
-            v.db_created_at as version_db_created_at,
-            v.slide_credits,
-            v.program_credits,
-            v.blob_url
-          from ranked_songs rs
-          left join song_versions v on v.song_id = rs.song_id and v.next_version_id is null and v.archived = false
-          order by rs.latest_version_at desc nulls last, v.created_at desc nulls last
-        `
-      : await sql`
-          with ranked_songs as (
-            select
-              s.id as song_id,
-              s.title,
-              s.created_by as song_created_by,
-              s.created_at as song_created_at,
-              s.archived as song_archived,
-              s.tags as song_tags,
-              max(v.created_at) as latest_version_at
-            from songs s
-            left join song_versions v on v.song_id = s.id and v.next_version_id is null and v.archived = false
-            where s.archived = false
-            group by s.id
-            order by latest_version_at desc nulls last
-            limit ${limit} offset ${offset}
-          )
-          select
-            rs.song_id,
-            rs.title,
-            rs.song_created_by,
-            rs.song_created_at,
-            rs.song_archived,
-            rs.song_tags,
-            v.id as version_id,
-            v.label,
-            v.content,
-            v.audio_url,
-            v.slides_movie_url,
-            v.slide_movie_start,
-            v.previous_version_id,
-            v.next_version_id,
-            v.original_version_id,
-            v.rendered_content,
-            v.bpm,
-            v.transpose,
-            v.archived,
-            v.created_by as version_created_by,
-            v.created_at as version_created_at,
-            v.db_created_at as version_db_created_at,
-            v.slide_credits,
-            v.program_credits,
-            v.blob_url
-          from ranked_songs rs
-          left join song_versions v on v.song_id = rs.song_id and v.next_version_id is null and v.archived = false
-          order by rs.latest_version_at desc nulls last, v.created_at desc nulls last
-        `
-    : await sql`
-        with ranked_songs as (
-          select
-            s.id as song_id,
-            s.title,
-            s.created_by as song_created_by,
-            s.created_at as song_created_at,
-            s.archived as song_archived,
-            s.tags as song_tags,
-            max(v.created_at) as latest_version_at
-          from songs s
-          left join song_versions v on v.song_id = s.id and v.next_version_id is null and v.archived = false
-          where s.archived = false
-          group by s.id
-          order by latest_version_at desc nulls last
-        )
-        select
-          rs.song_id,
-          rs.title,
-          rs.song_created_by,
-          rs.song_created_at,
-          rs.song_archived,
-          rs.song_tags,
-          v.id as version_id,
-          v.label,
-          v.content,
-          v.audio_url,
-          v.slides_movie_url,
-          v.slide_movie_start,
-          v.previous_version_id,
-          v.next_version_id,
-          v.original_version_id,
-          v.rendered_content,
-          v.bpm,
-          v.transpose,
-          v.archived,
-          v.created_by as version_created_by,
-          v.created_at as version_created_at,
-          v.db_created_at as version_db_created_at,
-          v.slide_credits,
-          v.program_credits,
-          v.blob_url
-        from ranked_songs rs
-        left join song_versions v on v.song_id = rs.song_id and v.next_version_id is null and v.archived = false
-        order by rs.latest_version_at desc nulls last, v.created_at desc nulls last
-      `;
-
-  const typedRows = rows as SongVersionQueryRow[];
-  const grouped = groupBy(typedRows, (row) => row.song_id);
-  const songs = Object.values(grouped).map((group) => ({
-    ...mapSongRow(group[0]!),
-    versions: group.filter(hasVersionData).map(mapVersionRow),
-  }));
+  const rows = await sql`
+    with latest_per_label as (
+      ${latestVersionPerLabelCte()}
+    ),
+    ranked_songs as (
+      select
+        s.id as song_id,
+        s.title,
+        s.created_by as song_created_by,
+        s.created_at as song_created_at,
+        s.archived as song_archived,
+        s.tags as song_tags,
+        max(v.created_at) as latest_version_at
+      from songs s
+      left join latest_per_label v on v.song_id = s.id
+      where s.archived = false ${excludeIds.length > 0 ? sql`and s.id != ALL(${excludeIds})` : sql``}
+      group by s.id
+      order by latest_version_at desc nulls last
+      ${limit !== undefined ? sql`limit ${limit} offset ${offset}` : sql``}
+    )
+    select
+      rs.song_id,
+      rs.title,
+      rs.song_created_by,
+      rs.song_created_at,
+      rs.song_archived,
+      rs.song_tags,
+      v.id as version_id,
+      v.label,
+      v.content,
+      v.audio_url,
+      v.slides_movie_url,
+      v.slide_movie_start,
+      v.previous_version_id,
+      v.next_version_id,
+      v.original_version_id,
+      v.rendered_content,
+      v.bpm,
+      v.transpose,
+      v.archived,
+      v.created_by as version_created_by,
+      v.created_at as version_created_at,
+      v.db_created_at as version_db_created_at,
+      v.slide_credits,
+      v.program_credits,
+      v.blob_url
+    from ranked_songs rs
+    left join latest_per_label v on v.song_id = rs.song_id
+    order by rs.latest_version_at desc nulls last, v.created_at desc nulls last
+  `;
+  const songs = groupSongVersionRows(rows as SongVersionQueryRow[]);
   const loadedCount = offset + songs.length + excludeIds.length;
   return { songs, total, hasMore: loadedCount < total };
 };
 
 export const listSongsWithAllVersions = async (): Promise<SongWithVersions[]> => {
   const rows = await sql`
-    select
-      s.id as song_id,
-      s.title,
-      s.created_by as song_created_by,
-      s.created_at as song_created_at,
-      s.archived as song_archived,
-      s.tags as song_tags,
-      v.id as version_id,
-      v.label,
-      v.content,
-      v.audio_url,
-      v.slides_movie_url,
-      v.slide_movie_start,
-      v.previous_version_id,
-      v.next_version_id,
-      v.original_version_id,
-      v.rendered_content,
-      v.bpm,
-      v.transpose,
-      v.archived,
-      v.created_by as version_created_by,
-      v.created_at as version_created_at,
-      v.db_created_at as version_db_created_at,
-      v.slide_credits,
-      v.program_credits,
-      v.blob_url
+    select ${songVersionJoinColumns()}
     from songs s
     left join song_versions v on v.song_id = s.id and v.archived = false
     where s.archived = false
     order by s.title asc, v.created_at desc nulls last
   `;
-
-  const typedRows = rows as SongVersionQueryRow[];
-  const grouped = groupBy(typedRows, (row) => row.song_id);
-  return Object.values(grouped).map((group) => ({
-    ...mapSongRow(group[0]!),
-    versions: group
-      .filter(hasVersionData)
-      .map(mapVersionRow),
-  }));
+  return groupSongVersionRows(rows as SongVersionQueryRow[]);
 };
 
 export const getSongWithVersions = async (songId: string): Promise<SongWithVersions | null> => {
   const rows = await sql`
-    select
-      s.id as song_id,
-      s.title,
-      s.created_by as song_created_by,
-      s.created_at as song_created_at,
-      s.archived as song_archived,
-      s.tags as song_tags,
-      v.id as version_id,
-      v.label,
-      v.content,
-      v.audio_url,
-      v.slides_movie_url,
-      v.slide_movie_start,
-      v.previous_version_id,
-      v.next_version_id,
-      v.original_version_id,
-      v.rendered_content,
-      v.bpm,
-      v.transpose,
-      v.archived,
-      v.created_by as version_created_by,
-      v.created_at as version_created_at,
-      v.db_created_at as version_db_created_at,
-      v.slide_credits,
-      v.program_credits,
-      v.blob_url
+    with latest_per_label as (
+      ${latestVersionPerLabelCte()}
+    )
+    select ${songVersionJoinColumns()}
     from songs s
-    left join song_versions v on v.song_id = s.id and v.next_version_id is null and v.archived = false
+    left join latest_per_label v on v.song_id = s.id
     where s.id = ${songId} and s.archived = false
     order by v.created_at desc nulls last
   `;
-
   const typedRows = rows as SongVersionQueryRow[];
-
-  if (typedRows.length === 0) {
-    return null;
-  }
-
-  return {
-    ...mapSongRow(typedRows[0]!),
-    versions: typedRows
-      .filter(hasVersionData)
-      .map(mapVersionRow),
-  };
+  if (typedRows.length === 0) return null;
+  return groupSongVersionRows(typedRows)[0];
 };
 
 export const createSong = async (title: string, createdBy?: string | null, tags: string[] = ['song']): Promise<SongRecord> => {
@@ -462,49 +357,29 @@ export const createVersion = async (params: { songId: string; label: string; con
     const rows = await sql`
       insert into song_versions (song_id, label, content, audio_url, slides_movie_url, slide_movie_start, bpm, transpose, previous_version_id, next_version_id, original_version_id, created_by, slide_credits, program_credits, blob_url)
       values (${params.songId}, ${params.label}, ${params.content}, ${params.audioUrl ?? null}, ${params.slidesMovieUrl ?? null}, ${params.slideMovieStart ?? null}, ${params.bpm ?? null}, ${params.transpose ?? null}, ${params.previousVersionId ?? null}, ${params.nextVersionId ?? null}, ${params.originalVersionId ?? null}, ${params.createdBy ?? null}, ${params.slideCredits ?? null}, ${params.programCredits ?? null}, ${params.blobUrl ?? null})
-      returning id, song_id as "songId", label, content, audio_url as "audioUrl", slides_movie_url as "slidesMovieUrl", slide_movie_start as "slideMovieStart", bpm, transpose, previous_version_id as "previousVersionId", next_version_id as "nextVersionId", original_version_id as "originalVersionId", rendered_content as "renderedContent", archived, created_by as "createdBy", created_at as "createdAt", db_created_at as "dbCreatedAt", slide_credits as "slideCredits", program_credits as "programCredits", blob_url as "blobUrl"
+      returning ${versionReturningClause}
     `;
     return (rows as SongVersionResult[])[0];
   }
-
   // If dbCreatedAt not provided, use createdAt to keep them identical
   const dbCreatedAt = params.dbCreatedAt ?? params.createdAt;
   const rows = await sql`
     insert into song_versions (song_id, label, content, audio_url, slides_movie_url, slide_movie_start, bpm, transpose, previous_version_id, next_version_id, original_version_id, created_by, slide_credits, program_credits, blob_url, created_at, db_created_at)
     values (${params.songId}, ${params.label}, ${params.content}, ${params.audioUrl ?? null}, ${params.slidesMovieUrl ?? null}, ${params.slideMovieStart ?? null}, ${params.bpm ?? null}, ${params.transpose ?? null}, ${params.previousVersionId ?? null}, ${params.nextVersionId ?? null}, ${params.originalVersionId ?? null}, ${params.createdBy ?? null}, ${params.slideCredits ?? null}, ${params.programCredits ?? null}, ${params.blobUrl ?? null}, ${params.createdAt}, ${dbCreatedAt})
-    returning id, song_id as "songId", label, content, audio_url as "audioUrl", slides_movie_url as "slidesMovieUrl", slide_movie_start as "slideMovieStart", bpm, transpose, previous_version_id as "previousVersionId", next_version_id as "nextVersionId", original_version_id as "originalVersionId", rendered_content as "renderedContent", archived, created_by as "createdBy", created_at as "createdAt", db_created_at as "dbCreatedAt", slide_credits as "slideCredits", program_credits as "programCredits", blob_url as "blobUrl"
+    returning ${versionReturningClause}
   `;
   return (rows as SongVersionResult[])[0];
 };
 
 export const findVersionBySongTitleAndLabel = async (songTitle: string, label: string): Promise<SongVersionRecord | null> => {
   const rows = await sql`
-    select
-      v.id as "id",
-      v.song_id as "songId",
-      v.label,
-      v.content,
-      v.audio_url as "audioUrl",
-      v.slides_movie_url as "slidesMovieUrl",
-      v.slide_movie_start as "slideMovieStart",
-      v.bpm,
-      v.transpose,
-      v.previous_version_id as "previousVersionId",
-      v.next_version_id as "nextVersionId",
-      v.original_version_id as "originalVersionId",
-      v.rendered_content as "renderedContent",
-      v.archived as "archived",
-      v.created_by as "createdBy",
-      v.created_at as "createdAt",
-      v.db_created_at as "dbCreatedAt",
-      v.slide_credits as "slideCredits",
-      v.program_credits as "programCredits",
-      v.blob_url as "blobUrl"
-    from song_versions v
+    with latest_per_label as (
+      ${latestVersionPerLabelCte()}
+    )
+    select ${versionSelectColumns()}
+    from latest_per_label v
     join songs s on s.id = v.song_id
-    where LOWER(s.title) = LOWER(${songTitle}) and v.label = ${label} and v.archived = false and s.archived = false
-    order by v.created_at desc
-    limit 1
+    where LOWER(s.title) = LOWER(${songTitle}) and v.label = ${label} and s.archived = false
   `;
   const typedRows = rows as SongVersionResult[];
   return typedRows.length > 0 ? typedRows[0] : null;
@@ -512,42 +387,17 @@ export const findVersionBySongTitleAndLabel = async (songTitle: string, label: s
 
 export const updateVersionNextId = async (versionId: string, nextVersionId: string): Promise<SongVersionRecord> => {
   const rows = await sql`
-    update song_versions
-    set next_version_id = ${nextVersionId}
-    where id = ${versionId}
-    returning id, song_id as "songId", label, content, audio_url as "audioUrl", slides_movie_url as "slidesMovieUrl", slide_movie_start as "slideMovieStart", bpm, transpose, previous_version_id as "previousVersionId", next_version_id as "nextVersionId", original_version_id as "originalVersionId", rendered_content as "renderedContent", archived, created_by as "createdBy", created_at as "createdAt", db_created_at as "dbCreatedAt", slide_credits as "slideCredits", program_credits as "programCredits", blob_url as "blobUrl"
+    update song_versions set next_version_id = ${nextVersionId} where id = ${versionId}
+    returning ${versionReturningClause}
   `;
   const typedRows = rows as SongVersionResult[];
-  if (typedRows.length === 0) {
-    throw new Error(`Version ${versionId} not found`);
-  }
+  if (typedRows.length === 0) throw new Error(`Version ${versionId} not found`);
   return typedRows[0];
 };
 
 export const getVersionById = async (versionId: string): Promise<SongVersionRecord | null> => {
   const rows = await sql`
-    select
-      v.id as "id",
-      v.song_id as "songId",
-      v.label,
-      v.content,
-      v.audio_url as "audioUrl",
-      v.slides_movie_url as "slidesMovieUrl",
-      v.slide_movie_start as "slideMovieStart",
-      v.bpm,
-      v.transpose,
-      v.previous_version_id as "previousVersionId",
-      v.next_version_id as "nextVersionId",
-      v.original_version_id as "originalVersionId",
-      v.rendered_content as "renderedContent",
-      v.archived as "archived",
-      v.created_by as "createdBy",
-      v.created_at as "createdAt",
-      v.db_created_at as "dbCreatedAt",
-      s.title as "songTitle",
-      v.slide_credits as "slideCredits",
-      v.program_credits as "programCredits",
-      v.blob_url as "blobUrl"
+    select ${versionSelectColumns()}, s.title as "songTitle"
     from song_versions v
     join songs s on v.song_id = s.id
     where v.id = ${versionId} and v.archived = false
@@ -557,32 +407,9 @@ export const getVersionById = async (versionId: string): Promise<SongVersionReco
 };
 
 export const getVersionsByIds = async (versionIds: string[]): Promise<SongVersionRecord[]> => {
-  if (versionIds.length === 0) {
-    return [];
-  }
+  if (versionIds.length === 0) return [];
   const rows = await sql`
-    select
-      v.id as "id",
-      v.song_id as "songId",
-      v.label,
-      v.content,
-      v.audio_url as "audioUrl",
-      v.slides_movie_url as "slidesMovieUrl",
-      v.slide_movie_start as "slideMovieStart",
-      v.bpm,
-      v.transpose,
-      v.previous_version_id as "previousVersionId",
-      v.next_version_id as "nextVersionId",
-      v.original_version_id as "originalVersionId",
-      v.rendered_content as "renderedContent",
-      v.archived as "archived",
-      v.created_by as "createdBy",
-      v.created_at as "createdAt",
-      v.db_created_at as "dbCreatedAt",
-      s.title as "songTitle",
-      v.slide_credits as "slideCredits",
-      v.program_credits as "programCredits",
-      v.blob_url as "blobUrl"
+    select ${versionSelectColumns()}, s.title as "songTitle"
     from song_versions v
     join songs s on v.song_id = s.id
     where v.id = ANY(${versionIds}) and v.archived = false
@@ -592,34 +419,10 @@ export const getVersionsByIds = async (versionIds: string[]): Promise<SongVersio
 
 export const getPreviousVersionsChain = async (versionId: string): Promise<SongVersionRecord[]> => {
   const currentVersion = await getVersionById(versionId);
-  if (!currentVersion) {
-    return [];
-  }
-  
+  if (!currentVersion) return [];
   const originalVersionId = currentVersion.originalVersionId || currentVersion.id;
-  
   const rows = await sql`
-    select
-      v.id as "id",
-      v.song_id as "songId",
-      v.label,
-      v.content,
-      v.audio_url as "audioUrl",
-      v.slides_movie_url as "slidesMovieUrl",
-      v.slide_movie_start as "slideMovieStart",
-      v.bpm,
-      v.transpose,
-      v.previous_version_id as "previousVersionId",
-      v.next_version_id as "nextVersionId",
-      v.original_version_id as "originalVersionId",
-      v.rendered_content as "renderedContent",
-      v.archived as "archived",
-      v.created_by as "createdBy",
-      v.created_at as "createdAt",
-      v.db_created_at as "dbCreatedAt",
-      v.slide_credits as "slideCredits",
-      v.program_credits as "programCredits",
-      v.blob_url as "blobUrl"
+    select ${versionSelectColumns()}
     from song_versions v
     where v.original_version_id = ${originalVersionId}
       and v.label = ${currentVersion.label}
@@ -628,7 +431,6 @@ export const getPreviousVersionsChain = async (versionId: string): Promise<SongV
       and v.archived = false
     order by v.created_at desc
   `;
-  
   return rows as SongVersionRecord[];
 };
 
@@ -669,14 +471,11 @@ export const createVersionWithLineage = async (params: { songId: string; label: 
   
   if (!originalVersionId) {
     const rows = await sql`
-      update song_versions
-      set original_version_id = ${newVersion.id}
-      where id = ${newVersion.id}
-      returning id, song_id as "songId", label, content, audio_url as "audioUrl", slides_movie_url as "slidesMovieUrl", slide_movie_start as "slideMovieStart", bpm, transpose, previous_version_id as "previousVersionId", next_version_id as "nextVersionId", original_version_id as "originalVersionId", rendered_content as "renderedContent", created_by as "createdBy", created_at as "createdAt", db_created_at as "dbCreatedAt", slide_credits as "slideCredits", program_credits as "programCredits", blob_url as "blobUrl"
+      update song_versions set original_version_id = ${newVersion.id} where id = ${newVersion.id}
+      returning ${versionReturningClause}
     `;
     return (rows as SongVersionResult[])[0];
   }
-  
   return newVersion;
 };
 
@@ -717,40 +516,30 @@ export const updateVersion = async (versionId: string, updates: { label?: string
       program_credits = ${finalProgramCredits},
       blob_url = ${finalBlobUrl}
     where id = ${versionId}
-    returning id, song_id as "songId", label, content, audio_url as "audioUrl", slides_movie_url as "slidesMovieUrl", slide_movie_start as "slideMovieStart", bpm, transpose, previous_version_id as "previousVersionId", next_version_id as "nextVersionId", original_version_id as "originalVersionId", rendered_content as "renderedContent", archived, created_by as "createdBy", created_at as "createdAt", db_created_at as "dbCreatedAt", slide_credits as "slideCredits", program_credits as "programCredits", blob_url as "blobUrl"
+    returning ${versionReturningClause}
   `;
   const typedRows = rows as SongVersionResult[];
-  if (typedRows.length === 0) {
-    throw new Error(`Version ${versionId} not found`);
-  }
+  if (typedRows.length === 0) throw new Error(`Version ${versionId} not found`);
   return typedRows[0];
 };
 
 export const updateVersionRenderedContent = async (versionId: string, renderedContent: RenderedContent): Promise<SongVersionRecord> => {
   const rows = await sql`
-    update song_versions
-    set rendered_content = ${JSON.stringify(renderedContent)}::jsonb
-    where id = ${versionId}
-    returning id, song_id as "songId", label, content, audio_url as "audioUrl", slides_movie_url as "slidesMovieUrl", slide_movie_start as "slideMovieStart", bpm, transpose, previous_version_id as "previousVersionId", next_version_id as "nextVersionId", original_version_id as "originalVersionId", rendered_content as "renderedContent", archived, created_by as "createdBy", created_at as "createdAt", db_created_at as "dbCreatedAt", slide_credits as "slideCredits", program_credits as "programCredits", blob_url as "blobUrl"
+    update song_versions set rendered_content = ${JSON.stringify(renderedContent)}::jsonb where id = ${versionId}
+    returning ${versionReturningClause}
   `;
   const typedRows = rows as SongVersionResult[];
-  if (typedRows.length === 0) {
-    throw new Error(`Version ${versionId} not found`);
-  }
+  if (typedRows.length === 0) throw new Error(`Version ${versionId} not found`);
   return typedRows[0];
 };
 
 export const archiveVersion = async (versionId: string): Promise<SongVersionRecord> => {
   const rows = await sql`
-    update song_versions
-    set archived = true
-    where id = ${versionId} and archived = false
-    returning id, song_id as "songId", label, content, audio_url as "audioUrl", slides_movie_url as "slidesMovieUrl", slide_movie_start as "slideMovieStart", bpm, transpose, previous_version_id as "previousVersionId", next_version_id as "nextVersionId", original_version_id as "originalVersionId", rendered_content as "renderedContent", archived, created_by as "createdBy", created_at as "createdAt", db_created_at as "dbCreatedAt", slide_credits as "slideCredits", program_credits as "programCredits", blob_url as "blobUrl"
+    update song_versions set archived = true where id = ${versionId} and archived = false
+    returning ${versionReturningClause}
   `;
   const typedRows = rows as SongVersionResult[];
-  if (typedRows.length === 0) {
-    throw new Error(`Version ${versionId} not found or already archived`);
-  }
+  if (typedRows.length === 0) throw new Error(`Version ${versionId} not found or already archived`);
 
   const version = typedRows[0];
 
@@ -796,31 +585,13 @@ export const listAllVersionsWithSongTitles = async () => {
 
 export const getLatestVersionBySongTitle = async (songTitle: string): Promise<SongVersionRecord | null> => {
   const rows = await sql`
-    select
-      v.id as "id",
-      v.song_id as "songId",
-      v.label,
-      v.content,
-      v.audio_url as "audioUrl",
-      v.slides_movie_url as "slidesMovieUrl",
-      v.slide_movie_start as "slideMovieStart",
-      v.bpm,
-      v.transpose,
-      v.previous_version_id as "previousVersionId",
-      v.next_version_id as "nextVersionId",
-      v.original_version_id as "originalVersionId",
-      v.rendered_content as "renderedContent",
-      v.archived as "archived",
-      v.created_by as "createdBy",
-      v.created_at as "createdAt",
-      v.db_created_at as "dbCreatedAt",
-      s.title as "songTitle",
-      v.slide_credits as "slideCredits",
-      v.program_credits as "programCredits",
-      v.blob_url as "blobUrl"
-    from song_versions v
+    with latest_per_label as (
+      ${latestVersionPerLabelCte()}
+    )
+    select ${versionSelectColumns()}, s.title as "songTitle"
+    from latest_per_label v
     join songs s on v.song_id = s.id
-    where LOWER(s.title) = LOWER(${songTitle}) and v.archived = false and s.archived = false and v.next_version_id is null
+    where LOWER(s.title) = LOWER(${songTitle}) and s.archived = false
     order by v.created_at desc
     limit 1
   `;

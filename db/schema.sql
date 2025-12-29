@@ -76,6 +76,7 @@ CREATE INDEX if not exists song_versions_next_version_idx on song_versions USING
 CREATE INDEX if not exists song_versions_original_version_idx on song_versions USING btree (original_version_id);
 CREATE INDEX if not exists song_versions_prev_version_idx on song_versions USING btree (previous_version_id);
 CREATE INDEX if not exists song_versions_song_id_idx on song_versions USING btree (song_id);
+CREATE INDEX if not exists song_versions_song_label_created_idx on song_versions USING btree (song_id, label, created_at DESC);
 CREATE INDEX if not exists song_versions_song_label_idx on song_versions USING btree (song_id, label);
 
 create table if not exists songs (

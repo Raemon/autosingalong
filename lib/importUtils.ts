@@ -1,7 +1,7 @@
 import path from 'path';
 import { promises as fs } from 'fs';
 import { put } from '@vercel/blob';
-import { createSong, createVersionWithLineage, findVersionBySongTitleAndLabel, getLatestVersionBySongTitle } from './songsRepository';
+import { createSong, createVersionWithLineage, findVersionBySongTitleAndLabel, getLatestVersionBySongTitle, getLatestVersionIdForSong } from './songsRepository';
 import { createProgram, getProgramByTitle, updateProgramElementIds } from './programsRepository';
 import sql from './db';
 import { AUDIO_EXTENSION_SET } from './audioExtensions';
@@ -62,10 +62,6 @@ const ensureSong = async (title: string, tags: string[]) => {
   }
 };
 
-const getLatestVersionId = async (songId: string) => {
-  const rows = await sql`select id from song_versions where song_id = ${songId} and archived = false and next_version_id is null order by created_at desc limit 1`;
-  return rows.length > 0 ? (rows[0] as { id: string }).id : null;
-};
 
 const getFileCreatedAt = async (filePath: string) => {
   const stats = await fs.stat(filePath);
@@ -195,7 +191,7 @@ export const importSongDirectory = async (
         results.push(result);
         onResult?.(result);
       } else {
-        const previousVersionId = await getLatestVersionId(songId!);
+        const previousVersionId = await getLatestVersionIdForSong(songId!);
         if (file.isText) {
           const content = file.buffer.toString('utf-8');
           const created = await createVersionWithLineage({
@@ -295,7 +291,7 @@ const importTextFile = async (
       onResult?.(result);
       return result;
     } else {
-      const previousVersionId = await getLatestVersionId(songId!);
+      const previousVersionId = await getLatestVersionIdForSong(songId!);
       const created = await createVersionWithLineage({
         songId: songId!, label, content, previousVersionId, createdBy: IMPORT_USER, createdAt, dbCreatedAt: new Date(),
       });
