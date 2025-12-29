@@ -222,6 +222,7 @@ const BackupsPage = () => {
                       <ChevronArrow isExpanded={isExpanded} className="text-gray-500 mr-2" />
                       <span className="text-gray-200">{backup.filename}</span>
                       <span className="text-gray-500 text-sm ml-3">{formatFileSize(backup.size)}</span>
+                      <span className="text-gray-500 text-sm ml-3">{formatDate(backup.createdAt)}</span>
                     </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleRestore(backup.filename); }}

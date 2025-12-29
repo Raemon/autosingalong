@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    backups.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    backups.sort((a, b) => b.filename.localeCompare(a.filename));
 
     return NextResponse.json({ backups });
   } catch (error) {
