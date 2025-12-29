@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useUser } from '@/app/contexts/UserContext';
 import type { BackupInfo } from '@/app/api/admin/backup/list/route';
 import type { BackupContents } from '@/app/api/admin/backup/contents/route';
+import type { StatsResponse } from '@/app/api/admin/stats/route';
 import ChevronArrow from '@/app/components/ChevronArrow';
 
 const formatFileSize = (bytes: number) => {
@@ -17,6 +18,12 @@ const formatDate = (dateStr: string) => {
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
 
+const formatShortDate = (dateStr: string | null) => {
+  if (!dateStr) return '—';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
 const BackupsPage = () => {
   const { userId, isAdmin, loading: userLoading } = useUser();
   const [backups, setBackups] = useState<BackupInfo[]>([]);
@@ -28,6 +35,7 @@ const BackupsPage = () => {
   const [backupContents, setBackupContents] = useState<Record<string, BackupContents>>({});
   const [loadingContents, setLoadingContents] = useState<string | null>(null);
   const [expandedSongs, setExpandedSongs] = useState<Set<string>>(new Set());
+  const [stats, setStats] = useState<StatsResponse | null>(null);
 
   const fetchBackups = useCallback(async () => {
     if (!userId) return;
@@ -44,9 +52,24 @@ const BackupsPage = () => {
     }
   }, [userId]);
 
+  const fetchStats = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const response = await fetch(`/api/admin/stats?requestingUserId=${userId}`);
+      if (!response.ok) throw new Error('Failed to fetch stats');
+      const data = await response.json();
+      setStats(data);
+    } catch (err) {
+      console.error('Error fetching stats:', err);
+    }
+  }, [userId]);
+
   useEffect(() => {
-    if (userId && isAdmin) fetchBackups();
-  }, [userId, isAdmin, fetchBackups]);
+    if (userId && isAdmin) {
+      fetchBackups();
+      fetchStats();
+    }
+  }, [userId, isAdmin, fetchBackups, fetchStats]);
 
   const handleExpandBackup = async (filename: string) => {
     if (expandedBackup === filename) {
@@ -150,7 +173,17 @@ const BackupsPage = () => {
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Backups</h1>
+      <h1 className="text-2xl font-bold mb-4">Backups</h1>
+
+      {stats && (
+        <div className="text-sm text-gray-400 mb-4">
+          <span>{stats.songs.count} songs (latest: {formatShortDate(stats.songs.mostRecent)})</span>
+          <span className="mx-2">•</span>
+          <span>{stats.versions.count} versions (latest: {formatShortDate(stats.versions.mostRecent)})</span>
+          <span className="mx-2">•</span>
+          <span>{stats.programs.count} programs (latest: {formatShortDate(stats.programs.mostRecent)})</span>
+        </div>
+      )}
 
       {status && (
         <div className={`mb-4 p-2 text-sm ${status.type === 'success' ? 'text-green-400 bg-green-900/30' : 'text-red-400 bg-red-900/30'}`}>
