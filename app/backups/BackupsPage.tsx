@@ -5,6 +5,7 @@ import { useUser } from '@/app/contexts/UserContext';
 import type { BackupInfo } from '@/app/api/admin/backup/list/route';
 import type { BackupContents } from '@/app/api/admin/backup/contents/route';
 import type { StatsResponse } from '@/app/api/admin/stats/route';
+import type { RestoreProgress } from '@/app/api/admin/backup/restore/route';
 import ChevronArrow from '@/app/components/ChevronArrow';
 
 const formatFileSize = (bytes: number) => {
@@ -30,6 +31,7 @@ const BackupsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [restoringFile, setRestoringFile] = useState<string | null>(null);
+  const [restoreProgress, setRestoreProgress] = useState<{ step: string; percent?: number } | null>(null);
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [expandedBackup, setExpandedBackup] = useState<string | null>(null);
   const [backupContents, setBackupContents] = useState<Record<string, BackupContents>>({});
@@ -140,6 +142,7 @@ const BackupsPage = () => {
     if (!confirmed) return;
 
     setRestoringFile(filename);
+    setRestoreProgress(null);
     setStatus(null);
     try {
       const response = await fetch(`/api/admin/backup/restore?requestingUserId=${userId}`, {
@@ -147,19 +150,45 @@ const BackupsPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filename }),
       });
-      const data = await response.json();
       if (!response.ok) {
+        const data = await response.json();
         throw new Error(data.error || 'Failed to restore backup');
       }
-      setStatus({
-        type: 'success',
-        message: `Restored: ${data.restored.songs} songs, ${data.restored.versions} versions, ${data.restored.programs} programs`,
-      });
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No response body');
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = JSON.parse(line.slice(6)) as RestoreProgress;
+              const percent = data.progress ? Math.round((data.progress.current / data.progress.total) * 100) : undefined;
+              setRestoreProgress({ step: data.step, percent });
+            if (data.completed) {
+              if (data.error) {
+                setStatus({ type: 'error', message: data.error });
+              } else if (data.details) {
+                setStatus({
+                  type: 'success',
+                  message: `Restored: ${data.details.songs} songs, ${data.details.versions} versions, ${data.details.programs} programs`,
+                });
+                fetchStats();
+              }
+            }
+          }
+        }
+      }
     } catch (err: unknown) {
       console.error('Restore failed:', err);
       setStatus({ type: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
     } finally {
       setRestoringFile(null);
+      setRestoreProgress(null);
     }
   };
 
@@ -229,7 +258,9 @@ const BackupsPage = () => {
                       disabled={restoringFile !== null}
                       className={`text-sm px-3 py-1 border border-red-700 rounded ${restoringFile === backup.filename ? 'opacity-50 cursor-not-allowed' : 'text-red-400 hover:bg-red-900/30'}`}
                     >
-                      {restoringFile === backup.filename ? 'Restoring...' : 'Restore'}
+                      {restoringFile === backup.filename
+                        ? (restoreProgress ? `${restoreProgress.step}${restoreProgress.percent !== undefined ? ` (${restoreProgress.percent}%)` : ''}` : 'Restoring...')
+                        : 'Restore'}
                     </button>
                   </div>
                   {isExpanded && (
