@@ -46,18 +46,6 @@ const ProgramElementItem = ({id, version, allVersions, onRemove, onChangeVersion
               onChangeVersion(id, newId);
             }
           }}
-          footer={canEdit ? (
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                if (version?.songId && onCreateNewVersion) {
-                  onCreateNewVersion(version.songId);
-                }
-              }}
-            >
-              + Create new version
-            </div>
-          ) : undefined}
         />
       </div>
       {canEdit && (
@@ -68,4 +56,3 @@ const ProgramElementItem = ({id, version, allVersions, onRemove, onChangeVersion
 };
 
 export default ProgramElementItem;
-
