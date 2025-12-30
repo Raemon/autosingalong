@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { PublicBackupInfo } from '@/app/api/public-backups/route';
+import DownloadAllSongsButton from '../songs/DownloadAllSongsButton';
 
 const formatFileSize = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;
@@ -70,13 +71,18 @@ const PublicBackups = () => {
         and contain an export of all songs. These are publicly downloadable.
       </p>
 
-      <button
-        onClick={handleTriggerBackup}
-        disabled={isTriggering}
-        className={`mb-6 px-4 py-2 text-sm border border-blue-600 ${isTriggering ? 'opacity-50 cursor-not-allowed' : 'text-blue-400 hover:bg-blue-900/30'}`}
-      >
-        {isTriggering ? 'Triggering...' : 'Create New Backup'}
-      </button>
+      <div className="flex gap-2">
+        <div className="mb-6 px-4 py-2 text-sm border border-blue-600">
+          <DownloadAllSongsButton />
+        </div>
+        <button
+          onClick={handleTriggerBackup}
+          disabled={isTriggering}
+          className={`mb-6 px-4 py-2 text-sm border border-blue-600 ${isTriggering ? 'opacity-50 cursor-not-allowed' : 'text-blue-400 hover:bg-blue-900/30'}`}
+        >
+          {isTriggering ? 'Triggering...' : 'Create New Backup'}
+        </button>
+      </div>
 
       {status && (
         <div className={`mb-4 p-2 text-sm ${status.type === 'success' ? 'text-green-400 bg-green-900/30' : 'text-red-400 bg-red-900/30'}`}>

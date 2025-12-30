@@ -51,11 +51,11 @@ const DownloadAllSongsButton = ({ className = '' }: DownloadAllSongsButtonProps)
         <button
           onClick={handleDownloadAllSongs}
           disabled={downloading}
-          className={`text-xs px-2 w-full py-1 outline-none whitespace-nowrap text-left ${
+          className={`text-xs px-2 w-full py-1 outline-none whitespace-nowrap text-left   ${
             downloading ? 'opacity-50 cursor-not-allowed' : 'text-gray-200 hover:bg-gray-800'
           }`}
         >
-          {downloading ? 'Preparing…' : 'Download'}
+          {downloading ? 'Preparing…' : 'Download All'}
         </button>
         {downloadError && (
           <div className="text-xs text-red-400">
