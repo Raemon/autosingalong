@@ -179,6 +179,11 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
 
   const selectedProgram = selectedProgramId ? programMap[selectedProgramId] ?? null : null;
 
+  const parentProgram = useMemo(() => {
+    if (!selectedProgramId) return null;
+    return programs.find((p) => p.programIds.includes(selectedProgramId)) ?? null;
+  }, [programs, selectedProgramId]);
+
   useEffect(() => {
     if (!selectedProgramId && programs.length > 0) {
       setSelectedProgramId(programs[0].id);
@@ -449,6 +454,11 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
       <div className="flex flex-col gap-4">
         <div className="flex gap-4 overflow-x-scroll w-full sm:w-auto sm:overflow-x-visible">
           <div className={`overflow-x-scroll sm:overflow-x-visible ${selectedVersion ? 'hidden xl:block' : ''} w-auto`}>
+            {parentProgram && (
+              <div className="text-sm text-gray-400 mb-2">
+                part of <span className="text-gray-300">{parentProgram.title}</span>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <ProgramSelector
                 programs={programs}
@@ -511,4 +521,3 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
 };
 
 export default ProgramBrowser;
-
