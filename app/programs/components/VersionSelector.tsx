@@ -74,15 +74,6 @@ const VersionSelector = ({searchTerm, onSearchChange, filteredVersions, onAddEle
                 <span className="text-gray-400 ml-2">{formatRelativeTimestamp(version.createdAt)}</span>
               </button>
             ))}
-          <div className="border-t border-gray-300">
-            <button
-              type="button"
-              onClick={() => onCreateVersion(filteredVersions[0].songId)}
-              className="w-full text-left px-2 py-1 text-sm text-blue-400 hover:bg-blue-50"
-            >
-              + Create new version
-            </button>
-          </div>
         </div>
       )}
     </div>
@@ -90,4 +81,3 @@ const VersionSelector = ({searchTerm, onSearchChange, filteredVersions, onAddEle
 };
 
 export default VersionSelector;
-
