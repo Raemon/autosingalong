@@ -46,12 +46,12 @@ const DownloadAllSongsButton = ({ className = '' }: DownloadAllSongsButtonProps)
   }, []);
 
   return (
-    <Tooltip content={"Download all songs"} placement="bottom">  
-      <div className={`flex items-center gap-2 ${className}`}>
+    <Tooltip content={"Download all songs and programs"} placement="bottom">  
+      <div className={`flex gap-2 w-full`}>
         <button
           onClick={handleDownloadAllSongs}
           disabled={downloading}
-          className={`text-xs px-2 py-1 border border-gray-600 rounded whitespace-nowrap ${
+          className={`text-xs px-2 w-full py-1 outline-none whitespace-nowrap text-left ${
             downloading ? 'opacity-50 cursor-not-allowed' : 'text-gray-200 hover:bg-gray-800'
           }`}
         >
@@ -68,4 +68,3 @@ const DownloadAllSongsButton = ({ className = '' }: DownloadAllSongsButtonProps)
 };
 
 export default DownloadAllSongsButton;
-

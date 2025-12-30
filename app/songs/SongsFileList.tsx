@@ -241,25 +241,25 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
   }
 
   return (
-    <div className="min-h-[calc(100vh-80px)] px-4 py-8 relative overflow-x-scroll">
+    <div className="min-h-[calc(100vh-100px)] pt-8 relative overflow-x-scroll">
       <div className="flex gap-4  justify-center">
         {isListCollapsed ? (
-          <div className={` h-[calc(100vh-80px)] overflow-y-auto w-[70px] flex flex-col items-center gap-2 ${isCreatingVersion ? 'opacity-50 pointer-events-none' : ''} ${selectedVersion ? 'hidden xl:flex' : ''}`}>
+          <div className={` h-[calc(100vh-100px)] overflow-y-auto w-[100px] flex flex-col items-center gap-2 ${isCreatingVersion ? 'opacity-50 pointer-events-none' : ''} ${selectedVersion ? 'hidden xl:flex' : ''}`}>
             <button
               onClick={() => setIsListCollapsed(false)}
-              className="text-xs px-2 py-1 text-gray-400 whitespace-nowrap"
+              className="text-xl px-2 py-1 text-gray-400 whitespace-nowrap"
             >
-              Show
+              »
             </button>
             <div className="flex-1 w-full overflow-y-auto space-y-1">
               {filteredSongs.map((song) => {
-                const abbreviation = song.title.replace(/The/g, ' ').replace(/An/g, ' ').replace(/A/g, ' ').slice(0, 6) || '...';
+                const abbreviation = song.title.replace(/The/g, ' ').replace(/An/g, ' ').replace(/A/g, ' ').slice(0, 12) || '...';
                 const isSongSelected = selectedVersion ? song.versions.some(v => v.id === selectedVersion.id) : false;
                 return (
                   <button
                     key={song.id}
                     onClick={() => handleCollapsedSongClick(song)}
-                    className={`w-full text-xs py-2 text-center ${
+                    className={`w-full text-xs py-2 ${
                       isSongSelected 
                         ? 'text-white' 
                         : 'text-gray-300'
@@ -273,7 +273,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
             </div>
           </div>
         ) : (
-          <div className={` h-[calc(100vh-80px)] overflow-y-auto flex-1 w-full max-w-[650px] ${isCreatingVersion ? 'opacity-50 pointer-events-none' : ''} ${(selectedVersion ||selectedSongOnly) ? 'hidden xl:block' : ''}`}>
+          <div className={` h-[calc(100vh-120px)] px-4 overflow-y-auto flex-1 w-full max-w-[650px] ${isCreatingVersion ? 'opacity-50 pointer-events-none' : ''} ${(selectedVersion ||selectedSongOnly) ? 'hidden xl:block' : ''}`}>
             <div className="flex gap-2 items-center mb-4 sticky top-0 bg-[#11101b] pb-4 z-10">
               <SearchInput
                 ref={searchInputRef}
@@ -306,8 +306,6 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
                 onSongCreated={fetchSongs}
                 onError={setLocalError}
               />
-              <DownloadAllSongsButton />
-              {loadingMore && <span className="text-xs text-gray-500">loading...</span>}
               {selectedVersion && <button
                 onClick={() => setIsListCollapsed(true)}
                 className="text-xl px-2 py-1 text-gray-400 whitespace-nowrap"
@@ -333,7 +331,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
         {selectedVersion && (() => {
           const song = songs.find(s => s.versions.some(v => v.id === selectedVersion.id));
           return (
-            <div className="flex-1 h-[calc(100vh-80px)] overflow-y-auto">
+            <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto">
               <VersionDetailPanel
                 songTitle={song?.title || ''}
                 version={selectedVersion}
@@ -360,7 +358,7 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
         })()}
         {selectedSongOnly && !selectedVersion && (() => {
           return (
-            <div className="flex-1 h-[calc(100vh-80px)] overflow-y-auto">
+            <div className="flex-1 h-[calc(100vh-120px)] overflow-y-auto">
               <div className="pl-4 w-full lg:p-20 relative max-w-4xl mx-auto">
                 <SongInfoHeader
                   songId={selectedSongOnly.id}

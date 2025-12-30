@@ -5,6 +5,7 @@ import { useUser } from './contexts/UserContext';
 import { usePathname } from 'next/navigation';
 import UsernameInput from './feedback/components/UsernameInput';
 import { useState, useRef, useEffect } from 'react';
+import DownloadAllSongsButton from './songs/DownloadAllSongsButton';
 
 const Header = () => {
   const pathname = usePathname();
@@ -56,6 +57,7 @@ const Header = () => {
               {isAdmin && <Link href="/admin" className="block px-2 py-1 text-sm hover:bg-gray-800 text-gray-200" onClick={() => setPoweruserOpen(false)}>Admin</Link>}
               <Link href="/public-backups" className="block px-2 py-1 text-sm hover:bg-gray-800 text-gray-200" onClick={() => setPoweruserOpen(false)}>Public Backups</Link>
               <Link href="/changelog" className="block px-2 py-1 text-sm hover:bg-gray-800 text-gray-200" onClick={() => setPoweruserOpen(false)}>Changelog</Link>
+              <DownloadAllSongsButton />
             </div>
           )}
         </div>
