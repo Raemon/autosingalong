@@ -74,6 +74,10 @@ body {
   font-family: var(--font-eb-garamond), 'Georgia', serif;
   font-size: 16px;
 }
+.markdown-content.monospace {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 12px;
+}
 
 .markdown-content h1,
 .markdown-content h2,
