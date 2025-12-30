@@ -409,7 +409,7 @@ const findOrCreateEmptyVersion = async (title: string, dryRun: boolean, tags: st
   }
   const created = await createVersionWithLineage({
     songId,
-    label: 'placeholder',
+    label: 'README.md',
     content: `# ${title}\n\n(Placeholder - content not yet imported)`,
     previousVersionId: null,
     createdBy: IMPORT_USER,
