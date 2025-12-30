@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import ChevronArrow from '@/app/components/ChevronArrow';
+import PDFViewer from './PDFViewer';
 
 const getFileType = (pathname: string): 'image' | 'video' | 'audio' | 'pdf' | 'text' | null => {
   const ext = pathname.split('.').pop()?.toLowerCase();
@@ -39,7 +40,7 @@ const FilePreview = ({ url, pathname }: { url: string; pathname: string }) => {
     case 'audio':
       return <audio src={url} controls className="my-2" />;
     case 'pdf':
-      return <iframe src={url} className="w-full h-96 my-2" />;
+      return <PDFViewer fileUrl={url} />;
     case 'text':
       return <TextPreview url={url} />;
     default:
@@ -97,7 +98,7 @@ const BlobAttachment = ({ blobUrl, defaultExpanded = false }: { blobUrl: string;
         <button onClick={handleDownload} disabled={downloading} className="text-gray-400 hover:text-gray-200 text-xs ml-1 disabled:opacity-50">{downloading ? '...' : '⬇'}</button>
       </div>
       {expanded && canPreview && (
-        <div className="ml-4">
+        <div className="ml-4 mt-4">
           <FilePreview url={blobUrl} pathname={filename} />
         </div>
       )}
