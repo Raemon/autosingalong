@@ -17,7 +17,8 @@ const VersionContent = ({version, print}: {
   const fileType = detectFileType(version.label, version.content || '');
   const isChordmarkFile = fileType === 'chordmark';
   const isLilypondFile = fileType === 'lilypond';
-  const isMarkdownFile = fileType === 'markdown' || fileType === 'ultimateguitar';
+  const isMarkdownFile = fileType === 'markdown';
+  const isUltimateGuitarFile = fileType === 'ultimateguitar';
   const isTxtFile = fileType === 'text' || fileType === 'unknown';
   const audioUrl = version.audioUrl || '';
   const normalizedAudioUrl = audioUrl.toLowerCase();
@@ -56,6 +57,9 @@ const VersionContent = ({version, print}: {
       {hasContent && isMarkdownFile && (
         <MarkdownRenderer content={version.content || ''} />
       )}
+      {hasContent && isUltimateGuitarFile && (
+        <MarkdownRenderer content={version.content || ''} monospace />
+      )}
       {hasSlidesMovie && (
         isVideoFile ? (
           <video controls src={version.slidesMovieUrl || undefined} className="w-full">
@@ -73,5 +77,3 @@ const VersionContent = ({version, print}: {
 };
 
 export default VersionContent;
-
-

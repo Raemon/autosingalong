@@ -1,11 +1,15 @@
 'use client';
 import { marked } from 'marked';
 
-const MarkdownRenderer = ({content}: {content: string}) => {
+const MarkdownRenderer = ({content, monospace}: {content: string, monospace?: boolean}) => {
+  const renderer = new marked.Renderer();
+  renderer.code = function({text}: {text: string}) {
+    return text;
+  };
   return (
     <div 
-      className="markdown-content text-sm"
-      dangerouslySetInnerHTML={{ __html: marked.parse(content, { breaks: true }) as string }}
+      className={`markdown-content text-sm ${monospace ? 'monospace' : ''}`}
+      dangerouslySetInnerHTML={{ __html: marked.parse(content, { breaks: true, renderer }) as string }}
     />
   );
 };

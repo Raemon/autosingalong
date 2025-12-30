@@ -74,6 +74,10 @@ body {
   font-family: var(--font-eb-garamond), 'Georgia', serif;
   font-size: 16px;
 }
+.markdown-content.monospace {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 12px;
+}
 
 .markdown-content h1,
 .markdown-content h2,
@@ -121,11 +125,11 @@ body {
 }
 
 .markdown-content code {
-  background-color: #2b2c2e;
-  padding: 0.125em 0.25em;
-  border-radius: 0.125rem;
-  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
-  font-size: 0.9em;
+  background-color: transparent;
+  border-radius: 0;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
 }
 
 .text-content {
