@@ -14,7 +14,7 @@ const formatDate = (dateStr: string | Date) => {
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
 
-const GITHUB_ACTIONS_URL = 'https://github.com/Raemon/autosingalong/actions/workflows/public-backup.yml';
+const GITHUB_ACTIONS_URL = 'https://github.com/Raemon/secularsolstice/actions/workflows/public-backup.yml';
 
 const PublicBackups = () => {
   const [backups, setBackups] = useState<PublicBackupInfo[]>([]);

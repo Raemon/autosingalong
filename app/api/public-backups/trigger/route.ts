@@ -8,7 +8,7 @@ export async function POST() {
 
   try {
     const response = await fetch(
-      'https://api.github.com/repos/Raemon/autosingalong/actions/workflows/public-backup.yml/dispatches',
+      'https://api.github.com/repos/Raemon/secularsolstice/actions/workflows/public-backup.yml/dispatches',
       {
         method: 'POST',
         headers: {

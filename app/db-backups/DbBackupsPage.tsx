@@ -22,7 +22,7 @@ const formatShortDate = (dateStr: string | null) => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-const GITHUB_ACTIONS_RESTORE_URL = 'https://github.com/Raemon/autosingalong/actions/workflows/db-restore.yml';
+const GITHUB_ACTIONS_RESTORE_URL = 'https://github.com/Raemon/secularsolstice/actions/workflows/db-restore.yml';
 
 const DbBackupsPage = () => {
   const { userId, isAdmin, loading: userLoading } = useUser();

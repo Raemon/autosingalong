@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     const response = await fetch(
-      'https://api.github.com/repos/Raemon/autosingalong/actions/workflows/db-restore.yml/dispatches',
+      'https://api.github.com/repos/Raemon/secularsolstice/actions/workflows/db-restore.yml/dispatches',
       {
         method: 'POST',
         headers: {
