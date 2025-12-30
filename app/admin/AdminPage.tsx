@@ -16,7 +16,8 @@ interface User {
 }
 
 const TOOL_LINKS = [
-  { href: '/backups', label: 'Backups' },
+  { href: '/db-backups', label: 'Database Backups' },
+  { href: '/public-backups', label: 'Public Backups' },
   { href: '/blobs', label: 'Blob Storage' },
   { href: '/bulk-create-versions', label: 'Bulk Create Versions' },
   { href: '/chord-player', label: 'Chord Player' },
