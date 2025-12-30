@@ -41,7 +41,7 @@ export async function GET() {
           filename,
           size: obj.Size!,
           lastModified: obj.LastModified!,
-          downloadUrl: `https://f${region?.split('-').pop() || '005'}.backblazeb2.com/file/${bucketName}/backups/${filename}`,
+          downloadUrl: `https://s3.${region}.backblazeb2.com/${bucketName}/backups/${filename}`,
         };
       })
       .sort((a, b) => new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime());
