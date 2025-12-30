@@ -125,11 +125,11 @@ body {
 }
 
 .markdown-content code {
-  background-color: #2b2c2e;
-  padding: 0.125em 0.25em;
-  border-radius: 0.125rem;
-  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
-  font-size: 0.9em;
+  background-color: transparent;
+  border-radius: 0;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
 }
 
 .text-content {
