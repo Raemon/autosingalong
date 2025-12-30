@@ -30,7 +30,6 @@ const DbBackupsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [downloadingFile, setDownloadingFile] = useState<string | null>(null);
   const [restoringFile, setRestoringFile] = useState<string | null>(null);
-  const [copiedFile, setCopiedFile] = useState<string | null>(null);
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [stats, setStats] = useState<StatsResponse | null>(null);
 
@@ -87,12 +86,6 @@ const DbBackupsPage = () => {
     } finally {
       setDownloadingFile(null);
     }
-  };
-
-  const handleCopyFilename = (filename: string) => {
-    navigator.clipboard.writeText(filename);
-    setCopiedFile(filename);
-    setTimeout(() => setCopiedFile(null), 2000);
   };
 
   const handleRestore = async (filename: string) => {

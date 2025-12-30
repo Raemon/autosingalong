@@ -4,10 +4,24 @@ import Link from 'next/link';
 import { useUser } from './contexts/UserContext';
 import { usePathname } from 'next/navigation';
 import UsernameInput from './feedback/components/UsernameInput';
+import { useState, useRef, useEffect } from 'react';
 
 const Header = () => {
   const pathname = usePathname();
   const { isAdmin } = useUser();
+  const [poweruserOpen, setPoweruserOpen] = useState(false);
+  const poweruserRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!poweruserOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (poweruserRef.current && !poweruserRef.current.contains(event.target as Node)) {
+        setPoweruserOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [poweruserOpen]);
   
   if (pathname?.includes('/print') || pathname?.match(/\/programs\/[^/]+\/slides/)) {
     return null;
@@ -34,8 +48,17 @@ const Header = () => {
         <Link href="/songs" className={`hover:underline text-sm ${isSongsPage ? activeTextClass : inactiveTextClass}`}>Songs/Speeches</Link>
         <Link href="/programs" className={`hover:underline text-sm ${isProgramsPage ? activeTextClass : inactiveTextClass}`}>Programs</Link>
         <Link href="/feedback" className={`hover:underline text-sm ${isFeedbackPage ? activeTextClass : inactiveTextClass}`}>Feedback</Link>
-        <Link href="/changelog" className={`hover:underline text-sm ${isChangelogPage ? activeTextClass : inactiveTextClass}`}>Changelog</Link>
-        {isAdmin && <Link href="/admin" className={`hover:underline text-sm ${isAdminPage ? activeTextClass : inactiveTextClass}`}>Admin</Link>}
+
+        <div className="relative" ref={poweruserRef}>
+          <button onClick={() => setPoweruserOpen(!poweruserOpen)} className={`hover:underline text-sm ${inactiveTextClass}`}>Power User ▼</button>
+          {poweruserOpen && (
+            <div className="absolute bg-black z-10 mt-1 border border-gray-500 shadow-lg min-w-[150px] top-full left-0">
+              {isAdmin && <Link href="/admin" className="block px-2 py-1 text-sm hover:bg-gray-800 text-gray-200" onClick={() => setPoweruserOpen(false)}>Admin</Link>}
+              <Link href="/public-backups" className="block px-2 py-1 text-sm hover:bg-gray-800 text-gray-200" onClick={() => setPoweruserOpen(false)}>Public Backups</Link>
+              <Link href="/changelog" className="block px-2 py-1 text-sm hover:bg-gray-800 text-gray-200" onClick={() => setPoweruserOpen(false)}>Changelog</Link>
+            </div>
+          )}
+        </div>
       </nav>
       <div className="order-1 lg:order-3">
         <UsernameInput lightMode={!!isScriptPage} />
@@ -45,4 +68,3 @@ const Header = () => {
 };
 
 export default Header;
-
