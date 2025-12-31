@@ -509,6 +509,7 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
               onAddElement={handleAddElement}
               onRemoveElement={handleRemoveElement}
               canEdit={canEdit}
+              isEditing={isEditingProgram}
               onSongCreated={loadVersionOptions}
               onCreateSubprogram={handleCreateSubprogram}
               isProgramLocked={isProgramLocked}
