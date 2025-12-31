@@ -331,6 +331,7 @@ export const usePreviewItems = (sections: Section[], songs: Song[], versionSuffi
         candidateSongs,
         selectedVersionId,
         versionName: versionSuffix.trim() || '(no suffix)',
+        content: section.content,
         contentPreview: section.content.slice(0, 100) + (section.content.length > 100 ? '...' : ''),
       };
     });

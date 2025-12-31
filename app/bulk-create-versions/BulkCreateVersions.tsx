@@ -1,19 +1,31 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import VersionSuffixInput from './components/VersionSuffixInput';
 import ContentEditor from './components/ContentEditor';
 import StatusMessage from './components/StatusMessage';
 import ResultsList from './components/ResultsList';
 import PreviewPanel from './components/PreviewPanel';
+import VersionDiffPage from '../changelog/[oldVersionId]/[newVersionId]/VersionDiffPage';
 import { useSongs, useSections, useStatus, useProcessSections, usePreviewItems } from './hooks';
 import { useUser } from '../contexts/UserContext';
+import type { PreviewItem } from './types';
+
+type DiffModalState = {
+  open: boolean;
+  oldText: string;
+  newText: string;
+  oldLabel: string;
+  newLabel: string;
+  title: string;
+};
 
 const BulkCreateVersions = () => {
   const { canEdit, userName } = useUser();
   const [versionSuffix, setVersionSuffix] = useState('');
   const [htmlContent, setHtmlContent] = useState('');
   const [versionSelections, setVersionSelections] = useState<Map<string, string>>(new Map());
+  const [diffModal, setDiffModal] = useState<DiffModalState>({ open: false, oldText: '', newText: '', oldLabel: '', newLabel: '', title: '' });
 
   const { songs, loadSongs } = useSongs();
   const sections = useSections(htmlContent);
@@ -36,6 +48,26 @@ const BulkCreateVersions = () => {
     });
   };
 
+  const handleCompare = (item: PreviewItem, versionId: string, versionLabel: string, versionContent: string) => {
+    setDiffModal({
+      open: true,
+      oldText: versionContent,
+      newText: item.content,
+      oldLabel: versionLabel,
+      newLabel: 'New content',
+      title: item.sectionTitle,
+    });
+  };
+
+  useEffect(() => {
+    if (!diffModal.open) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDiffModal(prev => ({ ...prev, open: false }));
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [diffModal.open]);
+
   return (
     <div className="flex gap-4 p-4">
       <div className="flex-1 space-y-4">
@@ -53,7 +85,24 @@ const BulkCreateVersions = () => {
         )}
         <ResultsList results={results} />
       </div>
-      <PreviewPanel previewItems={previewItems} onVersionSelect={handleVersionSelection} />
+      <PreviewPanel previewItems={previewItems} onVersionSelect={handleVersionSelection} onCompare={handleCompare} />
+      {diffModal.open && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={() => setDiffModal(prev => ({ ...prev, open: false }))}>
+          <div className="bg-gray-800 max-w-5xl max-h-[90vh] overflow-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-end p-2">
+              <button className="text-gray-400 hover:text-white text-sm" onClick={() => setDiffModal(prev => ({ ...prev, open: false }))}>✕ Close</button>
+            </div>
+            <VersionDiffPage
+              oldText={diffModal.oldText}
+              newText={diffModal.newText}
+              oldLabel={diffModal.oldLabel}
+              newLabel={diffModal.newLabel}
+              title={diffModal.title}
+              showBackLink={false}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

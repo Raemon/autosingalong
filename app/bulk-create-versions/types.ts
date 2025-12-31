@@ -25,6 +25,7 @@ export type PreviewItem = {
   candidateSongs: CandidateSong[];
   selectedVersionId: string | null;
   versionName: string;
+  content: string;
   contentPreview: string;
 };
 

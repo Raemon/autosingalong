@@ -18,7 +18,7 @@ type DiffLine = {
   content: string;
 };
 
-const computeLineDiff = (oldText: string, newText: string): { oldLines: DiffLine[]; newLines: DiffLine[] } => {
+export const computeLineDiff = (oldText: string, newText: string): { oldLines: DiffLine[]; newLines: DiffLine[] } => {
   const oldLines = oldText.split('\n');
   const newLines = newText.split('\n');
   const m = oldLines.length;
@@ -58,13 +58,35 @@ const computeLineDiff = (oldText: string, newText: string): { oldLines: DiffLine
   return { oldLines: oldResult, newLines: newResult };
 };
 
-const VersionDiffPage = ({ oldVersionId, newVersionId }: { oldVersionId: string; newVersionId: string }) => {
+type VersionDiffProps = {
+  oldVersionId?: string;
+  newVersionId?: string;
+  oldText?: string;
+  newText?: string;
+  oldLabel?: string;
+  newLabel?: string;
+  title?: string;
+  showBackLink?: boolean;
+};
+
+const VersionDiffPage = ({ oldVersionId, newVersionId, oldText, newText, oldLabel, newLabel, title, showBackLink = true }: VersionDiffProps) => {
   const [oldVersion, setOldVersion] = useState<VersionData | null>(null);
   const [newVersion, setNewVersion] = useState<VersionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const useTextMode = oldText !== undefined || newText !== undefined;
+
   useEffect(() => {
+    if (useTextMode) {
+      setLoading(false);
+      return;
+    }
+    if (!oldVersionId || !newVersionId) {
+      setError('Version IDs required');
+      setLoading(false);
+      return;
+    }
     const fetchVersions = async () => {
       try {
         const [oldRes, newRes] = await Promise.all([
@@ -84,26 +106,29 @@ const VersionDiffPage = ({ oldVersionId, newVersionId }: { oldVersionId: string;
       }
     };
     fetchVersions();
-  }, [oldVersionId, newVersionId]);
+  }, [oldVersionId, newVersionId, useTextMode]);
 
   if (loading) return <div className="p-4 text-gray-400">Loading versions...</div>;
   if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
-  if (!oldVersion || !newVersion) return <div className="p-4 text-gray-400">Version not found</div>;
+  if (!useTextMode && (!oldVersion || !newVersion)) return <div className="p-4 text-gray-400">Version not found</div>;
 
-  const oldContent = oldVersion.content || '';
-  const newContent = newVersion.content || '';
+  const oldContent = useTextMode ? (oldText || '') : (oldVersion?.content || '');
+  const newContent = useTextMode ? (newText || '') : (newVersion?.content || '');
+  const displayOldLabel = oldLabel || oldVersion?.label || 'Old';
+  const displayNewLabel = newLabel || newVersion?.label || 'New';
+  const displayTitle = title || oldVersion?.songTitle || newVersion?.songTitle || '';
   const { oldLines, newLines } = computeLineDiff(oldContent, newContent);
 
   return (
     <div className="p-4">
-      <Link href="/changelog" className="text-gray-400 hover:text-gray-200 text-sm mb-4 inline-block">← Back to changelog</Link>
-      <h1 className="text-xl font-mono mb-2 text-gray-200">{oldVersion.songTitle || newVersion.songTitle}</h1>
+      {showBackLink && <Link href="/changelog" className="text-gray-400 hover:text-gray-200 text-sm mb-4 inline-block">← Back to changelog</Link>}
+      {displayTitle && <h1 className="text-xl font-mono mb-2 text-gray-200">{displayTitle}</h1>}
       <div className="flex gap-4 mb-4 text-sm text-gray-400 font-mono">
-        <span>Comparing: <span className="text-red-400">{oldVersion.label}</span> → <span className="text-green-400">{newVersion.label}</span></span>
+        <span>Comparing: <span className="text-red-400">{displayOldLabel}</span> → <span className="text-green-400">{displayNewLabel}</span></span>
       </div>
       <div className="flex gap-2">
         <div className="flex-1 overflow-auto">
-          <div className="text-sm font-mono text-gray-400 mb-1">Old ({oldVersion.label})</div>
+          <div className="text-sm font-mono text-gray-400 mb-1">Old ({displayOldLabel})</div>
           <div className="bg-gray-900 p-2 font-mono text-sm whitespace-pre-wrap">
             {oldLines.map((line, idx) => (
               <div key={idx} className={`${line.type === 'removed' ? 'bg-red-900/40 text-red-300' : line.content === '' && line.type === 'unchanged' ? 'h-5' : 'text-gray-300'}`}>
@@ -113,7 +138,7 @@ const VersionDiffPage = ({ oldVersionId, newVersionId }: { oldVersionId: string;
           </div>
         </div>
         <div className="flex-1 overflow-auto">
-          <div className="text-sm font-mono text-gray-400 mb-1">New ({newVersion.label})</div>
+          <div className="text-sm font-mono text-gray-400 mb-1">New ({displayNewLabel})</div>
           <div className="bg-gray-900 p-2 font-mono text-sm whitespace-pre-wrap">
             {newLines.map((line, idx) => (
               <div key={idx} className={`${line.type === 'added' ? 'bg-green-900/40 text-green-300' : line.content === '' && line.type === 'unchanged' ? 'h-5' : 'text-gray-300'}`}>
