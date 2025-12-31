@@ -9,6 +9,7 @@ const MarkdownRenderer = ({content, monospace}: {content: string, monospace?: bo
   return (
     <div 
       className={`markdown-content text-sm ${monospace ? 'monospace' : ''}`}
+      style={monospace ? { whiteSpace: 'pre-wrap' } : undefined}
       dangerouslySetInnerHTML={{ __html: marked.parse(content, { breaks: true, renderer }) as string }}
     />
   );
