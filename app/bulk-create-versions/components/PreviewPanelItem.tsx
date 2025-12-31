@@ -8,43 +8,47 @@ type Props = {
 
 const PreviewPanelItem = ({item, onSelectVersion, onCompare}: Props) => {
   const isNewSong = !item.selectedVersionId;
+  const candidateNames = item.candidateSongs.map(c => `${c.song.title} (${c.similarity}%)`).join(', ');
 
   return (
-    <div className="text-xs p-2">
-      <div className="text-gray-400">{item.sectionTitle}</div>
-      <div className="mt-1 space-y-0.5 ml-2">
-        <div
-          className={`cursor-pointer p-0.5 ${isNewSong ? 'text-white bg-gray-600' : 'text-gray-400'}`}
-          onClick={() => onSelectVersion(item.sectionTitle, null)}
-        >
-          {isNewSong ? '●' : '○'} Create new song
+    <div className="flex">
+      <div className="w-1/2 px-2 py-1 text-lg font-medium border-b border-gray-500 font-georgia">
+        <div className="flex flex-col">
+          <span>{item.sectionTitle}</span>
+          {candidateNames && <span className="text-[10px] text-gray-400 font-mono">{candidateNames}</span>}
         </div>
-        {item.candidateSongs.map(candidate => (
-          <div key={candidate.song.id}>
-            <div className="text-gray-400">{candidate.song.title} ({candidate.similarity}%)</div>
-            <div className="ml-2 space-y-0.5">
-              {candidate.song.versions.map(version => {
-                const isSelected = version.id === item.selectedVersionId;
-                return (
-                  <div key={version.id} className="flex items-center gap-1">
-                    <div
-                      className={`cursor-pointer p-0.5 flex-1 ${isSelected ? 'text-white bg-gray-600' : 'text-gray-400'}`}
-                      onClick={() => onSelectVersion(item.sectionTitle, version.id)}
-                    >
-                      {isSelected ? '●' : '○'} {version.label}
-                    </div>
-                    <button
-                      className="text-blue-400 hover:text-blue-300 px-1"
-                      onClick={() => onCompare(item, version.id, version.label, version.content || '')}
-                    >
-                      diff
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+      </div>
+      <div className="border-b py-1 border-gray-500 w-1/2 flex flex-col justify-center">
+        <div
+          onClick={() => onSelectVersion(item.sectionTitle, null)}
+          className={`flex items-center gap-3 px-2 py-[2px] cursor-pointer ${isNewSong ? 'text-primary' : 'hover:bg-black/50'}`}
+        >
+          <span className={`flex-1 font-mono min-w-0 ${isNewSong ? 'font-medium' : ''}`} style={{fontSize: '12px'}}>
+            <span className={isNewSong ? 'text-primary' : 'text-gray-300'}>{isNewSong ? '● ' : '○ '}Create new element</span>
+          </span>
+        </div>
+        {item.candidateSongs.flatMap(candidate =>
+          candidate.song.versions.map(version => {
+            const isSelected = version.id === item.selectedVersionId;
+            return (
+              <div
+                key={version.id}
+                onClick={() => onSelectVersion(item.sectionTitle, version.id)}
+                className={`flex items-center gap-3 px-2 py-[2px] cursor-pointer ${isSelected ? 'text-primary' : 'hover:bg-black/50'}`}
+              >
+                <span className={`flex-1 font-mono min-w-0 ${isSelected ? 'font-medium' : ''}`} style={{fontSize: '12px'}}>
+                  <span className={isSelected ? 'text-primary' : 'text-gray-300'}>{isSelected ? '● ' : '○ '}{version.label}</span>
+                </span>
+                <button
+                  className="text-blue-400 hover:text-blue-300 text-xs"
+                  onClick={(e) => { e.stopPropagation(); onCompare(item, version.id, version.label, version.content || ''); }}
+                >
+                  diff
+                </button>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );
