@@ -452,7 +452,7 @@ const resolveProgramItems = async (
           }
           programIds.push(existingSubProgram.id);
         } else if (!dryRun) {
-          const subProgram = await createProgram(currentSectionName, IMPORT_USER, true);
+          const subProgram = await createProgram(currentSectionName, IMPORT_USER, true, true);
           await updateProgramElementIds(subProgram.id, currentSectionItems, []);
           programIds.push(subProgram.id);
         } else {
@@ -462,7 +462,7 @@ const resolveProgramItems = async (
       } else {
         // Create new subprogram (or placeholder in dryRun)
         if (!dryRun) {
-          const subProgram = await createProgram(currentSectionName, IMPORT_USER, true);
+          const subProgram = await createProgram(currentSectionName, IMPORT_USER, true, true);
           await updateProgramElementIds(subProgram.id, currentSectionItems, []);
           programIds.push(subProgram.id);
         } else {
@@ -588,7 +588,7 @@ export const importProgramFile = async (
       return result;
     }
 
-    const program = await createProgram(programTitle, IMPORT_USER);
+    const program = await createProgram(programTitle, IMPORT_USER, false, true);
     await updateProgramElementIds(program.id, elementIds, programIds);
     const url = `/programs/${program.id}`;
     const result: ProgramImportResult = {
