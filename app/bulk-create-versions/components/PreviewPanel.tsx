@@ -9,12 +9,12 @@ type Props = {
 
 const PreviewPanel = ({ previewItems, onVersionSelect, onCompare }: Props) => {
   return (
-    <div className="w-80 space-y-2">
-      <div className="text-xs font-semibold">Preview ({previewItems.length} sections):</div>
+    <div className="w-full">
+      <div className="text-sm font-semibold px-2 py-1 border-b border-gray-500">Preview ({previewItems.length} sections)</div>
       {previewItems.length === 0 ? (
-        <div className="text-xs text-gray-500">No sections found. Paste text with headings to see preview.</div>
+        <div className="text-xs text-gray-500 px-2 py-2">No sections found. Paste text with headings to see preview.</div>
       ) : (
-        <div className="space-y-1 max-h-[600px] overflow-y-auto">
+        <div className="max-h-[600px] overflow-y-auto">
           {previewItems.map((item, idx) => (
             <PreviewPanelItem key={idx} item={item} onSelectVersion={onVersionSelect} onCompare={onCompare} />
           ))}

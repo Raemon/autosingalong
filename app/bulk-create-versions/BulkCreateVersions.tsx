@@ -20,12 +20,29 @@ type DiffModalState = {
   title: string;
 };
 
+const LOCALSTORAGE_KEY = 'bulk-create-versions-content';
+
 const BulkCreateVersions = () => {
   const { canEdit, userName } = useUser();
   const [versionSuffix, setVersionSuffix] = useState('');
   const [htmlContent, setHtmlContent] = useState('');
+  const [initialContent, setInitialContent] = useState<string | undefined>(undefined);
   const [versionSelections, setVersionSelections] = useState<Map<string, string>>(new Map());
   const [diffModal, setDiffModal] = useState<DiffModalState>({ open: false, oldText: '', newText: '', oldLabel: '', newLabel: '', title: '' });
+
+  useEffect(() => {
+    const saved = localStorage.getItem(LOCALSTORAGE_KEY);
+    if (saved) {
+      setInitialContent(saved);
+      setHtmlContent(saved);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (htmlContent) {
+      localStorage.setItem(LOCALSTORAGE_KEY, htmlContent);
+    }
+  }, [htmlContent]);
 
   const { songs, loadSongs } = useSongs();
   const sections = useSections(htmlContent);
@@ -70,9 +87,9 @@ const BulkCreateVersions = () => {
 
   return (
     <div className="flex gap-4 p-4">
-      <div className="flex-1 space-y-4">
+      <div className="flex-1 space-y-4 w-1/2">
         <VersionSuffixInput value={versionSuffix} onChange={setVersionSuffix} />
-        <ContentEditor onContentChange={setHtmlContent} showStatus={showStatus} />
+        <ContentEditor onContentChange={setHtmlContent} showStatus={showStatus} initialContent={initialContent} />
         <StatusMessage message={statusMessage} type={statusType} />
         {canEdit && (
           <button
@@ -85,7 +102,9 @@ const BulkCreateVersions = () => {
         )}
         <ResultsList results={results} />
       </div>
-      <PreviewPanel previewItems={previewItems} onVersionSelect={handleVersionSelection} onCompare={handleCompare} />
+      <div className="w-1/2">
+        <PreviewPanel previewItems={previewItems} onVersionSelect={handleVersionSelection} onCompare={handleCompare} />
+      </div>
       {diffModal.open && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={() => setDiffModal(prev => ({ ...prev, open: false }))}>
           <div className="bg-gray-800 max-w-5xl max-h-[90vh] overflow-auto" onClick={e => e.stopPropagation()}>

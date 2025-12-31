@@ -1,14 +1,23 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import { handlePaste as processPaste } from '../../../src/components/slides/eventHandlers';
 import type { StatusType } from '../types';
 
 type Props = {
   onContentChange: (html: string) => void;
   showStatus: (message: string, type: StatusType) => void;
+  initialContent?: string;
 };
 
-const ContentEditor = ({ onContentChange, showStatus }: Props) => {
+const ContentEditor = ({ onContentChange, showStatus, initialContent }: Props) => {
   const contentEditorRef = useRef<HTMLDivElement | null>(null);
+  const hasInitialized = useRef(false);
+
+  useEffect(() => {
+    if (contentEditorRef.current && initialContent && !hasInitialized.current) {
+      contentEditorRef.current.innerHTML = initialContent;
+      hasInitialized.current = true;
+    }
+  }, [initialContent]);
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     processPaste(e, showStatus, onContentChange);
@@ -37,11 +46,3 @@ const ContentEditor = ({ onContentChange, showStatus }: Props) => {
 };
 
 export default ContentEditor;
-
-
-
-
-
-
-
-
