@@ -33,6 +33,68 @@ const groupIntoSections = (lines: ParsedLine[]): Section[] => {
   return result;
 };
 
+const levenshteinDistance = (str1: string, str2: string): number => {
+  const matrix: number[][] = [];
+  for (let i = 0; i <= str2.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= str1.length; j++) {
+    matrix[0][j] = j;
+  }
+  for (let i = 1; i <= str2.length; i++) {
+    for (let j = 1; j <= str1.length; j++) {
+      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+  return matrix[str2.length][str1.length];
+};
+
+const calculateSimilarity = (str1: string, str2: string): number => {
+  const distance = levenshteinDistance(str1.toLowerCase(), str2.toLowerCase());
+  const maxLength = Math.max(str1.length, str2.length);
+  if (maxLength === 0) return 100;
+  return Math.round(((maxLength - distance) / maxLength) * 100);
+};
+
+const calculateSubstringMatch = (str1: string, str2: string, minChars: number = 15): number => {
+  const lower1 = str1.toLowerCase().trim();
+  const lower2 = str2.toLowerCase().trim();
+  const shorter = lower1.length <= lower2.length ? lower1 : lower2;
+  const longer = lower1.length <= lower2.length ? lower2 : lower1;
+  if (longer.includes(shorter) && shorter.length >= minChars) {
+    return 95;
+  }
+  return 0;
+};
+
+type CandidateSong = {
+  song: Song;
+  similarity: number;
+};
+
+const findCandidateSongs = (title: string, songsList: Song[], threshold: number = 70, limit: number = 5): CandidateSong[] => {
+  const normalizedTitle = title.trim();
+  const candidates: CandidateSong[] = [];
+  for (const song of songsList) {
+    const substringMatch = calculateSubstringMatch(normalizedTitle, song.title);
+    const levenshteinMatch = calculateSimilarity(normalizedTitle, song.title);
+    const similarity = Math.max(substringMatch, levenshteinMatch);
+    if (similarity >= threshold) {
+      candidates.push({ song, similarity });
+    }
+  }
+  candidates.sort((a, b) => b.similarity - a.similarity);
+  return candidates.slice(0, limit);
+};
+
 const findMatchingSong = (title: string, songsList: Song[]): Song | null => {
   const normalizedTitle = title.trim().toLowerCase();
   return songsList.find(song => song.title.toLowerCase() === normalizedTitle) || null;
@@ -94,7 +156,8 @@ export const useProcessSections = (
   loadSongs: () => Promise<Song[]>,
   sections: Section[],
   versionSuffix: string,
-  userName: string
+  userName: string,
+  songSelections: Map<string, string>
 ) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [results, setResults] = useState<ProcessResult[]>([]);
@@ -132,7 +195,13 @@ export const useProcessSections = (
     const processedResults: ProcessResult[] = [];
 
     for (const section of sections) {
-      const matchedSong = findMatchingSong(section.title, songsToUse);
+      let matchedSong: Song | null = null;
+      const selectedSongId = songSelections.get(section.title);
+      if (selectedSongId) {
+        matchedSong = songsToUse.find(s => s.id === selectedSongId) || null;
+      } else {
+        matchedSong = findMatchingSong(section.title, songsToUse);
+      }
       
       if (!matchedSong) {
         processedResults.push({ title: section.title, matched: false });
@@ -187,17 +256,18 @@ export const useProcessSections = (
   return { isProcessing, results, processSections };
 };
 
-export const usePreviewItems = (sections: Section[], songs: Song[], versionSuffix: string) => {
+export const usePreviewItems = (sections: Section[], songs: Song[], versionSuffix: string, songSelections: Map<string, string>) => {
   return sections.map(section => {
     const matchedSong = findMatchingSong(section.title, songs);
+    const selectedSongId = songSelections.get(section.title) || null;
+    const candidateSongs = findCandidateSongs(section.title, songs);
     return {
       sectionTitle: section.title,
       song: matchedSong,
+      candidateSongs,
+      selectedSongId,
       versionName: versionSuffix.trim() || '(no suffix)',
       contentPreview: section.content.slice(0, 100) + (section.content.length > 100 ? '...' : ''),
     };
   });
 };
-
-
-

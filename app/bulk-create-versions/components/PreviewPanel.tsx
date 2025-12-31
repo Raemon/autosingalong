@@ -1,34 +1,45 @@
+import { useState } from 'react';
 import type { PreviewItem } from '../types';
+import PreviewPanelItem from './PreviewPanelItem';
 
 type Props = {
   previewItems: PreviewItem[];
+  onSongSelect: (sectionTitle: string, songId: string | null) => void;
 };
 
-const PreviewPanel = ({ previewItems }: Props) => (
-  <div className="w-80 space-y-2">
-    <div className="text-xs font-semibold">Preview ({previewItems.length} sections):</div>
-    {previewItems.length === 0 ? (
-      <div className="text-xs text-gray-500">No sections found. Paste text with headings to see preview.</div>
-    ) : (
-      <div className="space-y-1 max-h-[600px] overflow-y-auto">
-        {previewItems.map((item, idx) => (
-          <div key={idx} className="text-xs border border-gray-200 p-2">
-            <div className={item.song ? 'text-green-600' : 'text-red-600'}>
-              {item.song ? '✓' : '✗'} {item.sectionTitle}
-            </div>
-            {item.song && (
-              <div className="mt-1 text-gray-400">Song: {item.song.title}</div>
-            )}
-            <div className="mt-1 text-gray-400">Version: {item.versionName}</div>
-            {item.contentPreview && (
-              <div className="mt-1 text-gray-400 truncate">{item.contentPreview}</div>
-            )}
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-);
+const PreviewPanel = ({ previewItems, onSongSelect }: Props) => {
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+
+  const toggleExpanded = (idx: number) => {
+    setExpandedIndex(expandedIndex === idx ? null : idx);
+  };
+
+  const handleSelectSong = (sectionTitle: string, songId: string, idx: number) => {
+    onSongSelect(sectionTitle, songId);
+    setExpandedIndex(null);
+  };
+
+  return (
+    <div className="w-80 space-y-2">
+      <div className="text-xs font-semibold">Preview ({previewItems.length} sections):</div>
+      {previewItems.length === 0 ? (
+        <div className="text-xs text-gray-500">No sections found. Paste text with headings to see preview.</div>
+      ) : (
+        <div className="space-y-1 max-h-[600px] overflow-y-auto">
+          {previewItems.map((item, idx) => (
+            <PreviewPanelItem
+              key={idx}
+              item={item}
+              idx={idx}
+              isExpanded={expandedIndex === idx}
+              onToggleExpanded={toggleExpanded}
+              onSelectSong={handleSelectSong}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default PreviewPanel;
-

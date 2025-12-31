@@ -13,12 +13,25 @@ const BulkCreateVersions = () => {
   const { canEdit, userName } = useUser();
   const [versionSuffix, setVersionSuffix] = useState('');
   const [htmlContent, setHtmlContent] = useState('');
+  const [songSelections, setSongSelections] = useState<Map<string, string>>(new Map());
 
   const { songs, loadSongs } = useSongs();
   const sections = useSections(htmlContent);
   const { statusMessage, statusType, showStatus } = useStatus();
-  const { isProcessing, results, processSections } = useProcessSections(songs, loadSongs, sections, versionSuffix, userName);
-  const previewItems = usePreviewItems(sections, songs, versionSuffix);
+  const { isProcessing, results, processSections } = useProcessSections(songs, loadSongs, sections, versionSuffix, userName, songSelections);
+  const previewItems = usePreviewItems(sections, songs, versionSuffix, songSelections);
+
+  const handleSongSelection = (sectionTitle: string, songId: string | null) => {
+    setSongSelections(prev => {
+      const newMap = new Map(prev);
+      if (songId === null) {
+        newMap.delete(sectionTitle);
+      } else {
+        newMap.set(sectionTitle, songId);
+      }
+      return newMap;
+    });
+  };
 
   return (
     <div className="flex gap-4 p-4">
@@ -37,7 +50,7 @@ const BulkCreateVersions = () => {
         )}
         <ResultsList results={results} />
       </div>
-      <PreviewPanel previewItems={previewItems} />
+      <PreviewPanel previewItems={previewItems} onSongSelect={handleSongSelection} />
     </div>
   );
 };

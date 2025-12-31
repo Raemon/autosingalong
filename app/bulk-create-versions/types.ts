@@ -14,19 +14,18 @@ export type ProcessResult = {
   error?: string;
 };
 
+export type CandidateSong = {
+  song: Song;
+  similarity: number;
+};
+
 export type PreviewItem = {
   sectionTitle: string;
   song: Song | null;
+  candidateSongs: CandidateSong[];
+  selectedSongId: string | null;
   versionName: string;
   contentPreview: string;
 };
 
 export type { Song, ParsedLine, StatusType };
-
-
-
-
-
-
-
-
