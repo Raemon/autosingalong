@@ -40,22 +40,24 @@ const VersionRow = ({version, isSelected, onClick}: {
       className={`flex items-center gap-3 px-2 py-[2px] cursor-pointer ${isSelected ? 'text-primary' : 'hover:bg-black/50'}`}
     >
       <span className={`flex-1 font-mono min-w-0 w-[100px] ${isSelected ? 'font-medium' : ''}`} style={{fontSize: '12px'}}>
-        <TruncatedFilename label={version.label} className={isSelected ? 'text-primary' : 'text-gray-300'} />
+        <TruncatedFilename label={version.label} className={isSelected ? 'text-primary' : 'text-gray-400'} />
       </span>
       <MyTooltip content={<div>{formatDate(version.createdAt)}{version.createdBy && ` - ${version.createdBy}`}</div>} placement="left">
-        <span className="text-gray-400 text-xs">{formatRelativeTimestamp(version.createdAt)}</span>
+        <span className="text-gray-600 text-xs">{formatRelativeTimestamp(version.createdAt)}</span>
       </MyTooltip>
     </div>
   );
 };
 
-const SongItem = ({song, selectedVersionId, selectedSongId, onSongClick, onVersionClick, onCreateNewVersion}: {
+const SongItem = ({song, selectedVersionId, selectedSongId, onSongClick, onVersionClick, onCreateNewVersion, showTags = true, maxVersions}: {
   song: Song;
   selectedVersionId?: string;
   selectedSongId?: string;
   onSongClick: (song: Song) => void;
   onVersionClick: (version: SongVersion) => void;
   onCreateNewVersion: (song: Song) => void;
+  showTags?: boolean;
+  maxVersions?: number;
 }) => {
   const { canEdit } = useUser();
 
@@ -76,7 +78,7 @@ const SongItem = ({song, selectedVersionId, selectedSongId, onSongClick, onVersi
           <span className={isSongSelected ? 'text-primary' : 'hover:text-gray-300'}>
             {song.title}
           </span>
-          <span className="text-[10px] text-gray-400 font-mono">{tagsMinusSong.join(', ')}</span>
+          {showTags && <span className="text-[10px] text-gray-400 font-mono">{tagsMinusSong.join(', ')}</span>}
           </div>
         {canEdit && (
           <button
@@ -92,7 +94,7 @@ const SongItem = ({song, selectedVersionId, selectedSongId, onSongClick, onVersi
         {mostRecentVersions.length === 0 ? (
           <p className="px-2 py-1 text-xs text-gray-500">No versions stored yet.</p>
         ) : (
-          mostRecentVersions.map((version) => (
+          (maxVersions ? mostRecentVersions.slice(0, maxVersions) : mostRecentVersions).map((version) => (
             <VersionRow
               key={version.id}
               version={version}

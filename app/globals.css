@@ -72,7 +72,7 @@ body {
 .markdown-content {
   line-height: 1.6;
   font-family: var(--font-eb-garamond), 'Georgia', serif;
-  font-size: 20px;
+  font-size: 18px;
 }
 .markdown-content.monospace {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
@@ -115,9 +115,16 @@ body {
   list-style-type: disc;
 }
 
+.markdown-content li li {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+  list-style-type: circle;
+}
+
+
 .markdown-content a {
   color: var(--primary);
-  text-decoration: underline;
+  /* text-decoration: underline; */
 }
 
 .markdown-content a:hover {
