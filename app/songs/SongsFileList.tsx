@@ -59,6 +59,11 @@ const SongsFileList = ({ initialVersionId }: SongsFileListProps = {}) => {
       // || (version.content && version.content.toLowerCase().includes(searchLower))
     );
   }).sort((a, b) => {
+    // Sort songs with only README.md versions to the bottom
+    const aOnlyReadme = a.versions.length > 0 && a.versions.every(v => v.label === 'README.md');
+    const bOnlyReadme = b.versions.length > 0 && b.versions.every(v => v.label === 'README.md');
+    if (aOnlyReadme && !bOnlyReadme) return 1;
+    if (!aOnlyReadme && bOnlyReadme) return -1;
     if (sortOption === 'alphabetical') {
       return a.title.toLowerCase().localeCompare(b.title.toLowerCase());
     } else if (sortOption === 'recently-updated') {
