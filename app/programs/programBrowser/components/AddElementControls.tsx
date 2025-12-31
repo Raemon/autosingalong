@@ -14,9 +14,13 @@ export type AddElementControlsProps = {
   onSongCreated?: (data?: { song?: SongRecord; version?: SongVersionRecord }) => Promise<void> | void;
   onCreateSubprogram?: (programId: string) => void | Promise<void>;
   topLevelProgramTitle?: string;
+  disabled?: boolean;
 };
 
-const AddElementControls = ({ programId, versions, onAddElement, onSongCreated, onCreateSubprogram, topLevelProgramTitle }: AddElementControlsProps) => {
+const AddElementControls = ({ programId, versions, onAddElement, onSongCreated, onCreateSubprogram, topLevelProgramTitle, disabled }: AddElementControlsProps) => {
+  if (disabled) {
+    return null;
+  }
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -144,4 +148,3 @@ const AddElementControls = ({ programId, versions, onAddElement, onSongCreated, 
 };
 
 export default AddElementControls;
-

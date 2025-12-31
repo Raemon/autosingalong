@@ -18,7 +18,7 @@ type ProgramBrowserProps = {
 
 const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserProps) => {
   const pathname = usePathname();
-  const { userName, canEdit } = useUser();
+  const { userName, canEdit, isAdmin } = useUser();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [versions, setVersions] = useState<VersionOption[]>([]);
   const [isLoadingPrograms, setIsLoadingPrograms] = useState(true);
@@ -178,6 +178,11 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
   }, [versions]);
 
   const selectedProgram = selectedProgramId ? programMap[selectedProgramId] ?? null : null;
+
+  const isProgramLocked = useCallback((programId: string): boolean => {
+    const program = programMap[programId];
+    return program?.locked ?? false;
+  }, [programMap]);
 
   const parentProgram = useMemo(() => {
     if (!selectedProgramId) return null;
@@ -468,7 +473,7 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
               />
             </div>
             <div className="mt-4 ml-1 mb-8">
-              <ProgramViews programId={selectedProgramId} />
+              <ProgramViews programId={selectedProgramId ?? ''} isLocked={isProgramLocked(selectedProgramId ?? '')} />
             </div>
             <ProgramStructurePanel
               program={selectedProgram}
@@ -484,6 +489,7 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
               canEdit={canEdit}
               onSongCreated={loadVersionOptions}
               onCreateSubprogram={handleCreateSubprogram}
+              isProgramLocked={isProgramLocked}
             />
           </div>  
           {selectedVersion ? (

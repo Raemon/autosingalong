@@ -1,4 +1,4 @@
-const ProgramViews = ({programId}:{programId: string | null}) => {
+const ProgramViews = ({programId, isLocked}:{programId: string | null, isLocked?: boolean}) => {
   return (
     <div className="flex items-center gap-4">
       <a href={`/programs/${programId}/program`} className="text-sm hover:opacity-50">
@@ -16,6 +16,11 @@ const ProgramViews = ({programId}:{programId: string | null}) => {
       <a href={`/programs/${programId}/edit`} className="text-sm hover:opacity-50">
         Edit
       </a>
+      {isLocked && (
+        <span className="text-sm opacity-50">
+          🔒 Locked
+        </span>
+      )}
     </div>
   );
 };

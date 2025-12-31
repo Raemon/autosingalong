@@ -11,6 +11,8 @@ export type Program = {
   videoUrl?: string | null;
   printProgramForeword?: string | null;
   printProgramEpitaph?: string | null;
+  createdBy?: string | null;
+  locked: boolean;
 };
 
 export type VersionOption = {
@@ -34,5 +36,3 @@ export type SongSlideData = {
   slidesMovieUrl?: string | null;
   slideMovieStart?: number | null;
 };
-
-

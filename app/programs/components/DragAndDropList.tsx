@@ -7,13 +7,15 @@ type DragAndDropListProps<T> = {
   onReorder: (reorderedItems: T[]) => void;
   renderItem: (item: T, index: number) => ReactNode;
   keyExtractor?: (item: T, index: number) => string | number;
+  disabled?: boolean;
 };
 
-const DragAndDropList = <T,>({ items, onReorder, renderItem, keyExtractor }: DragAndDropListProps<T>) => {
+const DragAndDropList = <T,>({ items, onReorder, renderItem, keyExtractor, disabled }: DragAndDropListProps<T>) => {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
 
   const handleDragStart = (index: number) => {
+    if (disabled) return;
     setDraggedIndex(index);
   };
 
@@ -50,14 +52,14 @@ const DragAndDropList = <T,>({ items, onReorder, renderItem, keyExtractor }: Dra
             <div className="h-0.5 bg-blue-500 my-1" />
           )}
           <div
-            draggable
+            draggable={!disabled}
             onDragStart={() => handleDragStart(index)}
             onDragOver={(e) => handleDragOver(e, index)}
             onDrop={(e) => handleDrop(e, index)}
             onDragEnd={handleDragEnd}
-            className={`flex items-center gap-2 ${draggedIndex === index ? 'opacity-50 cursor-grabbing' : 'cursor-grab'}`}
+            className={`flex items-center gap-2 ${disabled ? 'cursor-default' : draggedIndex === index ? 'opacity-50 cursor-grabbing' : 'cursor-grab'}`}
           >
-            <div className="text-gray-500 select-none" style={{ userSelect: 'none', pointerEvents: 'none' }}>
+            <div className={`${disabled ? 'text-gray-700' : 'text-gray-500'} select-none`} style={{ userSelect: 'none', pointerEvents: 'none' }}>
               <svg width="14" height="14" viewBox="0 0 12 12" fill="currentColor">
                 <circle cx="2" cy="2" r="1"/>
                 <circle cx="2" cy="6" r="1"/>
@@ -89,4 +91,3 @@ const DragAndDropList = <T,>({ items, onReorder, renderItem, keyExtractor }: Dra
 };
 
 export default DragAndDropList;
-

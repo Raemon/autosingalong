@@ -25,6 +25,8 @@ export type ProgramStructureNodeProps = {
   onSongCreated?: (data?: { song?: SongRecord; version?: SongVersionRecord }) => Promise<void> | void;
   onCreateSubprogram?: (programId: string) => void | Promise<void>;
   topLevelProgramTitle?: string;
+  isProgramLocked?: (programId: string) => boolean;
+  parentIsLocked?: boolean;
 };
 
 const ProgramStructureNode = ({
@@ -35,6 +37,7 @@ const ProgramStructureNode = ({
   versionMap,
   versions,
   selectedVersionId,
+  parentIsLocked,
   onElementClick,
   onReorderElements,
   onChangeVersion,
@@ -44,9 +47,11 @@ const ProgramStructureNode = ({
   onSongCreated,
   onCreateSubprogram,
   topLevelProgramTitle,
+  isProgramLocked,
 }: ProgramStructureNodeProps): ReactElement => {
   const nextTrail = new Set(trail);
   nextTrail.add(current.id);
+  const isLocked = parentIsLocked ?? isProgramLocked?.(current.id) ?? false;
 
   return (
     <div className={`px-0 sm:px-2 ${depth > 0 ? 'ml-1' : ''}`}>
@@ -65,6 +70,7 @@ const ProgramStructureNode = ({
           onSongCreated={onSongCreated}
           onCreateSubprogram={onCreateSubprogram}
           topLevelProgramTitle={topLevelProgramTitle}
+          disabled={!canEdit || isLocked}
         />
       </div>
       <div className="mt-2 flex flex-col">
@@ -89,11 +95,12 @@ const ProgramStructureNode = ({
                 }}
                 onClick={onElementClick}
                 selectedVersionId={selectedVersionId}
-                canEdit={canEdit}
+                canEdit={canEdit && !isLocked}
               />
             );
           }}
           keyExtractor={(elementId: string) => `${elementId}-${current.id}`}
+          disabled={isLocked}
         />
       </div>
       {current.programIds.length > 0 && (
@@ -123,6 +130,7 @@ const ProgramStructureNode = ({
                 programMap={programMap}
                 versionMap={versionMap}
                 versions={versions}
+                parentIsLocked={isLocked || parentIsLocked}
                 selectedVersionId={selectedVersionId}
                 onElementClick={onElementClick}
                 onReorderElements={onReorderElements}
@@ -133,6 +141,7 @@ const ProgramStructureNode = ({
                 onSongCreated={onSongCreated}
                 onCreateSubprogram={onCreateSubprogram}
                 topLevelProgramTitle={topLevelProgramTitle}
+                isProgramLocked={isProgramLocked}
               />
             );
           })}
@@ -143,4 +152,3 @@ const ProgramStructureNode = ({
 };
 
 export default ProgramStructureNode;
-

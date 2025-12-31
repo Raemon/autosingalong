@@ -18,6 +18,7 @@ export type ProgramStructurePanelProps = {
   canEdit: boolean;
   onSongCreated?: () => void | Promise<void>;
   onCreateSubprogram?: (programId: string) => void | Promise<void>;
+  isProgramLocked?: (programId: string) => boolean;
 };
 
 const ProgramStructurePanel = ({
@@ -34,6 +35,7 @@ const ProgramStructurePanel = ({
   canEdit,
   onSongCreated,
   onCreateSubprogram,
+  isProgramLocked,
 }: ProgramStructurePanelProps): ReactElement => {
   if (!program) {
     return (
@@ -66,10 +68,10 @@ const ProgramStructurePanel = ({
         onSongCreated={onSongCreated}
         onCreateSubprogram={onCreateSubprogram}
         topLevelProgramTitle={program.title}
+        isProgramLocked={isProgramLocked}
       />
     </div>
   );
 };
 
 export default ProgramStructurePanel;
-
