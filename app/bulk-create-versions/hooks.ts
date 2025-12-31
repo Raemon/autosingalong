@@ -157,7 +157,7 @@ export const useProcessSections = (
   sections: Section[],
   versionSuffix: string,
   userName: string,
-  songSelections: Map<string, string>
+  versionSelections: Map<string, string>
 ) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [results, setResults] = useState<ProcessResult[]>([]);
@@ -196,11 +196,24 @@ export const useProcessSections = (
 
     for (const section of sections) {
       let matchedSong: Song | null = null;
-      const selectedSongId = songSelections.get(section.title);
-      if (selectedSongId) {
-        matchedSong = songsToUse.find(s => s.id === selectedSongId) || null;
+      let previousVersionId: string | null = null;
+      const selectedVersionId = versionSelections.get(section.title);
+      if (selectedVersionId) {
+        // Find song by version ID
+        for (const song of songsToUse) {
+          const version = song.versions.find(v => v.id === selectedVersionId);
+          if (version) {
+            matchedSong = song;
+            previousVersionId = selectedVersionId;
+            break;
+          }
+        }
       } else {
         matchedSong = findMatchingSong(section.title, songsToUse);
+        if (matchedSong) {
+          const latestVersion = matchedSong.versions.find(v => v.nextVersionId === null);
+          previousVersionId = latestVersion?.id || null;
+        }
       }
       
       if (!matchedSong) {
@@ -209,9 +222,6 @@ export const useProcessSections = (
       }
 
       try {
-        const latestVersion = matchedSong.versions.find(v => v.nextVersionId === null);
-        const previousVersionId = latestVersion?.id || null;
-
         const response = await fetch('/api/songs/versions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -256,16 +266,16 @@ export const useProcessSections = (
   return { isProcessing, results, processSections };
 };
 
-export const usePreviewItems = (sections: Section[], songs: Song[], versionSuffix: string, songSelections: Map<string, string>) => {
+export const usePreviewItems = (sections: Section[], songs: Song[], versionSuffix: string, versionSelections: Map<string, string>) => {
   return sections.map(section => {
     const matchedSong = findMatchingSong(section.title, songs);
-    const selectedSongId = songSelections.get(section.title) || null;
+    const selectedVersionId = versionSelections.get(section.title) || null;
     const candidateSongs = findCandidateSongs(section.title, songs);
     return {
       sectionTitle: section.title,
       song: matchedSong,
       candidateSongs,
-      selectedSongId,
+      selectedVersionId,
       versionName: versionSuffix.trim() || '(no suffix)',
       contentPreview: section.content.slice(0, 100) + (section.content.length > 100 ? '...' : ''),
     };

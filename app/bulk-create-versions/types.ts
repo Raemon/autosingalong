@@ -23,7 +23,7 @@ export type PreviewItem = {
   sectionTitle: string;
   song: Song | null;
   candidateSongs: CandidateSong[];
-  selectedSongId: string | null;
+  selectedVersionId: string | null;
   versionName: string;
   contentPreview: string;
 };

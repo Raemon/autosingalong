@@ -13,21 +13,21 @@ const BulkCreateVersions = () => {
   const { canEdit, userName } = useUser();
   const [versionSuffix, setVersionSuffix] = useState('');
   const [htmlContent, setHtmlContent] = useState('');
-  const [songSelections, setSongSelections] = useState<Map<string, string>>(new Map());
+  const [versionSelections, setVersionSelections] = useState<Map<string, string>>(new Map());
 
   const { songs, loadSongs } = useSongs();
   const sections = useSections(htmlContent);
   const { statusMessage, statusType, showStatus } = useStatus();
-  const { isProcessing, results, processSections } = useProcessSections(songs, loadSongs, sections, versionSuffix, userName, songSelections);
-  const previewItems = usePreviewItems(sections, songs, versionSuffix, songSelections);
+  const { isProcessing, results, processSections } = useProcessSections(songs, loadSongs, sections, versionSuffix, userName, versionSelections);
+  const previewItems = usePreviewItems(sections, songs, versionSuffix, versionSelections);
 
-  const handleSongSelection = (sectionTitle: string, songId: string | null) => {
-    setSongSelections(prev => {
+  const handleVersionSelection = (sectionTitle: string, versionId: string | null) => {
+    setVersionSelections(prev => {
       const newMap = new Map(prev);
-      if (songId === null) {
+      if (versionId === null) {
         newMap.delete(sectionTitle);
       } else {
-        newMap.set(sectionTitle, songId);
+        newMap.set(sectionTitle, versionId);
       }
       return newMap;
     });
@@ -50,7 +50,7 @@ const BulkCreateVersions = () => {
         )}
         <ResultsList results={results} />
       </div>
-      <PreviewPanel previewItems={previewItems} onSongSelect={handleSongSelection} />
+      <PreviewPanel previewItems={previewItems} onVersionSelect={handleVersionSelection} />
     </div>
   );
 };
