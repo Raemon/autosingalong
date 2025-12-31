@@ -45,3 +45,4 @@ songs/*
 .env*.local
 
 tmp/*
+.vscode/*
