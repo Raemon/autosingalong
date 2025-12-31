@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { parseHTMLContent } from '../../src/components/slides/slideUtils';
 import type { Song, Section, ProcessResult, StatusType } from './types';
 import { ParsedLine } from '../../src/components/slides/types';
@@ -78,6 +78,50 @@ const calculateSubstringMatch = (str1: string, str2: string, minChars: number = 
 type CandidateSong = {
   song: Song;
   similarity: number;
+};
+
+type VersionWithSimilarity = {
+  versionId: string;
+  contentSimilarity: number;
+};
+
+const normalizeForComparison = (text: string): string => {
+  return text.toLowerCase().replace(/\s+/g, ' ').trim();
+};
+
+const calculateContentSimilarity = (content1: string | null, content2: string | null): number => {
+  if (!content1 || !content2) return 0;
+  const str1 = normalizeForComparison(content1);
+  const str2 = normalizeForComparison(content2);
+  if (str1.length === 0 && str2.length === 0) return 100;
+  if (str1.length === 0 || str2.length === 0) return 0;
+  // Quick length check - if lengths differ by more than 50%, low similarity
+  const lengthRatio = Math.min(str1.length, str2.length) / Math.max(str1.length, str2.length);
+  if (lengthRatio < 0.5) return Math.round(lengthRatio * 50);
+  // Use word-based Jaccard similarity (much faster than Levenshtein for long text)
+  const words1 = new Set(str1.split(' ').filter(w => w.length > 2));
+  const words2 = new Set(str2.split(' ').filter(w => w.length > 2));
+  if (words1.size === 0 && words2.size === 0) return 100;
+  if (words1.size === 0 || words2.size === 0) return 0;
+  let intersection = 0;
+  for (const word of words1) {
+    if (words2.has(word)) intersection++;
+  }
+  const union = words1.size + words2.size - intersection;
+  return Math.round((intersection / union) * 100);
+};
+
+const findBestVersionMatch = (sectionContent: string, candidates: CandidateSong[]): VersionWithSimilarity | null => {
+  let bestMatch: VersionWithSimilarity | null = null;
+  for (const candidate of candidates) {
+    for (const version of candidate.song.versions) {
+      const similarity = calculateContentSimilarity(sectionContent, version.content);
+      if (!bestMatch || similarity > bestMatch.contentSimilarity) {
+        bestMatch = { versionId: version.id, contentSimilarity: similarity };
+      }
+    }
+  }
+  return bestMatch;
 };
 
 const findCandidateSongs = (title: string, songsList: Song[], threshold: number = 70, limit: number = 5): CandidateSong[] => {
@@ -267,17 +311,28 @@ export const useProcessSections = (
 };
 
 export const usePreviewItems = (sections: Section[], songs: Song[], versionSuffix: string, versionSelections: Map<string, string>) => {
-  return sections.map(section => {
-    const matchedSong = findMatchingSong(section.title, songs);
-    const selectedVersionId = versionSelections.get(section.title) || null;
-    const candidateSongs = findCandidateSongs(section.title, songs);
-    return {
-      sectionTitle: section.title,
-      song: matchedSong,
-      candidateSongs,
-      selectedVersionId,
-      versionName: versionSuffix.trim() || '(no suffix)',
-      contentPreview: section.content.slice(0, 100) + (section.content.length > 100 ? '...' : ''),
-    };
-  });
+  return useMemo(() => {
+    return sections.map(section => {
+      const matchedSong = findMatchingSong(section.title, songs);
+      const candidateSongs = findCandidateSongs(section.title, songs);
+      const userSelection = versionSelections.get(section.title);
+      let selectedVersionId: string | null = null;
+      if (userSelection !== undefined) {
+        selectedVersionId = userSelection || null;
+      } else if (candidateSongs.length > 0) {
+        const bestMatch = findBestVersionMatch(section.content, candidateSongs);
+        if (bestMatch && bestMatch.contentSimilarity > 50) {
+          selectedVersionId = bestMatch.versionId;
+        }
+      }
+      return {
+        sectionTitle: section.title,
+        song: matchedSong,
+        candidateSongs,
+        selectedVersionId,
+        versionName: versionSuffix.trim() || '(no suffix)',
+        contentPreview: section.content.slice(0, 100) + (section.content.length > 100 ? '...' : ''),
+      };
+    });
+  }, [sections, songs, versionSuffix, versionSelections]);
 };

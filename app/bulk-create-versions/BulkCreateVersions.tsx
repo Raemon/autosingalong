@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import VersionSuffixInput from './components/VersionSuffixInput';
 import ContentEditor from './components/ContentEditor';
 import StatusMessage from './components/StatusMessage';
@@ -18,17 +18,20 @@ const BulkCreateVersions = () => {
   const { songs, loadSongs } = useSongs();
   const sections = useSections(htmlContent);
   const { statusMessage, statusType, showStatus } = useStatus();
-  const { isProcessing, results, processSections } = useProcessSections(songs, loadSongs, sections, versionSuffix, userName, versionSelections);
   const previewItems = usePreviewItems(sections, songs, versionSuffix, versionSelections);
+  const effectiveSelections = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const item of previewItems) {
+      if (item.selectedVersionId) map.set(item.sectionTitle, item.selectedVersionId);
+    }
+    return map;
+  }, [previewItems]);
+  const { isProcessing, results, processSections } = useProcessSections(songs, loadSongs, sections, versionSuffix, userName, effectiveSelections);
 
   const handleVersionSelection = (sectionTitle: string, versionId: string | null) => {
     setVersionSelections(prev => {
       const newMap = new Map(prev);
-      if (versionId === null) {
-        newMap.delete(sectionTitle);
-      } else {
-        newMap.set(sectionTitle, versionId);
-      }
+      newMap.set(sectionTitle, versionId === null ? '' : versionId);
       return newMap;
     });
   };
