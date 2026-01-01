@@ -31,6 +31,7 @@ create table if not exists program_versions (
   is_subprogram boolean not null default false,
   locked boolean not null default false,
   created_at timestamptz not null default now(),
+  created_by text,
   constraint program_versions_pkey PRIMARY KEY (id),
   constraint program_versions_program_id_fkey FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE CASCADE
 );

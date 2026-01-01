@@ -47,10 +47,16 @@ const mapProgramRow = (row: ProgramRow): ProgramRecord => ({
 
 export const listPrograms = async (): Promise<ProgramRecord[]> => {
   const rows = await sql`
-    select id, title, element_ids, program_ids, created_by, created_at, archived, is_subprogram, video_url, print_program_foreword, print_program_epitaph, locked
-    from programs
-    where archived = false
-    order by created_at desc
+    with latest_versions as (
+      select distinct on (program_id) *
+      from program_versions
+      order by program_id, created_at desc
+    )
+    select p.id, lv.title, lv.element_ids, lv.program_ids, lv.created_by, lv.created_at, lv.archived, lv.is_subprogram, lv.video_url, lv.print_program_foreword, lv.print_program_epitaph, lv.locked
+    from programs p
+    join latest_versions lv on lv.program_id = p.id
+    where lv.archived = false
+    order by lv.created_at desc
   `;
   return (rows as ProgramRow[]).map(mapProgramRow);
 };
@@ -72,9 +78,15 @@ export const createProgram = async (title: string, createdBy?: string | null, is
 
 export const getProgramById = async (programId: string): Promise<ProgramRecord | null> => {
   const rows = await sql`
-    select id, title, element_ids, program_ids, created_by, created_at, archived, is_subprogram, video_url, print_program_foreword, print_program_epitaph, locked
-    from programs
-    where id = ${programId} and archived = false
+    with latest_versions as (
+      select distinct on (program_id) *
+      from program_versions
+      order by program_id, created_at desc
+    )
+    select p.id, lv.title, lv.element_ids, lv.program_ids, lv.created_by, lv.created_at, lv.archived, lv.is_subprogram, lv.video_url, lv.print_program_foreword, lv.print_program_epitaph, lv.locked
+    from programs p
+    join latest_versions lv on lv.program_id = p.id
+    where p.id = ${programId} and lv.archived = false
   `;
   const typedRows = rows as ProgramRow[];
   if (typedRows.length === 0) {
@@ -85,9 +97,15 @@ export const getProgramById = async (programId: string): Promise<ProgramRecord |
 
 export const getProgramByTitle = async (title: string): Promise<ProgramRecord | null> => {
   const rows = await sql`
-    select id, title, element_ids, program_ids, created_by, created_at, archived, is_subprogram, video_url, print_program_foreword, print_program_epitaph, locked
-    from programs
-    where LOWER(title) = LOWER(${title}) and archived = false
+    with latest_versions as (
+      select distinct on (program_id) *
+      from program_versions
+      order by program_id, created_at desc
+    )
+    select p.id, lv.title, lv.element_ids, lv.program_ids, lv.created_by, lv.created_at, lv.archived, lv.is_subprogram, lv.video_url, lv.print_program_foreword, lv.print_program_epitaph, lv.locked
+    from programs p
+    join latest_versions lv on lv.program_id = p.id
+    where LOWER(lv.title) = LOWER(${title}) and lv.archived = false
     limit 1
   `;
   const typedRows = rows as ProgramRow[];
@@ -142,19 +160,28 @@ export const updateProgramVideoUrl = async (programId: string, videoUrl: string)
 
 export const getProgramsContainingVersion = async (versionId: string): Promise<ProgramRecord[]> => {
   const rows = await sql`
-    with direct_programs as (
-      select id, title, element_ids, program_ids, created_by, created_at, archived, is_subprogram, video_url, print_program_foreword, print_program_epitaph, locked
-      from programs
-      where archived = false and ${versionId} = ANY(element_ids)
+    with latest_versions as (
+      select distinct on (program_id) *
+      from program_versions
+      order by program_id, created_at desc
+    ),
+    programs_with_versions as (
+      select p.id, lv.title, lv.element_ids, lv.program_ids, lv.created_by, lv.created_at, lv.archived, lv.is_subprogram, lv.video_url, lv.print_program_foreword, lv.print_program_epitaph, lv.locked
+      from programs p
+      join latest_versions lv on lv.program_id = p.id
+      where lv.archived = false
+    ),
+    direct_programs as (
+      select * from programs_with_versions
+      where ${versionId} = ANY(element_ids)
     ),
     non_subprogram_direct as (
       select * from direct_programs where is_subprogram = false
     ),
     parent_programs as (
-      select p.id, p.title, p.element_ids, p.program_ids, p.created_by, p.created_at, p.archived, p.is_subprogram, p.video_url, p.print_program_foreword, p.print_program_epitaph, p.locked
-      from programs p
-      where p.archived = false
-        and exists (select 1 from direct_programs dp where dp.is_subprogram = true and dp.id = ANY(p.program_ids))
+      select pv.*
+      from programs_with_versions pv
+      where exists (select 1 from direct_programs dp where dp.is_subprogram = true and dp.id = ANY(pv.program_ids))
     )
     select * from non_subprogram_direct
     union

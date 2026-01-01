@@ -611,14 +611,6 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
 
   return (
     <div className="px-2 py-1 sm:p-4">
-      canEdit: {canEdit ? 'true' : 'false'}<br/>
-      isEditingProgram: {isEditingProgram ? 'true' : 'false'}<br/>
-      pendingDeletions: {JSON.stringify(pendingDeletions)}<br/>
-      pendingElementChanges: {JSON.stringify(pendingElementChanges)}<br/>
-      hasPendingChanges: {hasPendingChanges ? 'true' : 'false'}<br/>
-      isSavingChanges: {isSavingChanges ? 'true' : 'false'}<br/>
-      isProgramLocked: {isProgramLocked(selectedProgramId ?? '') ? 'true' : 'false'}<br/>
-      parentProgram: {JSON.stringify(parentProgram)}<br/>
       <div className="flex flex-col gap-4">
         <div className={`flex ${selectedVersion || isEditingProgram ? '' : 'mx-auto'} gap-4 overflow-x-scroll w-full sm:w-auto sm:overflow-x-visible`}>
           <div className={`overflow-x-scroll sm:overflow-x-visible ${selectedVersion || isEditingProgram ? 'hidden xl:block' : ''} w-auto`}>
