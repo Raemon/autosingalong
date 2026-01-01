@@ -1,3 +1,4 @@
+import { groupBy } from 'lodash';
 import type { PreviewItem } from '../types';
 import PreviewPanelItem from './PreviewPanelItem';
 
@@ -11,6 +12,7 @@ type Props = {
 const PreviewPanel = ({ previewItems, onVersionSelect, onToggleDontImport, onCompare }: Props) => {
   const enabledCount = previewItems.filter(i => !i.dontImport).length;
   const sectionCount = new Set(previewItems.map(i => i.sectionTitle)).size;
+  const groupedItems = groupBy(previewItems, 'sectionTitle');
   return (
     <div className="w-full">
       <div className="text-sm font-semibold px-2 py-1 border-b border-gray-500">
@@ -20,8 +22,13 @@ const PreviewPanel = ({ previewItems, onVersionSelect, onToggleDontImport, onCom
         <div className="text-xs text-gray-500 px-2 py-2">No sections found. Paste text with headings to see preview.</div>
       ) : (
         <div className="max-h-[600px] overflow-y-auto">
-          {previewItems.map(item => (
-            <PreviewPanelItem key={item.itemKey} item={item} onSelectVersion={onVersionSelect} onToggleDontImport={onToggleDontImport} onCompare={onCompare} />
+          {Object.entries(groupedItems).map(([sectionTitle, items]) => (
+            <div key={sectionTitle} className="border-b-2 border-gray-600">
+              <div className="bg-gray-700/50 px-2 py-1 text-sm font-georgia font-medium">{sectionTitle}</div>
+              {items.map(item => (
+                <PreviewPanelItem key={item.itemKey} item={item} onSelectVersion={onVersionSelect} onToggleDontImport={onToggleDontImport} onCompare={onCompare} />
+              ))}
+            </div>
           ))}
         </div>
       )}
