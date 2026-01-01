@@ -6,11 +6,15 @@ import RecentPrograms from './RecentPrograms';
 
 const HomePage = () => {
   const [content, setContent] = useState<string>('');
+  const [faqContent, setFaqContent] = useState<string>('');
 
   useEffect(() => {
     fetch('/home.md')
       .then(res => res.text())
       .then(text => setContent(text));
+    fetch('/faq.md')
+      .then(res => res.text())
+      .then(text => setFaqContent(text));
   }, []);
 
   return (
@@ -20,6 +24,12 @@ const HomePage = () => {
           className="markdown-content"
           dangerouslySetInnerHTML={{ __html: marked.parse(content, { breaks: true }) as string }}
         />
+        {/* {faqContent && (
+          <div 
+            className="markdown-content mt-8"
+            dangerouslySetInnerHTML={{ __html: marked.parse(faqContent, { breaks: true }) as string }}
+          />
+        )} */}
       </div>
       <div className="lg:w-1/2 max-w-xl flex flex-col gap-12 pb-12 pt-20">
         <div>
