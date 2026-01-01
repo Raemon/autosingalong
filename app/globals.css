@@ -72,7 +72,7 @@ body {
 .markdown-content {
   line-height: 1.6;
   font-family: var(--font-eb-garamond), 'Georgia', serif;
-  font-size: 18px;
+  font-size: 20px;
 }
 .markdown-content.monospace {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
