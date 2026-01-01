@@ -55,12 +55,18 @@ export const listPrograms = async (): Promise<ProgramRecord[]> => {
   return (rows as ProgramRow[]).map(mapProgramRow);
 };
 
-export const createProgram = async (title: string, createdBy?: string | null, isSubprogram?: boolean, locked?: boolean): Promise<ProgramRecord> => {
-  const rows = await sql`
-    insert into programs (title, created_by, is_subprogram, locked)
-    values (${title}, ${createdBy ?? null}, ${isSubprogram ?? false}, ${locked ?? false})
-    returning id, title, element_ids, program_ids, created_by, created_at, archived, is_subprogram, video_url, print_program_foreword, print_program_epitaph, locked
-  `;
+export const createProgram = async (title: string, createdBy?: string | null, isSubprogram?: boolean, locked?: boolean, createdAt?: string): Promise<ProgramRecord> => {
+  const rows = createdAt
+    ? await sql`
+        insert into programs (title, created_by, is_subprogram, locked, created_at)
+        values (${title}, ${createdBy ?? null}, ${isSubprogram ?? false}, ${locked ?? false}, ${createdAt})
+        returning id, title, element_ids, program_ids, created_by, created_at, archived, is_subprogram, video_url, print_program_foreword, print_program_epitaph, locked
+      `
+    : await sql`
+        insert into programs (title, created_by, is_subprogram, locked)
+        values (${title}, ${createdBy ?? null}, ${isSubprogram ?? false}, ${locked ?? false})
+        returning id, title, element_ids, program_ids, created_by, created_at, archived, is_subprogram, video_url, print_program_foreword, print_program_epitaph, locked
+      `;
   return mapProgramRow((rows as ProgramRow[])[0]!);
 };
 
@@ -141,13 +147,16 @@ export const getProgramsContainingVersion = async (versionId: string): Promise<P
       from programs
       where archived = false and ${versionId} = ANY(element_ids)
     ),
+    non_subprogram_direct as (
+      select * from direct_programs where is_subprogram = false
+    ),
     parent_programs as (
       select p.id, p.title, p.element_ids, p.program_ids, p.created_by, p.created_at, p.archived, p.is_subprogram, p.video_url, p.print_program_foreword, p.print_program_epitaph, p.locked
       from programs p
       where p.archived = false
         and exists (select 1 from direct_programs dp where dp.is_subprogram = true and dp.id = ANY(p.program_ids))
     )
-    select * from direct_programs
+    select * from non_subprogram_direct
     union
     select * from parent_programs
     order by created_at desc
