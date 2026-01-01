@@ -15,7 +15,7 @@ const PreviewPanel = ({ previewItems, onVersionSelect, onToggleDontImport, onCom
   const groupedItems = groupBy(previewItems, 'sectionTitle');
   return (
     <div className="w-full">
-      <div className="text-sm font-semibold px-2 py-1 border-b border-gray-500">
+      <div className="text-sm font-semibold px-2 py-1">
         Preview ({sectionCount} sections, {enabledCount}/{previewItems.length} items enabled)
       </div>
       {previewItems.length === 0 ? (
@@ -23,7 +23,7 @@ const PreviewPanel = ({ previewItems, onVersionSelect, onToggleDontImport, onCom
       ) : (
         <div className="max-h-[calc(100vh-235px)] overflow-y-auto">
           {Object.entries(groupedItems).map(([sectionTitle, items]) => (
-            <div key={sectionTitle}>
+            <div key={sectionTitle} className="border-t border-l border-r rounded-sm border-gray-500 mb-2 bg-black/30">
               <div className="px-2 py-1 text-base font-medium border-b border-gray-500 font-georgia">{sectionTitle}</div>
               {items.map(item => (
                 <PreviewPanelItem key={item.itemKey} item={item} onSelectVersion={onVersionSelect} onToggleDontImport={onToggleDontImport} onCompare={onCompare} />

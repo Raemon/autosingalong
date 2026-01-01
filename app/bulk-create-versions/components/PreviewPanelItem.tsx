@@ -24,10 +24,10 @@ const PreviewPanelItem = ({item, onSelectVersion, onToggleDontImport, onCompare}
       <div className="border-b py-1 border-gray-500 w-1/2 flex flex-col justify-center">
         <div
           onClick={() => onToggleDontImport(item.itemKey)}
-          className={`flex items-center gap-3 px-2 py-[2px] cursor-pointer ${item.dontImport ? 'text-red-400' : 'hover:bg-black/50'}`}
+          className={`flex items-center gap-3 px-2 py-[2px] cursor-pointer hover:bg-white/20 ${item.dontImport ? 'text-red-400' : ''}`}
         >
           <span className="font-mono" style={{fontSize: '12px'}}>
-            {item.dontImport ? '● ' : '○ '}Don&apos;t import
+            {item.dontImport ? '● ' : '○ '}Don't import
           </span>
         </div>
         {!isNewSong && versions.map(version => {
@@ -35,8 +35,8 @@ const PreviewPanelItem = ({item, onSelectVersion, onToggleDontImport, onCompare}
           return (
             <div
               key={version.id}
-              onClick={() => !item.dontImport && onSelectVersion(item.itemKey, version.id)}
-              className={`flex items-center gap-3 px-2 py-[2px] ${item.dontImport ? 'cursor-not-allowed' : 'cursor-pointer'} ${isSelected ? 'text-primary' : item.dontImport ? '' : 'hover:bg-black/50'}`}
+              onClick={() => onSelectVersion(item.itemKey, version.id)}
+              className={`flex items-center gap-3 px-2 py-[2px] cursor-pointer ${isSelected ? 'text-primary' : 'hover:bg-white/20'}`}
             >
               <span className={`flex-1 font-mono min-w-0 ${isSelected ? 'font-medium' : ''}`} style={{fontSize: '12px'}}>
                 <span className={isSelected ? 'text-primary' : 'text-gray-300'}>{isSelected ? '● ' : '○ '}{version.label}</span>
