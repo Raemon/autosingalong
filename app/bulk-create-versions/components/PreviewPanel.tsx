@@ -21,7 +21,7 @@ const PreviewPanel = ({ previewItems, onVersionSelect, onToggleDontImport, onCom
       {previewItems.length === 0 ? (
         <div className="text-xs text-gray-500 px-2 py-2">No sections found. Paste text with headings to see preview.</div>
       ) : (
-        <div className="max-h-[600px] overflow-y-auto">
+        <div className="max-h-[calc(100vh-235px)] overflow-y-auto">
           {Object.entries(groupedItems).map(([sectionTitle, items]) => (
             <div key={sectionTitle} className="border-b-2 border-gray-600">
               <div className="bg-gray-700/50 px-2 py-1 text-sm font-georgia font-medium">{sectionTitle}</div>
