@@ -258,3 +258,100 @@ export const updateProgram = async (programId: string, updates: {title?: string;
   }
   return mapProgramRow((rows as ProgramRow[])[0]);
 };
+
+export type ProgramChangelogVersionRecord = {
+  id: string;
+  programId: string;
+  programTitle: string;
+  title: string | null;
+  previousTitle: string | null;
+  elementCount: number;
+  previousElementCount: number | null;
+  programCount: number;
+  previousProgramCount: number | null;
+  videoUrl: string | null;
+  previousVideoUrl: string | null;
+  printProgramForeword: string | null;
+  previousPrintProgramForeword: string | null;
+  printProgramEpitaph: string | null;
+  previousPrintProgramEpitaph: string | null;
+  isSubprogram: boolean;
+  previousIsSubprogram: boolean | null;
+  locked: boolean;
+  previousLocked: boolean | null;
+  archived: boolean;
+  previousArchived: boolean | null;
+  createdBy: string | null;
+  createdAt: string;
+};
+
+type ProgramChangelogOptions = {
+  programId?: string;
+  username?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export const listProgramVersionsForChangelog = async ({ programId, username, limit, offset }: ProgramChangelogOptions = {}): Promise<ProgramChangelogVersionRecord[]> => {
+  const rows = await sql`
+    with versions_with_prev as (
+      select
+        v.id,
+        v.program_id,
+        v.title,
+        coalesce(array_length(v.element_ids, 1), 0) as element_count,
+        coalesce(array_length(v.program_ids, 1), 0) as program_count,
+        v.video_url,
+        v.print_program_foreword,
+        v.print_program_epitaph,
+        v.is_subprogram,
+        v.locked,
+        v.archived,
+        v.created_by,
+        v.created_at,
+        lag(v.title) over (partition by v.program_id order by v.created_at) as prev_title,
+        lag(coalesce(array_length(v.element_ids, 1), 0)) over (partition by v.program_id order by v.created_at) as prev_element_count,
+        lag(coalesce(array_length(v.program_ids, 1), 0)) over (partition by v.program_id order by v.created_at) as prev_program_count,
+        lag(v.video_url) over (partition by v.program_id order by v.created_at) as prev_video_url,
+        lag(v.print_program_foreword) over (partition by v.program_id order by v.created_at) as prev_print_program_foreword,
+        lag(v.print_program_epitaph) over (partition by v.program_id order by v.created_at) as prev_print_program_epitaph,
+        lag(v.is_subprogram) over (partition by v.program_id order by v.created_at) as prev_is_subprogram,
+        lag(v.locked) over (partition by v.program_id order by v.created_at) as prev_locked,
+        lag(v.archived) over (partition by v.program_id order by v.created_at) as prev_archived,
+        row_number() over (partition by v.program_id order by v.created_at) as rn
+      from program_versions v
+    )
+    select
+      vp.id,
+      vp.program_id as "programId",
+      vp.title as "programTitle",
+      vp.title,
+      vp.prev_title as "previousTitle",
+      vp.element_count as "elementCount",
+      vp.prev_element_count as "previousElementCount",
+      vp.program_count as "programCount",
+      vp.prev_program_count as "previousProgramCount",
+      vp.video_url as "videoUrl",
+      vp.prev_video_url as "previousVideoUrl",
+      vp.print_program_foreword as "printProgramForeword",
+      vp.prev_print_program_foreword as "previousPrintProgramForeword",
+      vp.print_program_epitaph as "printProgramEpitaph",
+      vp.prev_print_program_epitaph as "previousPrintProgramEpitaph",
+      vp.is_subprogram as "isSubprogram",
+      vp.prev_is_subprogram as "previousIsSubprogram",
+      vp.locked,
+      vp.prev_locked as "previousLocked",
+      vp.archived,
+      vp.prev_archived as "previousArchived",
+      vp.created_by as "createdBy",
+      vp.created_at as "createdAt"
+    from versions_with_prev vp
+    where 1=1
+      ${programId ? sql`and vp.program_id = ${programId}` : sql``}
+      ${username ? sql`and vp.created_by = ${username}` : sql``}
+    order by vp.created_at desc
+    ${limit ? sql`limit ${limit}` : sql``}
+    ${offset ? sql`offset ${offset}` : sql``}
+  `;
+  return rows as ProgramChangelogVersionRecord[];
+};

@@ -7,7 +7,7 @@ import VersionHeader from './VersionHeader';
 import SongInfoHeader from './SongInfoHeader';
 import GithubIOLink from './GithubIOLink';
 import PastVersionUsage from './PastVersionUsage';
-import ChangelogPage from '../changelog/ChangelogPage';
+import SongChangelogList from '../changelog/SongChangelogList';
 import Comments from './Comments';
 import type { SongVersion } from './types';
 import { useUser } from '../contexts/UserContext';
@@ -170,7 +170,7 @@ const VersionDetailPanel = ({songTitle, version, previousVersions = [], isCreati
           {songId && (
             <div className="mt-4 pt-4 border-t border-gray-200 min-w-0 max-w-full overflow-hidden">
               <h3 className="text-xs text-gray-400 mb-2">History</h3>
-              <ChangelogPage songId={songId} filename={version.label} compact />
+              <SongChangelogList songId={songId} filename={version.label} compact />
             </div>
           )}
         </>
