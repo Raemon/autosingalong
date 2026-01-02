@@ -1,9 +1,9 @@
 import path from 'path';
 import dotenv from 'dotenv';
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
 import { importFromDirectories, ProgramImportResult } from '../lib/importUtils';
 import { downloadSecularSolsticeRepo } from '../lib/githubDownloader';
-
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const run = async () => {
   console.log('Starting import...');
