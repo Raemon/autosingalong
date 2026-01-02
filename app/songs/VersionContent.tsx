@@ -5,6 +5,7 @@ import type { SongVersion, RenderedContent } from './types';
 import ChordmarkRenderer from '../chordmark-converter/ChordmarkRenderer';
 import LilypondViewer from './LilypondViewer';
 import MarkdownRenderer from './MarkdownRenderer';
+import UgcRenderer from './UgcRenderer';
 import BlobAttachment from './BlobAttachment';
 import DeferredRender from '../components/DeferredRender';
 import { AUDIO_EXTENSIONS } from '../../lib/audioExtensions';
@@ -79,7 +80,7 @@ const LazyVersionContentLoader = ({versionId, label, bpm, transpose, print, hasB
         <MarkdownRenderer content={content} />
       )}
       {content && isUltimateGuitarFile && (
-        <MarkdownRenderer content={content} monospace />
+        <UgcRenderer content={content} initialTranspose={transpose ?? 0} />
       )}
       {hasBlob && blobUrl && (
         <BlobAttachment blobUrl={blobUrl} defaultExpanded={!content} />
@@ -163,7 +164,7 @@ const VersionContent = ({version, print}: {
               <MarkdownRenderer content={version.content || ''} />
             )}
             {hasContent && isUltimateGuitarFile && (
-              <MarkdownRenderer content={version.content || ''} monospace />
+              <UgcRenderer content={version.content || ''} initialTranspose={version.transpose ?? 0} />
             )}
           </DeferredRender>
           {hasBlob && (
