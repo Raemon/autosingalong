@@ -75,10 +75,10 @@ const processReadmeContent = (content: string, songTitle: string): string => {
   return content;
 };
 
-// Get text content from a file buffer, applying README.md title stripping if applicable
+// Get text content from a file buffer, applying title stripping for .md files if applicable
 const getProcessedTextContent = (buffer: Buffer, relativePath: string, songTitle: string): string => {
   let content = buffer.toString('utf-8');
-  if (path.basename(relativePath).toLowerCase() === 'readme.md') {
+  if (path.extname(relativePath).toLowerCase() === '.md') {
     content = processReadmeContent(content, songTitle);
   }
   return content;
