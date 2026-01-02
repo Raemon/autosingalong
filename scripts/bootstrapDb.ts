@@ -25,6 +25,11 @@ const getSqlClient = async () => {
   return module.default;
 };
 
+const ensureSchema = async (sql: Awaited<ReturnType<typeof getSqlClient>>) => {
+  await sql`create schema if not exists public;`;
+  await sql`set search_path to public;`;
+};
+
 const sha256 = (input: string) => {
   return crypto.createHash('sha256').update(input, 'utf8').digest('hex');
 };
@@ -204,6 +209,7 @@ const bootstrapDb = async () => {
   loadEnvFiles();
   assertDatabaseUrl();
   const sql = await getSqlClient();
+  await ensureSchema(sql);
   await ensureMigrationsTable(sql);
   await assertDatabaseLooksEmpty(sql);
 
@@ -217,5 +223,3 @@ bootstrapDb().catch((error) => {
   console.error('Bootstrap failed:', error);
   process.exit(1);
 });
-
-
