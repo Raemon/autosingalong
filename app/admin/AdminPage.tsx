@@ -24,6 +24,7 @@ const TOOL_LINKS = [
   { href: '/chordmark-converter', label: 'Chordmark Converter' },
   { href: '/comments', label: 'All Comments' },
   { href: '/votes', label: 'All Votes' },
+  { href: '/users/all', label: 'All Users' },
   { href: '/test-lilypond', label: 'Test Lilypond' },
   { href: '/tools/import-secular-solstice', label: 'Import Secular Solstice' },
 ];
