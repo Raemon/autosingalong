@@ -44,7 +44,7 @@ const BulkCreateVersions = () => {
     }
   }, [htmlContent]);
 
-  const { songs, loadSongs } = useSongs();
+  const { songs, loadSongs, isLoading: isLoadingSongs } = useSongs();
   const sections = useSections(htmlContent);
   const { statusMessage, statusType, showStatus } = useStatus();
   const previewItems = usePreviewItems(sections, songs, versionSuffix, selectionStates);
@@ -118,7 +118,7 @@ const BulkCreateVersions = () => {
         <ResultsList results={results} />
       </div>
       <div className="w-1/2">
-        <PreviewPanel previewItems={previewItems} onVersionSelect={handleVersionSelection} onCompare={handleCompare} />
+        <PreviewPanel previewItems={previewItems} onVersionSelect={handleVersionSelection} onCompare={handleCompare} isLoading={isLoadingSongs} />
       </div>
       {diffModal.open && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={() => setDiffModal(prev => ({ ...prev, open: false }))}>

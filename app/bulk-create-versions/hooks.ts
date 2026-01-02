@@ -146,9 +146,11 @@ const findMatchingSong = (title: string, songsList: Song[]): Song | null => {
 
 export const useSongs = () => {
   const [songs, setSongs] = useState<Song[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const loadSongs = async (): Promise<Song[]> => {
     try {
+      setIsLoading(true);
       const response = await fetch('/api/songs');
       const data = await response.json();
       const loadedSongs = data.songs || [];
@@ -157,6 +159,8 @@ export const useSongs = () => {
     } catch (error) {
       console.error('Failed to load songs:', error);
       return [];
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -164,7 +168,7 @@ export const useSongs = () => {
     loadSongs();
   }, []);
 
-  return { songs, loadSongs };
+  return { songs, loadSongs, isLoading };
 };
 
 export const useSections = (htmlContent: string) => {

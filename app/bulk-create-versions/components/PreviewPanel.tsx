@@ -6,6 +6,7 @@ type Props = {
   previewItems: PreviewItem[];
   onVersionSelect: (itemKey: string, versionId: string | null) => void;
   onCompare: (item: PreviewItem, versionId: string, versionLabel: string, versionContent: string) => void;
+  isLoading?: boolean;
 };
 
 type PreviewSectionProps = {
@@ -41,12 +42,15 @@ const PreviewSection = ({ sectionTitle, items, onVersionSelect, onCompare }: Pre
   );
 };
 
-const PreviewPanel = ({ previewItems, onVersionSelect, onCompare }: Props) => {
+const PreviewPanel = ({ previewItems, onVersionSelect, onCompare, isLoading = false }: Props) => {
   const enabledCount = previewItems.filter(i => !i.dontImport).length;
   const sectionCount = new Set(previewItems.map(i => i.sectionTitle)).size;
   const groupedItems = groupBy(previewItems, 'sectionTitle');
   return (
     <div className="w-full">
+      {isLoading && (
+        <div className="text-xs text-gray-400 px-2 py-1">Loading songs...</div>
+      )}
       <div className="text-sm font-semibold px-2 py-1">
         Preview ({sectionCount} sections, {enabledCount}/{previewItems.length} items enabled)
       </div>
