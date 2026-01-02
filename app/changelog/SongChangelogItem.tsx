@@ -34,30 +34,31 @@ const calculateDiff = (content: string | null, previousContent: string | null) =
   return { added: Math.max(0, diff), removed: Math.max(0, -diff) };
 };
 
-const SongChangelogItem = ({version, compact = false}: {version: ChangelogVersion; compact?: boolean}) => {
+const SongChangelogItem = ({version, compact = false, showType = false}: {version: ChangelogVersion; compact?: boolean; showType?: boolean}) => {
   const { added, removed } = calculateDiff(version.content, version.previousContent);
   const changedParts = getChangedText(version.content, version.previousContent);
   return (
     <div key={version.id} className={`flex items-center gap-2 ${compact ? 'py-0.5 text-xs' : 'py-1 text-sm gap-4'} font-mono min-w-0`}>
       <span className="w-6 shrink-0">{version.previousVersionId && <Link href={`/changelog/${version.previousVersionId}/${version.id}`} className="text-gray-400 hover:text-gray-200 text-xs">diff</Link>}</span>
-      <span className={`${compact ? 'w-10' : 'w-16 shrink-0'} text-right`}>
+      <span className={`${compact ? 'w-10' : 'w-16'} shrink-0 text-right`}>
         {added > 0 && <span className="text-green-500">+{added}</span>}
         {added > 0 && removed > 0 && <span className="text-gray-500">/</span>}
         {removed > 0 && <span className="text-red-500">-{removed}</span>}
         {added === 0 && removed === 0 && version.previousContent !== null && <span className="text-gray-500">±0</span>}
       </span>
       <Tooltip content={new Date(version.createdAt).toLocaleString()}>
-        <span className={`text-gray-600 w-6 text-right shrink-0 text-[11px] ${compact ? 'hidden sm:inline' : ''}`}>
+        <span className={`text-gray-600 w-8 text-right shrink-0 text-[11px] ${compact ? 'hidden sm:inline' : ''}`}>
           {formatRelativeTimestamp(version.createdAt)}
         </span>
       </Tooltip>
       {version.createdBy 
-        ? <Link href={`/users/${version.createdBy}`} className={`text-gray-500 hover:text-gray-300 text-nowrap w-[150px] flex-shrink-0 truncate ${compact ? 'hidden sm:inline-block' : ''}`}>
+        ? <Link href={`/users/${version.createdBy}`} className={`text-gray-500 hover:text-gray-300 text-nowrap w-[120px] flex-shrink-0 truncate ${compact ? 'hidden sm:inline-block' : ''}`}>
           {version.createdBy}
         </Link> 
-        : <span className={`text-gray-500 ${compact ? 'hidden sm:inline' : ''}`}>
+        : <span className={`text-gray-500 w-[120px] flex-shrink-0 ${compact ? 'hidden sm:inline' : ''}`}>
           anonymous
         </span>}
+      {showType && <span className="text-cyan-600 w-12 shrink-0 text-[11px]">song</span>}
       <Link href={`/songs/${version.songId}/${version.id}`} className="text-gray-200 hover:underline truncate min-w-0">
         {compact ? version.label : `${version.songTitle} / ${version.label}`}
       </Link>
