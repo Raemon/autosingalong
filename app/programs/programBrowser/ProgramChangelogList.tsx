@@ -41,3 +41,4 @@ const ProgramChangelogList = ({ programId }: ProgramChangelogListProps) => {
 };
 
 export default ProgramChangelogList;
+
