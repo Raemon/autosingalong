@@ -711,6 +711,7 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
                 isCreatingVersion={isCreatingVersion}
                 newVersionForm={newVersionForm}
                 isSubmitting={isSubmitting}
+                hidePastUsage={true}
                 isArchiving={isArchiving}
                 error={panelError}
                 tags={versionMap[selectedVersion.id]?.tags || []}

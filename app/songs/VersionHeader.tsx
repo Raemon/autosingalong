@@ -9,14 +9,13 @@ const VersionHeader = ({songTitle, version, showTitle = false}: {
 }) => {
   const createdDate = new Date(version?.createdAt || '');
   return (
-    <div>
+    <div className="flex items-end gap-4">
       {showTitle && songTitle && <h1 className="text-2xl font-georgia">{songTitle}</h1>}
       {version.label && <h1 className="text-[14px] font-mono hover:underline"><Link href={`/songs/${version.songId}/${version.id}`}>{version.label}</Link></h1>}
       <div className="text-sm flex items-center gap-1 text-gray-400">
-        Version last edited <Tooltip content={createdDate.toLocaleString()}>
-          <span className="text-white">{createdDate.toLocaleDateString()}</span>
+        <Tooltip content={<div>Version last edited on {createdDate.toLocaleString()}<br/> by {version.createdBy ? version.createdBy : ''}</div>}>
+          <span>{createdDate.toLocaleDateString()}</span>
         </Tooltip>
-        by <span className="text-white">{version.createdBy ? version.createdBy : ''}</span>
       </div>
     </div>
   );
