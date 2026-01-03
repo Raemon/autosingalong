@@ -287,17 +287,14 @@ const ChordmarkRenderer = ({
         className="relative group flex items-center"
         style={{ height: '16px', lineHeight: '16px' }}
       >
-        <button
-          onClick={() => handlePlayFromLine(index)}
-          className="absolute left-0 opacity-0 group-hover:opacity-100 transition-opacity px-1 text-blue-400 hover:text-blue-300 text-xs"
-          title={`Play from line ${index + 1}`}
-          style={{ fontSize: '10px' }}
-        >
-          ▶
-        </button>
-        <span className="text-gray-500 text-xs pr-1 pl-5 select-none" style={{ fontSize: '10px', minWidth: '40px', textAlign: 'right' }}>
-          {index + 1}
-        </span>
+          <button
+            onClick={() => handlePlayFromLine(index)}
+            className="absolute left-0 w-4 opacity-0 group-hover:opacity-100 transition-opacity px-1 text-blue-400 hover:text-blue-300 text-xs"
+            title={`Play from line ${index + 1}`}
+            style={{ fontSize: '12px' }}
+          >
+            ▶
+          </button>
       </div>
     ));
   }, [lineCount, handlePlayFromLine]);
@@ -328,7 +325,7 @@ const ChordmarkRenderer = ({
         <TransposeControls value={transposeSteps} onChange={setTransposeSteps} />
       </div>
       <div className="flex relative" style={{ maxWidth: isSideBySide ? 'none' : '800px' }}>
-        {!print && <div className="flex flex-col bg-gray-900 border-r border-gray-700">
+        {!print && <div className="flex flex-col w-6">
           {lineNumbers}
         </div>}
         <div ref={contentRef} className={`${print ? 'text-black' : 'text-gray-200'} p-2 flex-1`}>
@@ -340,4 +337,3 @@ const ChordmarkRenderer = ({
 };
 
 export default ChordmarkRenderer;
-
