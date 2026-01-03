@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import SlideViewer from '../../../../src/components/slides/SlideViewer';
 import { generateSlidesFromHtml, lyricsToHtml } from '../../../../src/components/slides/slideGenerators';
 import { extractFrames } from '../../../../src/components/slides/slideUtils';
@@ -18,6 +19,7 @@ type ProgramSlidesProps = {
 type SongSlideDataWithMovie = SongSlideData & { slidesMovieUrl?: string | null; slideMovieStart?: number | null; programId: string };
 
 const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
+  const router = useRouter();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [versions, setVersions] = useState<VersionOption[]>([]);
   const [fullVersions, setFullVersions] = useState<Record<string, SongVersion>>({});
@@ -32,6 +34,17 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
   const [extractingProgramId, setExtractingProgramId] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [backgroundMovieUrl, setBackgroundMovieUrl] = useState<string | null>(null);
+
+  const handleEscape = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      router.push(`/programs/${programId}`);
+    }
+  }, [router, programId]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [handleEscape]);
 
   useEffect(() => {
     const loadData = async () => {

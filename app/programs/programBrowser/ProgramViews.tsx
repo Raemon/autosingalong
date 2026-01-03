@@ -19,11 +19,11 @@ const ProgramViews = ({programId, currentView, canEdit, isLocked, isEditing, has
   const linkClass = (view: ProgramViewsProps['currentView']) => `text-sm hover:opacity-50 ${currentView !== view ? 'opacity-65' : 'underline'}`;
   return (
     <div className="flex items-center gap-5">
-      <a href={`/programs/${programId}`} className={linkClass('overview')}>
-        Overview
-      </a>
       <a href={`/programs/${programId}/script`} className={linkClass('script')}>
         Script
+      </a>
+      <a href={`/programs/${programId}`} className={linkClass('overview')}>
+        Editor
       </a>
       <a href={`/programs/${programId}/slides`} className={linkClass('slides')}>
         Slides
