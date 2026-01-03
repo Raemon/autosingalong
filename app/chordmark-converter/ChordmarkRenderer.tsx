@@ -180,7 +180,7 @@ const ChordmarkTabs = ({mode, onModeChange}: {mode: ChordmarkViewMode, onModeCha
   ];
 
   return (
-    <div className="flex gap-1 flex-wrap">
+    <div className="flex gap-1 flex-wrap monospace">
       {tabs.map(tab => (
         <button
           key={tab.id}
@@ -328,7 +328,7 @@ const ChordmarkRenderer = ({
         {!print && <div className="flex flex-col w-6">
           {lineNumbers}
         </div>}
-        <div ref={contentRef} className={`${print ? 'text-black' : 'text-gray-200'} p-2 flex-1`}>
+        <div ref={contentRef} className={`print:text-black text-gray-200 p-2 flex-1`}>
           <ChordmarkContent error={error} content={content} mode={mode} finalOutputs={finalOutputs} />
         </div>
       </div>

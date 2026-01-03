@@ -659,7 +659,7 @@ const resolveProgramItems = async (
               programIds.push(existingSubProgram.id);
             } else if (!dryRun) {
               try {
-                const subProgram = await createProgram(currentSectionName, IMPORT_USER, true, true, undefined, new Date());
+                const subProgram = await createProgram(currentSectionName, IMPORT_USER, true, false, undefined, new Date());
                 try {
                   await updateProgramElementIds(subProgram.id, currentSectionItems, [], IMPORT_USER);
                 } catch (error) {
@@ -680,7 +680,7 @@ const resolveProgramItems = async (
           // Create new subprogram (or placeholder in dryRun)
           if (!dryRun) {
             try {
-              const subProgram = await createProgram(currentSectionName, IMPORT_USER, true, true, undefined, new Date());
+              const subProgram = await createProgram(currentSectionName, IMPORT_USER, true, false, undefined, new Date());
               try {
                 await updateProgramElementIds(subProgram.id, currentSectionItems, [], IMPORT_USER);
               } catch (error) {
@@ -874,7 +874,7 @@ export const importProgramFile = async (
     }
     let program;
     try {
-      program = await createProgram(programTitle, IMPORT_USER, false, true, fileCreatedAt, new Date());
+      program = await createProgram(programTitle, IMPORT_USER, false, false, fileCreatedAt, new Date());
     } catch (error) {
       const result: ProgramImportResult = { title: programTitle, status: 'failed', error: `Failed to create program: ${error instanceof Error ? error.message : 'unknown error'}` };
       onResult?.(result);

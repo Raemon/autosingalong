@@ -14,6 +14,10 @@
   --link: rgb(120, 174, 255);
 }
 
+.monospace {
+  font-family: var(--font-monospace);
+}
+
 .text-primary {
   color: var(--primary) !important;
 }

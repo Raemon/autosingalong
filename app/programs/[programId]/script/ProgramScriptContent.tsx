@@ -168,7 +168,7 @@ const ProgramScriptContent = ({ programId, contentEntries, tocEntries }: Program
             return (
               <h1
                 key={`program-${entry.program.id}`}
-                className="text-5xl mt-8 mb-4 print-top-level-program-title"
+                className="text-5xl my-8 print-top-level-program-title text-center"
                 id={`program-${entry.program.id}`}
               >
                 <Link href={`/programs/${entry.program.id}`} className="hover:underline">
@@ -182,7 +182,7 @@ const ProgramScriptContent = ({ programId, contentEntries, tocEntries }: Program
             return (
               <h2
                 key={`heading-${entry.program.id}`}
-                className="text-[42px] underline mt-8 mb-4 print-subprogram-title"
+                className="text-2xl uppercase font-semibold text-center mt-8 mb-4 print-subprogram-title"
                 id={`program-${entry.program.id}`}
               >
                 <Link href={`/programs/${entry.program.id}`} className="hover:underline">
@@ -198,13 +198,17 @@ const ProgramScriptContent = ({ programId, contentEntries, tocEntries }: Program
             return (
               <div 
                 key={`song-${version.id}`} 
-                className="mb-8 print-song-container" 
+                className="mb-8 print-song-container ml-4" 
                 id={`song-${version.id}`}
               >
                 <div className="print-song-content">
-                  <h3 className="text-3xl mb-2">
-                    <Link href={`/programs/${programId}/${version.id}`} className="hover:underline">
-                      {version.songTitle}
+                  <h3 className="text-3xl mb-4 group">
+                    <Link href={`/programs/${programId}/${version.id}`} className="flex items-center gap-2">
+                      {version.songTitle} <span className="opacity-0 group-hover:opacity-100 ml-2 text-gray-400 print:hidden">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        </svg>
+                      </span>
                     </Link>
                   </h3>
                   
