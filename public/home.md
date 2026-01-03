@@ -4,7 +4,7 @@ This is a beta version of a new Solstices Resources website.
 
 It's aiming to be interoperable with as many other formats as possible, while also making it easy to...
 
-- [Upload](/bulk-create-versions) solstice content.
+- Upload solstice [content](/songs).
 - Display [Solstice programs](/programs) in as many formats as possible. 
   - *i.e. Nice slides, printed programs, scripts that contain just lyrics, scripts that contain just speeches*
 - Edit and display [songs](/songs) in as many formats as possible.

@@ -50,8 +50,8 @@ const BlogPage = () => {
 
   return (
     <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="font-georgia text-6xl mt-10 mb-6">Blog</h1>
-      <div className="flex gap-2 mb-16 text-sm">
+      <div className="font-georgia text-6xl mt-10 mb-6 text-center">Blog</div>
+      <div className="flex gap-2 mb-16 text-sm justify-center">
         <button onClick={() => setShowLW(!showLW)} className={`text-black px-2 py-0.5 border border-link rounded-sm text-link hover:bg-link /80 ${showLW ? 'opacity-100' : 'opacity-50'}`}>
           LW {showLW ? '✓' : '○'}
         </button>

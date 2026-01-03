@@ -2,13 +2,14 @@
 import { useEffect, useState } from 'react';
 import ProgramItem from './programs/ProgramItem';
 import type { Program } from './programs/types';
+import Link from 'next/link';
 
 const RecentPrograms = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/programs/recent?limit=6')
+    fetch('/api/programs/recent?limit=4')
       .then(res => res.json())
       .then(data => { setPrograms(data.programs || []); setLoading(false); })
       .catch(() => setLoading(false));
@@ -22,6 +23,7 @@ const RecentPrograms = () => {
       {programs.map(program => (
         <ProgramItem key={program.id} program={program as Program} />
       ))}
+      <Link href="/programs" className="text-gray-500 p-2 text-sm text-right w-full block">View all</Link>
     </div>
   );
 };

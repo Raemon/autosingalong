@@ -276,7 +276,8 @@ const SongsFileList = ({ initialSongId, initialVersionId }: SongsFileListProps =
                 className={`text-xs px-2 whitespace-nowrap border-l border-gray-500 ${sortOption === 'recently-updated' ? 'underline text-white' : 'text-gray-400 hover:underline'}`}
               >Recent</button>
             </div>
-            <CreateSongButton onSongCreated={fetchSongs} onError={setLocalError} />
+            <CreateSongButton onSongCreated={fetchSongs} onError={setLocalError} defaultTags={['song']} />
+            <CreateSongButton onSongCreated={fetchSongs} onError={setLocalError} defaultTags={['speech']} buttonText="+ Speech" />
           </div>
           {filteredSongs.map((song) => (
             <SongItem

@@ -36,13 +36,12 @@ export const handleCreateProgram = async (createdBy: string, onProgramCreated?: 
 const NewProgramButton = ({onProgramCreated, className}: {onProgramCreated?: (program: Program) => void, className?: string}) => {
   const { userName, canEdit } = useUser();
   const router = useRouter();
-  const canCreate = userName && canEdit;
 
   const button = (
     <button
-      className={`text-sm text-nowrap border border-gray-500 rounded-sm px-2 py-1 text-gray-400 ${!canCreate ? '' : 'opacity-50'}`}
+      className={`text-sm text-nowrap border border-gray-500 rounded-sm px-2 py-1 text-gray-200 ${!canEdit && 'opacity-50'}`}
       onClick={async () => {
-        if (!canCreate) return;
+        if (!canEdit) return;
         const program = await handleCreateProgram(userName, onProgramCreated);
         if (program?.id) {
           router.push(`/programs/${program.id}`);
@@ -51,7 +50,7 @@ const NewProgramButton = ({onProgramCreated, className}: {onProgramCreated?: (pr
     >+ Program</button>
   );
 
-  if (canCreate) {
+  if (canEdit) {
     return button;
   }
 

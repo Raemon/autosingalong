@@ -32,7 +32,7 @@ const HomePage = () => {
           />
         )} */}
       </div>
-      <div className="lg:w-1/2 max-w-xl flex flex-col gap-12 pb-12 pt-20">
+      <div className="lg:w-1/2 max-w-xl flex flex-col gap-6 pb-12 pt-20">
         <div>
           <Link href="/songs" className="font-georgia text-white hover:text-white/80 text-3xl mb-2 pb-2 block">Songs/Speeches</Link>
           <RecentSongs />

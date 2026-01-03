@@ -42,8 +42,8 @@ const Header = () => {
   const isScriptPage = pathname?.match(/\/programs\/[^/]+\/script/);
 
   const headerClasses = isScriptPage
-    ? "px-4 pt-3 pb-2 flex flex-wrap items-center justify-between print:hidden border-b border-gray-300 bg-white"
-    : "px-4 pt-3 pb-2 flex flex-wrap items-center justify-between print:hidden border-b border-gray-500 ";
+    ? "px-4 pt-3 pb-2 flex flex-wrap items-center justify-between print:hidden bg-white"
+    : "px-4 pt-3 pb-2 flex flex-wrap items-center justify-between print:hidden ";
 
   const activeTextClass = isScriptPage ? 'text-black' : 'text-white';
   const inactiveTextClass = isScriptPage ? 'text-gray-600 hover:text-black' : 'text-gray-400 hover:text-white';

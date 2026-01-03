@@ -26,13 +26,15 @@ const CreateSongButton = ({ onSongCreated, onError, defaultTags, buttonText = '+
     resetError,
   } = useCreateSong({createdBy: userName, onSongCreated, onError, defaultTags, versionLabel});
 
-  if (!canEdit) return <Tooltip content="Enter your name (top-right of screen) to create a song"><button className="text-xs px-2 py-1 border border-gray-500 rounded-sm text-white whitespace-nowrap opacity-50" disabled={true}>{buttonText}</button></Tooltip>;
+  if (!canEdit) return <Tooltip content="Enter your name (top-right of screen) to create a song">
+    <button className="text-xs px-2 py-1 border border-gray-500 rounded-sm text-white whitespace-nowrap opacity-50" disabled={true}>{buttonText}</button>
+    </Tooltip>;
 
   return (
     <>
       <button
         onClick={() => setIsCreatingSong(!isCreatingSong)}
-        className="text-xs px-2 py-1 border border-gray-500 rounded-md text-white whitespace-nowrap"
+        className="text-xs px-2 py-1 border border-gray-500 rounded-sm text-white whitespace-nowrap"
       >
         {buttonText}
       </button>
@@ -64,4 +66,3 @@ const CreateSongButton = ({ onSongCreated, onError, defaultTags, buttonText = '+
 };
 
 export default CreateSongButton;
-

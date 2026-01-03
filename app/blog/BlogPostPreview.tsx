@@ -40,7 +40,7 @@ const BlogPostPreview = ({ post }: { post: BlogPost }) => {
           {expanded ? (
             <div className="text-gray-200/80 font-georgia markdown-content preview" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.htmlHighlight) }} />
           ) : (
-            <div className="text-gray-200/80 font-georgia markdown-content preview line-clamp-4 cursor-pointer" onClick={() => setExpanded(true)} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.htmlHighlight) }}>
+            <div className="text-gray-200/80 font-georgia markdown-content preview line-clamp-4 cursor-pointer [&_img]:hidden" onClick={() => setExpanded(true)} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.htmlHighlight) }}>
             </div>
           )}
         </div>

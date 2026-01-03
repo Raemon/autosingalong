@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import type { Song } from './songs/types';
 import SongItem from './songs/SongItem';
+import Link from 'next/link';
 
 const RecentSongs = () => {
   const [songs, setSongs] = useState<Song[]>([]);
@@ -22,6 +23,7 @@ const RecentSongs = () => {
       {songs.map(song => (
         <SongItem key={song.id} song={song} showTags={false} maxVersions={3} />
       ))}
+      <Link href="/songs" className="text-gray-500 p-2 text-sm text-right w-full block">View all</Link>
     </div>
   );
 };

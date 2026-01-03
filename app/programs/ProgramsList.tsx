@@ -47,18 +47,18 @@ const ProgramsList = () => {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       }
     });
-  }, [topLevelPrograms, search, sortOption]);
+  }, [topLevelPrograms, search, sortOption])
 
   if (isLoading) {
-    return <div className="p-8 text-gray-400">Loading programs...</div>;
+    return <div className="p-8 text-gray-400 text-center">Loading programs...</div>
   }
 
   if (error) {
-    return <div className="p-8 text-red-600">Error: {error}</div>;
+    return <div className="p-8 text-red-600">Error: {error}</div>
   }
 
   if (!topLevelPrograms.length) {
-    return <div className="p-8 text-gray-400">No programs yet.</div>;
+    return <div className="p-8 text-gray-400 text-center">No programs yet.</div>
   }
 
   return (
