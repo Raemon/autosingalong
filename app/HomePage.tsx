@@ -21,6 +21,13 @@ const HomePage = () => {
   return (
     <div className="p-4 w-full mx-auto flex flex-col lg:flex-row items-center lg:items-start lg:gap-36 justify-center">
       <div className="lg:w-1/2 max-w-xl pt-8">
+        <style>
+          {`
+          .markdown-content h1 {
+            font-size: 3em;
+          }
+          `}
+        </style>
         <div 
           className="markdown-content"
           dangerouslySetInnerHTML={{ __html: marked.parse(content, { breaks: true }) as string }}

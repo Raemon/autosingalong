@@ -11,4 +11,4 @@ It's aiming to be interoperable with as many other formats as possible, while al
   - *i.e. converting between simple chord charts, lilypond, MuseScore, and chordmark, and transposing*
 - Give [feedback](/feedback) on solstice songs and programs in a way that aggregates the data across solstices.
 
-It imports content from secularsolstice.github.io once a day.
+It imports content from [secularsolstice.github.io](https://secularsolstice.github.io) once a day.

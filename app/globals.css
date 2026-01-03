@@ -5,6 +5,7 @@
 :root {
   --background: #000000;
   --foreground: #ffffff;
+  --font-monospace: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 }
 
 :root {
@@ -106,7 +107,7 @@ body {
   font-size: 20px;
 }
 .markdown-content.monospace {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-family: var(--font-monospace);
   font-size: 12px;
 }
 
@@ -121,7 +122,7 @@ body {
   line-height: 1.25;
 }
 
-.markdown-content h1 { font-size: 2.5em; }
+.markdown-content h1 { font-size: 2em; }
 .markdown-content h2 { font-size: 1.6em; }
 .markdown-content h3 { font-size: 1.15em; }
 .markdown-content h4 { font-size: 1.05em; }
@@ -157,6 +158,11 @@ body {
   padding-left: 1.5em;
 }
 
+.markdown-content table, .markdown-content td {
+  font-family: var(--font-monospace);
+  font-size: 12px;
+}
+
 .markdown-content li {
   margin-top: 0.25em;
   margin-bottom: 0.25em;
@@ -188,7 +194,7 @@ body {
 }
 
 .text-content {
-  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
+  font-family: var(--font-monospace);
   white-space: pre-wrap;
   word-wrap: break-word;
 }
