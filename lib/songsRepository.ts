@@ -252,8 +252,8 @@ export type PaginatedSongsResult = {
   hasMore: boolean;
 };
 
-export const listSongsWithVersionsPaginated = async (options: { limit?: number; offset?: number; excludeIds?: string[] } = {}): Promise<PaginatedSongsResult> => {
-  const { limit, offset = 0, excludeIds = [] } = options;
+export const listSongsWithVersionsPaginated = async (options: { limit?: number; offset?: number; excludeIds?: string[]; maxVersions?: number } = {}): Promise<PaginatedSongsResult> => {
+  const { limit, offset = 0, excludeIds = [], maxVersions } = options;
   // Get total count first
   const countResult = await sql`
     select count(*)::int as total from songs where archived = false
@@ -308,7 +308,12 @@ export const listSongsWithVersionsPaginated = async (options: { limit?: number; 
       v.program_credits,
       v.blob_url
     from ranked_songs rs
-    left join latest_per_label v on v.song_id = rs.song_id
+    left join lateral (
+      select * from latest_per_label lpl
+      where lpl.song_id = rs.song_id
+      order by lpl.created_at desc
+      ${maxVersions !== undefined ? sql`limit ${maxVersions}` : sql``}
+    ) v on true
     order by rs.only_readme asc, rs.latest_version_at desc nulls last, v.created_at desc nulls last
   `;
   const songs = groupSongVersionRows(rows as SongVersionQueryRow[]);

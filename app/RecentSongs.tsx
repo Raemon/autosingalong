@@ -9,7 +9,7 @@ const RecentSongs = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/songs?limit=6')
+    fetch('/api/songs?limit=6&maxVersions=1')
       .then(res => res.json())
       .then(data => { setSongs(data.songs || []); setLoading(false); })
       .catch(() => setLoading(false));

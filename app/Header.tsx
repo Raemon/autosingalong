@@ -40,7 +40,7 @@ const Header = () => {
   const isChangelogPage = pathname?.includes('/changelog');
   const isAdminPage = pathname?.includes('/admin');
 
-  const headerClasses = "px-4 pt-3 pb-2 flex flex-wrap items-center justify-between print:hidden";
+  const headerClasses = "absolute top-0 left-0 right-0 z-[100] px-4 pt-3 pb-2 flex flex-wrap items-center justify-between print:hidden";
 
   const activeTextClass = 'text-white';
   const inactiveTextClass = 'text-gray-400 hover:text-white';

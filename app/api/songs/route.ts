@@ -25,11 +25,13 @@ export async function GET(request: Request) {
     const limitParam = searchParams.get('limit');
     const offsetParam = searchParams.get('offset');
     const excludeIdsParam = searchParams.get('excludeIds');
-    if (limitParam !== null || offsetParam !== null) {
+    const maxVersionsParam = searchParams.get('maxVersions');
+    if (limitParam !== null || offsetParam !== null || maxVersionsParam !== null) {
       const limit = limitParam ? parseInt(limitParam, 10) : undefined;
       const offset = offsetParam ? parseInt(offsetParam, 10) : 0;
       const excludeIds = excludeIdsParam ? excludeIdsParam.split(',').filter(Boolean) : [];
-      const result = await listSongsWithVersionsPaginated({ limit, offset, excludeIds });
+      const maxVersions = maxVersionsParam ? parseInt(maxVersionsParam, 10) : undefined;
+      const result = await listSongsWithVersionsPaginated({ limit, offset, excludeIds, maxVersions });
       return NextResponse.json(result);
     }
 

@@ -4,6 +4,7 @@ import { marked } from 'marked';
 import RecentSongs from './RecentSongs';
 import RecentPrograms from './RecentPrograms';
 import Link from 'next/link';
+import { SolsticeSeasonBanner } from './solstice-banner';
 
 const HomePage = () => {
   const [content, setContent] = useState<string>('');
@@ -19,8 +20,10 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className="p-4 w-full mx-auto flex flex-col lg:flex-row items-center lg:items-start lg:gap-36 justify-center">
-      <div className="lg:w-1/2 max-w-xl pt-8">
+    <>
+    <div className="bg-black fixed left-0 top-0 h-[100vh] w-[100vw] z-[-3]"/>
+    <div className="z-[0] flex flex-col items-center w-[50vw]">
+      <div className="max-w-xl pt-8 mx-auto ">
         <style>
           {`
           .markdown-content h1 {
@@ -32,14 +35,8 @@ const HomePage = () => {
           className="markdown-content"
           dangerouslySetInnerHTML={{ __html: marked.parse(content, { breaks: true }) as string }}
         />
-        {/* {faqContent && (
-          <div 
-            className="markdown-content mt-8"
-            dangerouslySetInnerHTML={{ __html: marked.parse(faqContent, { breaks: true }) as string }}
-          />
-        )} */}
       </div>
-      <div className="lg:w-1/2 max-w-xl flex flex-col gap-6 pb-12 pt-20">
+      <div className="max-w-xl flex flex-col gap-6 pb-12 pt-8 w-full">
         <div>
           <Link href="/songs" className="font-georgia text-white hover:text-white/80 text-3xl mb-2 pb-2 block">Songs/Speeches</Link>
           <RecentSongs />
@@ -50,6 +47,8 @@ const HomePage = () => {
         </div>
       </div>
     </div>
+    <SolsticeSeasonBanner />
+  </>
   );
 };
 

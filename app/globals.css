@@ -181,7 +181,7 @@ body {
 
 
 .markdown-content a {
-  color: var(--link);
+  color: var(--primary);
   /* text-decoration: underline; */
 }
 
