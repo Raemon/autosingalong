@@ -51,7 +51,7 @@ export const TableOfContents = ({ entries, programId }: TableOfContentsProps) =>
               <a 
                 href={`#program-${entry.program.id}`}
                 onClick={(e) => handleClick(e, entry.program.id, 'program')}
-                className={`block my-4 font-semibold ${entry.level === 0 ? 'text-2xl' : 'text-xl'} hover:underline cursor-pointer`}
+                className={`block pt-4 mt-4 font-semibold ${entry.level === 0 ? 'text-2xl' : 'text-xl'} hover:underline cursor-pointer`}
               >
                 {entry.program.title}
               </a>
@@ -71,4 +71,3 @@ export const TableOfContents = ({ entries, programId }: TableOfContentsProps) =>
     </div>
   );
 };
-

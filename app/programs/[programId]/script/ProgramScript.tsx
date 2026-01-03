@@ -3,10 +3,9 @@ import Link from 'next/link';
 import sql from '@/lib/db';
 import { getProgramById, latestProgramVersionCte } from '@/lib/programsRepository';
 import { CHORDMARK_STYLES } from '@/app/chordmark-converter/chordmarkStyles';
-import { TableOfContents } from './TableOfContents';
 import { ScrollHandler } from './ScrollHandler';
-import VersionContent from '@/app/songs/VersionContent';
 import type { SongVersion } from '@/app/songs/types';
+import ProgramScriptContent from './ProgramScriptContent';
 
 type Program = {
   id: string;
@@ -269,52 +268,11 @@ const ProgramScript = async ({ programId }: ProgramScriptProps) => {
     <div className="min-h-screen bg-white text-black flex mx-auto justify-center print:block">
       <style dangerouslySetInnerHTML={{ __html: CHORDMARK_STYLES }} />
       <ScrollHandler />
-      <div className="max-w-lg p-8 font-georgia fixed top-[50px] left-0 print:static print:max-w-none print:w-full print:top-auto print:left-auto" style={{ breakAfter: 'page' }}>
-        {tocEntries.length > 0 && (
-          <TableOfContents entries={tocEntries} programId={selectedProgram.id} />
-        )}
-      </div>
-      <div className="max-w-3xl p-8 font-georgia print:max-w-none print:w-full flex flex-col gap-8">
-        {contentEntries.map((entry) => {
-          if (entry.type === 'programHeading') {
-            return (
-              <h2
-                key={`heading-${entry.program.id}`}
-                className="text-4xl mt-8 mb-4 font-semibold"
-                id={`program-${entry.program.id}`}
-                style={{ marginLeft: entry.level * 16 }}
-              >
-                <Link href={`/programs/${entry.program.id}`} className="hover:underline">
-                  {entry.program.title}
-                </Link>
-              </h2>
-            );
-          }
-
-          if (entry.type === 'version') {
-            const { version } = entry;
-            
-            return (
-              <div 
-                key={`song-${version.id}`} 
-                className="mb-8" 
-                id={`song-${version.id}`}
-                style={{ marginLeft: entry.level * 16 }}
-              >
-                <h3 className="text-xl mb-2 font-semibold">
-                  <Link href={`/programs/${selectedProgram.id}?songId=${version.id}`} className="hover:underline">
-                    {version.songTitle}
-                  </Link>
-                </h3>
-                
-                <VersionContent version={version} print={true} />
-              </div>
-            );
-          }
-          
-          return null;
-        })}
-      </div>
+      <ProgramScriptContent 
+        programId={selectedProgram.id} 
+        contentEntries={contentEntries} 
+        tocEntries={tocEntries} 
+      />
     </div>
   );
 };

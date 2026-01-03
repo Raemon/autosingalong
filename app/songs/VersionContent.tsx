@@ -161,7 +161,7 @@ const VersionContent = ({version, print}: {
               <div className="text-content text-xs overflow-x-auto max-w-full">{version.content}</div>
             )}
             {hasContent && isMarkdownFile && (
-              <MarkdownRenderer content={version.content || ''} />
+              <MarkdownRenderer content={version.content || ''} smallText/>
             )}
             {hasContent && isUltimateGuitarFile && (
               <UgcRenderer content={version.content || ''} initialTranspose={version.transpose ?? 0} />
