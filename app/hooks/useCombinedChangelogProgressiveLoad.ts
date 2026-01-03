@@ -20,7 +20,7 @@ type UseCombinedChangelogResult = {
   loadMore: () => Promise<void>;
 };
 
-const useCombinedChangelogProgressiveLoad = (): UseCombinedChangelogResult => {
+const useCombinedChangelogProgressiveLoad = (excludeUsername?: string): UseCombinedChangelogResult => {
   const [items, setItems] = useState<CombinedChangelogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -32,11 +32,12 @@ const useCombinedChangelogProgressiveLoad = (): UseCombinedChangelogResult => {
   const [programHasMore, setProgramHasMore] = useState(true);
   const abortControllerRef = useRef<AbortController | null>(null);
   const loadedIdsRef = useRef<Set<string>>(new Set());
+  const excludeParam = excludeUsername ? `&excludeUsername=${encodeURIComponent(excludeUsername)}` : '';
 
   const fetchBoth = useCallback(async (limit: number, sOffset: number, pOffset: number, signal: AbortSignal) => {
     const [songRes, programRes] = await Promise.all([
-      fetch(`/api/changelog?limit=${limit}&offset=${sOffset}`, { signal }),
-      fetch(`/api/program-changelog?limit=${limit}&offset=${pOffset}`, { signal }),
+      fetch(`/api/changelog?limit=${limit}&offset=${sOffset}${excludeParam}`, { signal }),
+      fetch(`/api/program-changelog?limit=${limit}&offset=${pOffset}${excludeParam}`, { signal }),
     ]);
     if (!songRes.ok) throw new Error(`Failed to fetch song changelog: ${songRes.status}`);
     if (!programRes.ok) throw new Error(`Failed to fetch program changelog: ${programRes.status}`);
@@ -46,7 +47,7 @@ const useCombinedChangelogProgressiveLoad = (): UseCombinedChangelogResult => {
       songs: songData.versions as ChangelogVersion[],
       programs: programData.versions as ProgramChangelogVersion[],
     };
-  }, []);
+  }, [excludeParam]);
 
   const mergeAndSort = useCallback((songs: ChangelogVersion[], programs: ProgramChangelogVersion[]): CombinedChangelogItem[] => {
     const combined: CombinedChangelogItem[] = [
@@ -123,8 +124,8 @@ const useCombinedChangelogProgressiveLoad = (): UseCombinedChangelogResult => {
     try {
       const pageSize = FULL_BATCH_SIZE - INITIAL_BATCH_SIZE;
       const [songRes, programRes] = await Promise.all([
-        songHasMore ? fetch(`/api/changelog?limit=${pageSize}&offset=${songOffset}`, { signal }) : Promise.resolve(null),
-        programHasMore ? fetch(`/api/program-changelog?limit=${pageSize}&offset=${programOffset}`, { signal }) : Promise.resolve(null),
+        songHasMore ? fetch(`/api/changelog?limit=${pageSize}&offset=${songOffset}${excludeParam}`, { signal }) : Promise.resolve(null),
+        programHasMore ? fetch(`/api/program-changelog?limit=${pageSize}&offset=${programOffset}${excludeParam}`, { signal }) : Promise.resolve(null),
       ]);
 
       let newSongs: ChangelogVersion[] = [];
@@ -161,7 +162,7 @@ const useCombinedChangelogProgressiveLoad = (): UseCombinedChangelogResult => {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setLoadingMore(false);
     }
-  }, [loadingMore, hasMore, songOffset, programOffset, songHasMore, programHasMore, mergeAndSort]);
+  }, [loadingMore, hasMore, songOffset, programOffset, songHasMore, programHasMore, mergeAndSort, excludeParam]);
 
   useEffect(() => {
     load();
@@ -174,4 +175,3 @@ const useCombinedChangelogProgressiveLoad = (): UseCombinedChangelogResult => {
 };
 
 export default useCombinedChangelogProgressiveLoad;
-

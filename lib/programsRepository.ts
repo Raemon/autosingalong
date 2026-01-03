@@ -290,11 +290,12 @@ export type ProgramChangelogVersionRecord = {
 type ProgramChangelogOptions = {
   programId?: string;
   username?: string;
+  excludeUsername?: string;
   limit?: number;
   offset?: number;
 };
 
-export const listProgramVersionsForChangelog = async ({ programId, username, limit, offset }: ProgramChangelogOptions = {}): Promise<ProgramChangelogVersionRecord[]> => {
+export const listProgramVersionsForChangelog = async ({ programId, username, excludeUsername, limit, offset }: ProgramChangelogOptions = {}): Promise<ProgramChangelogVersionRecord[]> => {
   const rows = await sql`
     with versions_with_prev as (
       select
@@ -357,6 +358,7 @@ export const listProgramVersionsForChangelog = async ({ programId, username, lim
     where 1=1
       ${programId ? sql`and vp.program_id = ${programId}` : sql``}
       ${username ? sql`and vp.created_by = ${username}` : sql``}
+      ${excludeUsername ? sql`and vp.created_by != ${excludeUsername}` : sql``}
     order by vp.created_at desc
     ${limit ? sql`limit ${limit}` : sql``}
     ${offset ? sql`offset ${offset}` : sql``}

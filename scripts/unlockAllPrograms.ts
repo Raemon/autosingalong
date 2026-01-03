@@ -41,7 +41,7 @@ const run = async () => {
           ORDER BY program_id, created_at DESC
         )
         INSERT INTO program_versions (program_id, title, element_ids, program_ids, archived, is_subprogram, video_url, print_program_foreword, print_program_epitaph, locked, created_by)
-        SELECT lv.program_id, lv.title, lv.element_ids, lv.program_ids, lv.archived, lv.is_subprogram, lv.video_url, lv.print_program_foreword, lv.print_program_epitaph, false, 'unlock-script'
+        SELECT lv.program_id, lv.title, lv.element_ids, lv.program_ids, lv.archived, lv.is_subprogram, lv.video_url, lv.print_program_foreword, lv.print_program_epitaph, false, 'secularsolstice-import'
         FROM programs p
         JOIN latest_versions lv ON lv.program_id = p.id
         WHERE p.id = ${program.id}

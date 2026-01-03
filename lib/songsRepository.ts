@@ -727,11 +727,12 @@ type ChangelogOptions = {
   songId?: string;
   filename?: string;
   username?: string;
+  excludeUsername?: string;
   limit?: number;
   offset?: number;
 };
 
-export const listVersionsForChangelog = async ({ songId, filename, username, limit, offset }: ChangelogOptions = {}): Promise<ChangelogVersionRecord[]> => {
+export const listVersionsForChangelog = async ({ songId, filename, username, excludeUsername, limit, offset }: ChangelogOptions = {}): Promise<ChangelogVersionRecord[]> => {
   const rows = songId
     ? await sql`
         select
@@ -750,6 +751,7 @@ export const listVersionsForChangelog = async ({ songId, filename, username, lim
         where v.archived = false and s.archived = false and v.song_id = ${songId}
           ${filename ? sql`and v.label = ${filename}` : sql``}
           ${username ? sql`and v.created_by = ${username}` : sql``}
+          ${excludeUsername ? sql`and v.created_by != ${excludeUsername}` : sql``}
         order by v.created_at desc
         ${limit ? sql`limit ${limit}` : sql``}
         ${offset ? sql`offset ${offset}` : sql``}
@@ -771,6 +773,7 @@ export const listVersionsForChangelog = async ({ songId, filename, username, lim
         where v.archived = false and s.archived = false
           ${filename ? sql`and v.label = ${filename}` : sql``}
           ${username ? sql`and v.created_by = ${username}` : sql``}
+          ${excludeUsername ? sql`and v.created_by != ${excludeUsername}` : sql``}
         order by v.created_at desc
         ${limit ? sql`limit ${limit}` : sql``}
         ${offset ? sql`offset ${offset}` : sql``}
