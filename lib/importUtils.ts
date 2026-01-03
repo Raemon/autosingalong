@@ -41,50 +41,66 @@ const uploadToBlob = async (buffer: Buffer, songId: string, fileName: string): P
   return blob.url;
 };
 
+import { normalizeString, isHeaderStartingWithBy, convertHeaderToItalics } from './markdownUtils';
+
 const normalizeTitle = (name: string) => name.replace(/_/g, ' ').trim();
 
-// Strip markdown formatting from a line (headers, bold, italic, etc.)
-// Using custom stripping rather than marked library since we only need plain text from a single line
-const stripMarkdownFormatting = (line: string): string => {
-  return line
-    .replace(/^#+\s*/, '') // Remove markdown headers (#, ##, ###, etc.)
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // Extract text from links [text](url) -> text
-    .replace(/\*\*/g, '') // Remove bold (**)
-    .replace(/\*/g, '') // Remove italic/emphasis (*)
-    .replace(/__/g, '') // Remove bold (__)
-    .replace(/_/g, '') // Remove italic/emphasis (_)
-    .replace(/`/g, '') // Remove code backticks
-    .trim();
-};
-
-// Process README.md content: remove first line if it matches the song title
+// Process markdown content: remove first line if it matches the song title (same logic as processMarkdownVersions.ts)
 // Also convert "By " headers to italics
 const processReadmeContent = (content: string, songTitle: string): string => {
   if (!content) return content;
+  
   const lines = content.split('\n');
-  const firstLine = lines[0];
-  const strippedFirstLine = stripMarkdownFormatting(firstLine);
-  const normalizedSongTitle = normalizeTitle(songTitle);
-  // strippedFirstLine is already trimmed; normalizedSongTitle handles underscore→space
-  let startIdx = 0;
-  if (strippedFirstLine.toLowerCase() === normalizedSongTitle.toLowerCase()) {
-    startIdx = 1;
-    while (startIdx < lines.length && lines[startIdx].trim() === '') {
-      startIdx++;
+  let firstLineIndex = -1;
+  let firstLine: string | null = null;
+  
+  // Find first non-empty line
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i]!.trim();
+    if (trimmed.length > 0) {
+      firstLineIndex = i;
+      firstLine = trimmed;
+      break;
     }
   }
-  // Check if the new first line is a header starting with "By "
-  if (startIdx < lines.length) {
-    const newFirstLine = lines[startIdx];
-    const headerMatch = newFirstLine.match(/^#+\s*/);
-    if (headerMatch) {
-      const headerContent = newFirstLine.slice(headerMatch[0].length);
-      if (headerContent.startsWith('By ')) {
-        lines[startIdx] = `*${headerContent}*`;
+  
+  if (firstLineIndex === -1 || !firstLine) {
+    return content; // No content to process
+  }
+  
+  // Check if first line matches song title (using same normalization as processMarkdownVersions.ts)
+  const normalizedFirstLine = normalizeString(firstLine);
+  const normalizedTitle = normalizeString(songTitle);
+  
+  let shouldDeleteFirstLine = normalizedFirstLine === normalizedTitle;
+  
+  let newLines = [...lines];
+  
+  // Delete first line if needed
+  if (shouldDeleteFirstLine) {
+    newLines[firstLineIndex] = '';
+    
+    // After deletion, find next content line
+    let nextLineIndex = -1;
+    let nextLine: string | null = null;
+    for (let i = firstLineIndex + 1; i < newLines.length; i++) {
+      const trimmed = newLines[i]!.trim();
+      if (trimmed.length > 0) {
+        nextLineIndex = i;
+        nextLine = trimmed;
+        break;
+      }
+    }
+    
+    // Check if next content line is a header starting with "by "
+    if (nextLine && nextLineIndex !== -1) {
+      if (isHeaderStartingWithBy(nextLine)) {
+        newLines[nextLineIndex] = convertHeaderToItalics(nextLine);
       }
     }
   }
-  return lines.slice(startIdx).join('\n');
+  
+  return newLines.join('\n');
 };
 
 // Get text content from a file buffer, applying title stripping for .md files if applicable
