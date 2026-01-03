@@ -24,13 +24,21 @@ const HomePage = () => {
 
   return (
     <>
-    <div className="bg-black fixed left-0 top-0 h-[100vh] w-[100vw] z-[-3]"/>
+    <div className="md:bg-black fixed left-0 top-0 h-[100vh] w-[100vw] z-[-3]"/>
     <div className="z-[0] flex flex-col items-center p-10 xl:p-0 lg:w-[50vw]">
       <div className="max-w-xl pt-8 mx-auto ">
         <style>
           {`
           .markdown-content h1 {
             font-size: 3em;
+          }
+          @media (max-width: 1200px) {
+            .markdown-content h1 {
+              font-size: 2.2em;
+            }
+            .markdown-content p {
+              font-size: 1em;
+            }
           }
           `}
         </style>
