@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import type { Program } from './types';
 import ProgramItem from './ProgramItem';
+import NewProgramButton from './programBrowser/components/NewProgramButton';
 
 const ProgramsList = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -81,6 +82,7 @@ const ProgramsList = () => {
               className={`text-xs px-2 whitespace-nowrap border-l border-gray-500 ${sortOption === 'recently-updated' ? 'underline text-white' : 'text-gray-400 hover:underline'}`}
             >Recent</button>
           </div>
+          <NewProgramButton className="text-xs text-gray-400 hover:underline whitespace-nowrap" />
         </div>
         {filteredPrograms.map((program) => (
           <ProgramItem key={program.id} program={program} />

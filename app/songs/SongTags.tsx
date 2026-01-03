@@ -71,7 +71,8 @@ const SongTags = ({songId, initialTags = []}: {songId?: string; initialTags?: st
     }
   };
 
-  if (!canEdit || !songId) {
+
+  if (!songId) {
     return null;
   }
 
@@ -79,19 +80,20 @@ const SongTags = ({songId, initialTags = []}: {songId?: string; initialTags?: st
     <div className="flex items-center gap-2 mb-4">
       <div className="flex flex-wrap gap-2">
         {tags.map(tag => (
-          <span key={tag} className="text-xs px-2 py-1 bg-black text-gray-200 border border-gray-500 flex items-center gap-1">
+          <span key={tag} className="text-xs px-2 py-1 bg-black text-gray-200 border border-gray-700 flex items-center gap-1">
             {tag}
-            <button
+            {canEdit && (<button
               onClick={() => handleRemoveTag(tag)}
-              disabled={isUpdatingTags}
+              disabled={isUpdatingTags || !canEdit}
               className="text-gray-500 hover:text-gray-700 disabled:opacity-50"
             >
               ×
-            </button>
+            </button>)}
           </span>
         ))}
       </div>
-      <div className="flex gap-2 relative">
+      {canEdit && (
+        <div className="flex gap-2 relative">
         <div className="relative">
           <input
             ref={inputRef}
@@ -141,7 +143,7 @@ const SongTags = ({songId, initialTags = []}: {songId?: string; initialTags?: st
             </div>
           )}
         </div>
-      </div>
+      </div>)}
     </div>
   );
 };
