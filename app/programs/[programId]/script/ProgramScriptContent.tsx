@@ -61,7 +61,76 @@ const ProgramScriptContent = ({ programId, contentEntries, tocEntries }: Program
 
   return (
     <>
-      <div className="max-w-lg p-8 font-georgia lg:fixed lg:top-[50px] lg:left-0 lg:max-h-[calc(100vh-50px)] lg:overflow-y-auto print:static print:max-w-none print:w-full print:top-auto print:left-auto" style={{ breakAfter: 'page' }}>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          @page {
+            size: 8.5in 11in;
+            margin: 1in;
+          }
+          .print-toc-container {
+            position: static !important;
+            max-width: none !important;
+            width: 100% !important;
+            top: auto !important;
+            left: auto !important;
+            padding: 0 !important;
+            margin-bottom: 0 !important;
+            break-after: page;
+            page-break-after: always;
+          }
+          .print-content-container {
+            max-width: none !important;
+            width: 100% !important;
+            padding: 0 !important;
+            display: block !important;
+            gap: 0 !important;
+          }
+          .print-content-container > * {
+            display: block;
+          }
+          .print-top-level-program-title {
+            min-height: calc(11in - 2in);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            break-after: page;
+            page-break-after: always;
+            margin: 0 !important;
+            padding: 0;
+            font-size: 4rem;
+          }
+          .print-subprogram-title {
+            min-height: calc(11in - 2in);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            break-after: page;
+            page-break-after: always;
+            margin: 0 !important;
+            padding: 0;
+          }
+          .print-song-container {
+            break-before: page;
+            page-break-before: always;
+            break-after: page;
+            page-break-after: always;
+            min-height: calc(11in - 2in);
+            display: flex;
+            flex-direction: column;
+            margin: 0 !important;
+            padding: 0;
+          }
+          .print-song-content {
+            flex-shrink: 0;
+          }
+          .print-song-spacer {
+            flex-grow: 1;
+            flex-shrink: 1;
+            min-height: 0;
+          }
+        }
+      `}} />
+      <div className="max-w-lg p-8 font-georgia lg:fixed lg:top-[50px] lg:left-0 lg:max-h-[calc(100vh-50px)] lg:overflow-y-auto print-toc-container">
         <div className="flex gap-2 mb-4 text-sm print:hidden">
           <button onClick={() => setShowSongs(!showSongs)} className={`px-2 py-0.5 border border-black rounded-sm ${showSongs ? 'opacity-100' : 'opacity-50'}`}>
             Songs {showSongs ? '✓' : '○'}
@@ -77,15 +146,28 @@ const ProgramScriptContent = ({ programId, contentEntries, tocEntries }: Program
           <TableOfContents entries={filteredTocEntries} programId={programId} />
         )}
       </div>
-      <div className="max-w-2xl p-8 font-georgia print:max-w-none print:w-full flex flex-col gap-8">
+      <div className="max-w-2xl p-8 font-georgia print-content-container flex flex-col gap-8">
         {filteredContentEntries.map((entry) => {
+          if (entry.type === 'program') {
+            return (
+              <h1
+                key={`program-${entry.program.id}`}
+                className="text-5xl mt-8 mb-4 font-semibold print-top-level-program-title"
+                id={`program-${entry.program.id}`}
+              >
+                <Link href={`/programs/${entry.program.id}`} className="hover:underline">
+                  {entry.program.title}
+                </Link>
+              </h1>
+            );
+          }
+
           if (entry.type === 'programHeading') {
             return (
               <h2
                 key={`heading-${entry.program.id}`}
-                className="text-4xl mt-8 mb-4 font-semibold"
+                className="text-4xl mt-8 mb-4 font-semibold print-subprogram-title"
                 id={`program-${entry.program.id}`}
-                style={{ marginLeft: entry.level * 16 }}
               >
                 <Link href={`/programs/${entry.program.id}`} className="hover:underline">
                   {entry.program.title}
@@ -100,17 +182,19 @@ const ProgramScriptContent = ({ programId, contentEntries, tocEntries }: Program
             return (
               <div 
                 key={`song-${version.id}`} 
-                className="mb-8" 
+                className="mb-8 print-song-container" 
                 id={`song-${version.id}`}
-                style={{ marginLeft: entry.level * 16 }}
               >
-                <h3 className="text-xl mb-2 font-semibold">
-                  <Link href={`/programs/${programId}?songId=${version.id}`} className="hover:underline">
-                    {version.songTitle}
-                  </Link>
-                </h3>
-                
-                <VersionContent version={version} print={true} />
+                <div className="print-song-content">
+                  <h3 className="text-xl mb-2 font-semibold">
+                    <Link href={`/programs/${programId}?songId=${version.id}`} className="hover:underline">
+                      {version.songTitle}
+                    </Link>
+                  </h3>
+                  
+                  <VersionContent version={version} print={true} />
+                </div>
+                <div className="print-song-spacer"></div>
               </div>
             );
           }

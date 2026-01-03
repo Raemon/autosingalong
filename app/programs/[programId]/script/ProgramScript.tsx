@@ -262,7 +262,7 @@ const ProgramScript = async ({ programId }: ProgramScriptProps) => {
   }
 
   const tocEntries = buildProgramEntries(selectedProgram, versions, programMap, true);
-  const contentEntries = buildProgramEntries(selectedProgram, versions, programMap, false);
+  const contentEntries = buildProgramEntries(selectedProgram, versions, programMap, true);
 
   return (
     <div className="min-h-screen bg-white text-black flex mx-auto justify-center print:block">
