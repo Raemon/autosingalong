@@ -60,7 +60,7 @@ export const TableOfContents = ({ entries, programId }: TableOfContentsProps) =>
               <a 
                 href={`#song-${entry.version.id}`}
                 onClick={(e) => handleClick(e, entry.version.id, 'song')}
-                className="block hover:underline text-base cursor-pointer"
+                className={`block hover:underline text-base cursor-pointer ${entry.version.tags?.includes('speech') ? 'italic' : ''}`}
               >
                 {entry.version.songTitle}
               </a>

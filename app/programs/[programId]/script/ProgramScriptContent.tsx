@@ -4,6 +4,7 @@ import Link from 'next/link';
 import VersionContent from '@/app/songs/VersionContent';
 import { TableOfContents } from './TableOfContents';
 import type { SongVersion } from '@/app/songs/types';
+import ProgramViews from '../../programBrowser/ProgramViews';
 
 type Program = {
   id: string;
@@ -130,21 +131,26 @@ const ProgramScriptContent = ({ programId, contentEntries, tocEntries }: Program
           }
         }
       `}} />
-      <div className="max-w-lg p-8 font-georgia lg:fixed lg:top-[50px] lg:left-0 lg:max-h-[calc(100vh-50px)] lg:overflow-y-auto print-toc-container">
-        <div className="flex gap-2 mb-4 text-sm print:hidden">
+      <div className="max-w-lg p-8 lg:fixed lg:top-[50px] lg:left-0 lg:max-h-[calc(100vh-50px)] lg:overflow-y-auto print-toc-container">
+        <div className="print:hidden">
+          <ProgramViews programId={programId} currentView="script" />
+        </div>
+        <div className="flex gap-2 mb-4 text-sm print:hidden mt-4 print:hidden">
           <button onClick={() => setShowSongs(!showSongs)} className={`px-2 py-0.5 border border-black rounded-sm ${showSongs ? 'opacity-100' : 'opacity-50'}`}>
-            Songs {showSongs ? '✓' : '○'}
+            Songs
           </button>
           <button onClick={() => setShowSpeeches(!showSpeeches)} className={`px-2 py-0.5 border border-black rounded-sm ${showSpeeches ? 'opacity-100' : 'opacity-50'}`}>
-            Speeches {showSpeeches ? '✓' : '○'}
+            Speeches
           </button>
           <button onClick={() => setShowActivities(!showActivities)} className={`px-2 py-0.5 border border-black rounded-sm ${showActivities ? 'opacity-100' : 'opacity-50'}`}>
-            Activities {showActivities ? '✓' : '○'}
+            Activities
           </button>
         </div>
-        {filteredTocEntries.length > 0 && (
-          <TableOfContents entries={filteredTocEntries} programId={programId} />
-        )}
+        <div className="font-georgia">
+          {filteredTocEntries.length > 0 && (
+            <TableOfContents entries={filteredTocEntries} programId={programId} />
+          )}
+        </div>
       </div>
       <div className="max-w-2xl p-8 font-georgia print-content-container flex flex-col gap-8">
         {filteredContentEntries.map((entry) => {

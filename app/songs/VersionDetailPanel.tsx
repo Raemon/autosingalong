@@ -56,27 +56,30 @@ const VersionActionButtons = ({isCreatingVersion, version, isSubmitting, isArchi
   );
 };
 
-const VersionDetailPanel = ({songTitle, version, previousVersions = [], isCreatingVersion, newVersionForm, isSubmitting, isArchiving, error, isLoadingVersion = false, songId, tags: initialTags = [], onClose, onCreateVersionClick, onCancelCreateVersion, onFormChange, onSubmitVersion, onArchiveVersion, onTitleChange}: {
+const VersionDetailPanel = ({songTitle, version, previousVersions = [], isCreatingVersion = false, newVersionForm, isSubmitting = false, isArchiving = false, error = null, isLoadingVersion = false, songId, tags: initialTags = [], hideComments = false, hideHistory = false, hidePastUsage = false, onClose, onCreateVersionClick, onCancelCreateVersion, onFormChange, onSubmitVersion, onArchiveVersion, onTitleChange}: {
   songTitle: string;
   version: SongVersion & { songId?: string; nextVersionId?: string | null; originalVersionId?: string | null };
-  previousVersions: SongVersion[];
-  isExpandedPreviousVersions: boolean;
-  isCreatingVersion: boolean;
-  newVersionForm: { label: string; content: string; audioUrl: string; slidesMovieUrl: string; slideMovieStart: number; bpm: number; transpose: number; previousVersionId: string; nextVersionId: string; slideCredits: string; programCredits: string; blobUrl: string };
-  isSubmitting: boolean;
-  isArchiving: boolean;
-  error: string | null;
+  previousVersions?: SongVersion[];
+  isExpandedPreviousVersions?: boolean;
+  isCreatingVersion?: boolean;
+  newVersionForm?: { label: string; content: string; audioUrl: string; slidesMovieUrl: string; slideMovieStart: number; bpm: number; transpose: number; previousVersionId: string; nextVersionId: string; slideCredits: string; programCredits: string; blobUrl: string };
+  isSubmitting?: boolean;
+  isArchiving?: boolean;
+  error?: string | null;
   isLoadingVersion?: boolean;
   songId?: string;
   tags?: string[];
-  onClose: () => void;
-  onTogglePreviousVersions: () => void;
-  onVersionClick: (version: SongVersion) => void;
-  onCreateVersionClick: () => void;
-  onCancelCreateVersion: () => void;
-  onFormChange: (updates: Partial<{ label: string; content: string; audioUrl: string; slidesMovieUrl: string; slideMovieStart: number; bpm: number; transpose: number; previousVersionId: string; nextVersionId: string; slideCredits: string; programCredits: string; blobUrl: string }>) => void;
-  onSubmitVersion: () => void;
-  onArchiveVersion: () => void;
+  hideComments?: boolean;
+  hideHistory?: boolean;
+  hidePastUsage?: boolean;
+  onClose?: () => void;
+  onTogglePreviousVersions?: () => void;
+  onVersionClick?: (version: SongVersion) => void;
+  onCreateVersionClick?: () => void;
+  onCancelCreateVersion?: () => void;
+  onFormChange?: (updates: Partial<{ label: string; content: string; audioUrl: string; slidesMovieUrl: string; slideMovieStart: number; bpm: number; transpose: number; previousVersionId: string; nextVersionId: string; slideCredits: string; programCredits: string; blobUrl: string }>) => void;
+  onSubmitVersion?: () => void;
+  onArchiveVersion?: () => void;
   onTitleChange?: (newTitle: string) => void;
 }) => {
   const { canEdit } = useUser();
@@ -91,17 +94,17 @@ const VersionDetailPanel = ({songTitle, version, previousVersions = [], isCreati
 
   return (
     <div className="md:pl-4 w-full lg:p-20 relative xl:max-w-4xl mx-auto overflow-x-hidden">
-      <SongInfoHeader
+        <SongInfoHeader
         songId={songId}
         title={songTitle}
         tags={initialTags}
-        onClose={onClose}
+        onClose={onClose ?? (() => {})}
         disableClose={isCreatingVersion}
       />
       <div className="flex items-end flex-wrap justify-start sm:justify-end gap-4 sticky top-[-80px] my-4 border-b border-gray-500 pb-2">
         <div className="lg:mr-auto w-full lg:w-auto">
           <VersionHeader version={version} />
-          <PastVersionUsage versionId={version.id} />
+          {!hidePastUsage && <PastVersionUsage versionId={version.id} />}
         </div>
         <a
           href={`/songs/${songId}/${version.id}/print`}
@@ -127,10 +130,10 @@ const VersionDetailPanel = ({songTitle, version, previousVersions = [], isCreati
               isSubmitting={isSubmitting}
               isArchiving={isArchiving}
               canEdit={canEdit}
-              onSubmitVersion={onSubmitVersion}
-              onArchiveVersion={onArchiveVersion}
-              onCreateVersionClick={onCreateVersionClick}
-              onCancelCreateVersion={onCancelCreateVersion}
+              onSubmitVersion={onSubmitVersion ?? (() => {})}
+              onArchiveVersion={onArchiveVersion ?? (() => {})}
+              onCreateVersionClick={onCreateVersionClick ?? (() => {})}
+              onCancelCreateVersion={onCancelCreateVersion ?? (() => {})}
             />
           ) : (
             <Tooltip content="To edit, update your name in the top-right corner" placement="left-start">
@@ -140,21 +143,21 @@ const VersionDetailPanel = ({songTitle, version, previousVersions = [], isCreati
                 isSubmitting={isSubmitting}
                 isArchiving={isArchiving}
                 canEdit={canEdit}
-                onSubmitVersion={onSubmitVersion}
-                onArchiveVersion={onArchiveVersion}
-                onCreateVersionClick={onCreateVersionClick}
-                onCancelCreateVersion={onCancelCreateVersion}
+                onSubmitVersion={onSubmitVersion ?? (() => {})}
+                onArchiveVersion={onArchiveVersion ?? (() => {})}
+                onCreateVersionClick={onCreateVersionClick ?? (() => {})}
+                onCancelCreateVersion={onCancelCreateVersion ?? (() => {})}
               />
             </Tooltip>
           )}
       </div>
       
-      {isCreatingVersion ? (
+      {isCreatingVersion && newVersionForm ? (
         <CreateVersionForm
           form={newVersionForm}
-          onFormChange={onFormChange}
-          onSubmit={onSubmitVersion}
-          onCancel={onCancelCreateVersion}
+          onFormChange={onFormChange ?? (() => {})}
+          onSubmit={onSubmitVersion ?? (() => {})}
+          onCancel={onCancelCreateVersion ?? (() => {})}
           isSubmitting={isSubmitting || isArchiving}
           error={error}
           autosaveKey={`version-${version.id}`}
@@ -164,10 +167,10 @@ const VersionDetailPanel = ({songTitle, version, previousVersions = [], isCreati
       ) : (
         <>
           <VersionContent version={version} />
-          {songId && version.id && version.id !== 'new' && (
+          {!hideComments && songId && version.id && version.id !== 'new' && (
             <Comments songId={songId} currentVersionId={version.id} />
           )}
-          {songId && (
+          {!hideHistory && songId && (
             <div className="mt-4 pt-4 border-t border-gray-200 min-w-0 max-w-full overflow-hidden">
               <h3 className="text-xs text-gray-400 mb-2">History</h3>
               <SongChangelogList songId={songId} filename={version.label} compact />

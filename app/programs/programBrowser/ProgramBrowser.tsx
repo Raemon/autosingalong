@@ -33,6 +33,8 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
   const [pendingElementChanges, setPendingElementChanges] = useState<PendingElementChanges>({});
   const [pendingDeletions, setPendingDeletions] = useState<Set<string>>(new Set());
   const [isSavingChanges, setIsSavingChanges] = useState(false);
+  const [programVersions, setProgramVersions] = useState<SongVersion[]>([]);
+  const [isLoadingProgramVersions, setIsLoadingProgramVersions] = useState(false);
   const hasHydratedInitialVersion = useRef(false);
   const getBasePath = useCallback(
     () => (selectedProgramId ? `/programs/${selectedProgramId}` : '/programs'),
@@ -576,6 +578,56 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
     }
   }, [pathname, clearSelection]);
 
+  useEffect(() => {
+    const loadProgramVersions = async () => {
+      if (!selectedProgramId || !selectedProgram || selectedVersion || isEditingProgram) {
+        setProgramVersions([]);
+        return;
+      }
+      const collectVersionIds = (program: Program | null, visited: Set<string> = new Set()): string[] => {
+        if (!program || visited.has(program.id)) {
+          return [];
+        }
+        visited.add(program.id);
+        let ids: string[] = [...program.elementIds];
+        for (const childId of program.programIds) {
+          const childProgram = effectiveProgramMap[childId] || null;
+          ids = ids.concat(collectVersionIds(childProgram, visited));
+        }
+        visited.delete(program.id);
+        return ids;
+      };
+      const versionIds = collectVersionIds(selectedProgram);
+      if (versionIds.length === 0) {
+        setProgramVersions([]);
+        return;
+      }
+      setIsLoadingProgramVersions(true);
+      try {
+        const response = await fetch('/api/songs/versions/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ versionIds }),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to load program versions');
+        }
+        const data = await response.json();
+        const versionsMap = data.versions || {};
+        const orderedVersions = versionIds
+          .map((id) => versionsMap[id])
+          .filter((v): v is SongVersion => v !== undefined);
+        setProgramVersions(orderedVersions);
+      } catch (err) {
+        console.error('Failed to load program versions:', err);
+        setProgramVersions([]);
+      } finally {
+        setIsLoadingProgramVersions(false);
+      }
+    };
+    loadProgramVersions();
+  }, [selectedProgramId, selectedProgram, selectedVersion, isEditingProgram, effectiveProgramMap]);
+
   if (loading) {
     return (
       <div className="min-h-screen p-4">
@@ -628,7 +680,7 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
               />
             </div>
             <div className="mt-4 ml-1 mb-8">
-              <ProgramViews programId={selectedProgramId ?? ''} canEdit={canEdit} isLocked={isProgramLocked(selectedProgramId ?? '')} isEditing={isEditingProgram} hasPendingChanges={hasPendingChanges} isSaving={isSavingChanges} onEditClick={handleEditClick} onSaveClick={handleSavePendingChanges} onCancelClick={handleCancelPendingChanges} />
+              <ProgramViews programId={selectedProgramId ?? ''} currentView="overview" canEdit={canEdit} isLocked={isProgramLocked(selectedProgramId ?? '')} isEditing={isEditingProgram} hasPendingChanges={hasPendingChanges} isSaving={isSavingChanges} onEditClick={handleEditClick} onSaveClick={handleSavePendingChanges} onCancelClick={handleCancelPendingChanges} />
             </div>
             <ProgramStructurePanel
               program={selectedProgram}
@@ -682,7 +734,27 @@ const ProgramBrowser = ({ initialProgramId, initialVersionId }: ProgramBrowserPr
               />
             </div>
           ) : (
-            <div className="flex-3 flex-grow">
+            <div className="flex-3 flex-grow min-w-0">
+              {isLoadingProgramVersions ? (
+                <div className="text-gray-400 text-sm">Loading versions...</div>
+              ) : programVersions.length > 0 ? (
+                <div className="space-y-8">
+                  {programVersions.map((version) => (
+                    <VersionDetailPanel
+                      key={version.id}
+                      songTitle={(versionMap[version.id]?.songTitle || version.label || '').replace(/_/g, ' ')}
+                      version={version}
+                      songId={version.songId}
+                      tags={versionMap[version.id]?.tags || []}
+                      hideComments
+                      hideHistory
+                      hidePastUsage
+                    />
+                  ))}
+                </div>
+              ) : selectedProgramId ? (
+                <div className="text-gray-400 text-sm">No versions in this program.</div>
+              ) : null}
             </div>
           )}
         </div>

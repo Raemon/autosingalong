@@ -2,6 +2,7 @@ import { useUser } from "@/app/contexts/UserContext";
 
 type ProgramViewsProps = {
   programId: string | null;
+  currentView?: 'overview' | 'script' | 'slides' | 'program' | 'feedback';
   canEdit?: boolean;
   isLocked?: boolean;
   isEditing?: boolean;
@@ -12,21 +13,25 @@ type ProgramViewsProps = {
   onCancelClick?: () => void;
 };
 
-const ProgramViews = ({programId, canEdit, isLocked, isEditing, hasPendingChanges, isSaving, onEditClick, onSaveClick, onCancelClick}: ProgramViewsProps) => {
+const ProgramViews = ({programId, currentView, canEdit, isLocked, isEditing, hasPendingChanges, isSaving, onEditClick, onSaveClick, onCancelClick}: ProgramViewsProps) => {
   const { isAdmin } = useUser();
   const showEditControls = canEdit && (!isLocked || isAdmin);
+  const linkClass = (view: ProgramViewsProps['currentView']) => `text-sm hover:opacity-50 ${currentView !== view ? 'opacity-65' : 'underline'}`;
   return (
-    <div className="flex items-center gap-4">
-      <a href={`/programs/${programId}/program`} className="text-sm hover:opacity-50">
-        Program
+    <div className="flex items-center gap-5">
+      <a href={`/programs/${programId}`} className={linkClass('overview')}>
+        Overview
       </a>
-      <a href={`/programs/${programId}/slides`} className="text-sm hover:opacity-50">
-        Slides
-      </a>
-      <a href={`/programs/${programId}/script`} className="text-sm hover:opacity-50">
+      <a href={`/programs/${programId}/script`} className={linkClass('script')}>
         Script
       </a>
-      <a href={`/feedback/${programId}`} className="text-sm hover:opacity-50">
+      <a href={`/programs/${programId}/slides`} className={linkClass('slides')}>
+        Slides
+      </a>
+      <a href={`/programs/${programId}/program`} className={linkClass('program')}>
+        Print Program
+      </a>
+      <a href={`/feedback/${programId}`} className={linkClass('feedback')}>
         Feedback
       </a>
       {showEditControls && (isEditing ? (

@@ -9,6 +9,7 @@ import { extractLyrics } from '../../../../lib/lyricsExtractor';
 import type { Program, VersionOption, SongSlideData } from '../../types';
 import type { SongVersion } from '../../../songs/types';
 import DownloadSlidesButton from './DownloadSlidesButton';
+import ProgramViews from '../../programBrowser/ProgramViews';
 
 type ProgramSlidesProps = {
   programId: string;
@@ -441,11 +442,11 @@ const ProgramSlides = ({ programId }: ProgramSlidesProps) => {
   return (
     <>
       <video ref={videoRef} style={{display: 'none'}} crossOrigin="anonymous" />
-      {!isFullyLoaded && totalVersionsToLoad > 0 && (
-        <div className="fixed top-4 left-4 z-10 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded">
-          Loading: {loadedVersionsCount}/{totalVersionsToLoad} songs
-        </div>
-      )}
+      
+      <div className="fixed opacity-0 hover:opacity-100 top-4 left-4 z-10 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded">
+        {!isFullyLoaded && totalVersionsToLoad > 0 && (<div>Loading: {loadedVersionsCount}/{totalVersionsToLoad} songs</div>)}
+        <ProgramViews programId={programId} currentView="slides" />
+      </div>
       {isExtractingFrames && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded">
           Extracting frames from video{extractingProgramId && programMap[extractingProgramId]?.title ? ` (${programMap[extractingProgramId].title})` : ''}...
