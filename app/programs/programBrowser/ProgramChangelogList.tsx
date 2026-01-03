@@ -9,14 +9,7 @@ type ProgramChangelogListProps = {
 };
 
 const ProgramChangelogList = ({ programId }: ProgramChangelogListProps) => {
-  const { versions, loading: changelogLoading, loadingMore, error: changelogError, hasMore, loadMore, refetch: refetchChangelog } = useProgramChangelogProgressiveLoad({ programId });
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      void refetchChangelog();
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [refetchChangelog]);
+  const { versions, loading: changelogLoading, loadingMore, error: changelogError, hasMore, loadMore } = useProgramChangelogProgressiveLoad({ programId });
 
   return (
     <div className="mt-8 pt-8 border-t border-gray-700">
@@ -41,4 +34,3 @@ const ProgramChangelogList = ({ programId }: ProgramChangelogListProps) => {
 };
 
 export default ProgramChangelogList;
-
