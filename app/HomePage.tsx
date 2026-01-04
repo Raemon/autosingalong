@@ -1,9 +1,10 @@
 'use client';
+import { useState } from 'react';
 import { marked } from 'marked';
 import RecentSongs from './RecentSongs';
 import RecentPrograms from './RecentPrograms';
 import Link from 'next/link';
-import { SolsticeSeasonBanner } from './solstice-banner';
+import { GlobeBanner, type GlobeDataSource } from './solstice-banner';
 import useIsMobile from './hooks/useIsMobile';
 import type { Song } from './songs/types';
 import type { Program } from './programs/types';
@@ -17,7 +18,8 @@ type HomePageProps = {
 
 const HomePage = ({ initialSongs, initialPrograms, homeContent = '', faqContent = '' }: HomePageProps) => {
   const content = homeContent;
-  const isMobile = useIsMobile()
+  const isMobile = useIsMobile();
+  const [globeDataSource, setGlobeDataSource] = useState<GlobeDataSource>('programs');
 
   return (
     <>
@@ -53,9 +55,15 @@ const HomePage = ({ initialSongs, initialPrograms, homeContent = '', faqContent 
           <Link href="/programs" className="font-georgia text-white hover:text-white/80 text-3xl mb-2 pb-2 block">Programs</Link>
           <RecentPrograms initialPrograms={initialPrograms} />
         </div>
+        {/* Globe data source toggle (for testing) */}
+        <div className="flex gap-2 text-xs text-gray-500">
+          <span>Globe:</span>
+          <button onClick={() => setGlobeDataSource('programs')} className={globeDataSource === 'programs' ? 'underline' : 'opacity-50'}>Programs</button>
+          <button onClick={() => setGlobeDataSource('lesswrong-events')} className={globeDataSource === 'lesswrong-events' ? 'underline' : 'opacity-50'}>LW Events</button>
+        </div>
       </div>
     </div>
-    {!isMobile && <SolsticeSeasonBanner />}
+    {!isMobile && <GlobeBanner dataSource={globeDataSource} />}
   </>
   );
 };

@@ -26,7 +26,7 @@ export type SolsticeGlobePoint = {
   size: number;
   color?: string;
   eventId?: string;
-  event?: SolsticeEvent;
+  event?: SolsticeEvent | unknown; // Can be SolsticeEvent or LocationGroup
 };
 
 export type PointOfView = {
