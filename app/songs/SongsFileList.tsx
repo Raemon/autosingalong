@@ -275,7 +275,7 @@ const SongsFileList = ({ initialSongs, initialSongId, initialVersionId, initialV
       <div className="flex gap-4 justify-center px-2 md:px-0">
         {/* Song list - on small screens hide when detail is shown, on xl+ always show greyed */}
         <div ref={listContainerRef} className={`px-4 shrink-0 max-w-[650px] ${hasDetailPanel ? `hidden xl:block w-[650px] ${isCreatingVersion ? 'opacity-50' : 'opacity-50 hover:opacity-100'}` : 'flex-1 w-full'}`}>
-          <div className="flex gap-2 items-center sticky top-0 bg-[#11101b] py-4 z-10 overflow-hidden">
+          <div className="flex gap-2 items-center sticky top-0 bg-[#11101b] py-4 z-10">
             <SearchInput ref={searchInputRef} searchTerm={searchTerm} onSearchChange={setSearchTerm} />
             <div className="flex gap-0">
               <button

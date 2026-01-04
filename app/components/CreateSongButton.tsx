@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useUser } from '../contexts/UserContext';
 import useCreateSong from '../hooks/useCreateSong';
 import type { SongRecord, SongVersionRecord } from '@/lib/songsRepository';
@@ -26,7 +27,24 @@ const CreateSongButton = ({ onSongCreated, onError, defaultTags, buttonText = '+
     resetError,
   } = useCreateSong({createdBy: userName, onSongCreated, onError, defaultTags, versionLabel});
 
-  if (!canEdit) return <Tooltip content="Enter your name (top-right of screen) to create a song">
+  const closeModal = () => {
+    setIsCreatingSong(false);
+    setNewSongTitle('');
+    resetError();
+  };
+
+  useEffect(() => {
+    if (!isCreatingSong) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isCreatingSong]);
+
+  if (!canEdit) return <Tooltip content="Sign in to create a song">
     <button className="text-xs px-2 py-1 border border-gray-500 rounded-sm text-white whitespace-nowrap opacity-50" disabled={true}>{buttonText}</button>
     </Tooltip>;
 
@@ -39,7 +57,7 @@ const CreateSongButton = ({ onSongCreated, onError, defaultTags, buttonText = '+
         {buttonText}
       </button>
       {isCreatingSong && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => { setIsCreatingSong(false); setNewSongTitle(''); resetError(); }}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={closeModal}>
           <div className="p-4 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-semibold mb-3">Create New {buttonText.replace('+ ', '')}</h2>
             <input
@@ -55,7 +73,7 @@ const CreateSongButton = ({ onSongCreated, onError, defaultTags, buttonText = '+
               <div className="text-red-600 text-xs mb-3">{createSongError}</div>
             )}
             <div className="flex gap-2 justify-end">
-              <button onClick={() => { setIsCreatingSong(false); setNewSongTitle(''); resetError(); }} className="text-sm px-3 py-1">
+              <button onClick={closeModal} className="text-sm px-3 py-1">
                 Cancel
               </button>
               <button onClick={handleCreateSong} disabled={isSubmittingSong} className="text-sm px-3 py-1">
