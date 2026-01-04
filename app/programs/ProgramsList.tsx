@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { Program } from './types';
 import ProgramItem from './ProgramItem';
 import NewProgramButton from './programBrowser/components/NewProgramButton';
@@ -14,7 +15,10 @@ const ProgramsList = ({ initialPrograms }: ProgramsListProps = {}) => {
   const { programs: clientPrograms, loading: clientLoading, error } = useProgramsProgressiveLoad();
   const programs = initialPrograms || clientPrograms;
   const isLoading = initialPrograms ? false : clientLoading;
-  const [search, setSearch] = useState('');
+  const searchParams = useSearchParams();
+  const cityParam = searchParams.get('city');
+  const [search, setSearch] = useState(cityParam || '');
+  useEffect(() => { if (cityParam) setSearch(cityParam); }, [cityParam]);
   const [sortOption, setSortOption] = useState<'alphabetical' | 'recently-updated'>('recently-updated');
 
   const topLevelPrograms = useMemo(() => programs.filter((p) => !p.isSubprogram && !p.archived), [programs]);

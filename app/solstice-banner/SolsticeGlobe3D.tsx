@@ -3,6 +3,7 @@ import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { SolsticeGlobe3DProps, SolsticeGlobePoint } from './types';
 import { useGlobeDayNightMaterial, useGlobeReadyEffects, useEventListener } from './hooks';
 import { mapPointsToMarkers } from './utils';
+import { createLightBeams, setBeamHovered } from './LightBeams';
 import { DEFAULT_DAY_IMAGE_URL, DEFAULT_NIGHT_IMAGE_URL, DEFAULT_LUMINOSITY_IMAGE_URL, DEFAULT_ALTITUDE_SCALE, DEFAULT_INITIAL_ALTITUDE_MULTIPLIER, DEFAULT_NIGHT_SKY_IMAGE_URL } from './solsticeSeasonConstants';
 import { type GlobeMethods } from 'react-globe.gl';
 import dynamic from 'next/dynamic';
@@ -17,12 +18,14 @@ type GlobeMarkerData = {
   eventId?: string;
   event?: unknown;
   _index: number;
+  programCount?: number;
 };
 
 export const SolsticeGlobe3D = ({
   pointsData,
   defaultPointOfView,
   onPointClick,
+  onPointHover,
   onReady,
   onFullyLoaded,
   className,
@@ -33,6 +36,7 @@ export const SolsticeGlobe3D = ({
   luminosityImageUrl = DEFAULT_LUMINOSITY_IMAGE_URL,
   altitudeScale = DEFAULT_ALTITUDE_SCALE,
   initialAltitudeMultiplier = DEFAULT_INITIAL_ALTITUDE_MULTIPLIER,
+  markerStyle = 'pins',
 }: SolsticeGlobe3DProps) => {
   const [isGlobeReady, setIsGlobeReady] = useState(false);
   const [isFullyLoaded, setIsFullyLoaded] = useState(false);
@@ -192,7 +196,71 @@ export const SolsticeGlobe3D = ({
     }
   }, [globeMaterialRef]);
 
-  const markerData: GlobeMarkerData[] = mapPointsToMarkers(pointsData);
+  const handleObjectClick = useCallback((obj: object, event: MouseEvent) => {
+    const d = obj as GlobeMarkerData;
+    if (onPointClick && d.eventId) {
+      const solsticePoint: SolsticeGlobePoint = {
+        lat: d.lat,
+        lng: d.lng,
+        size: d.size,
+        eventId: d.eventId,
+        event: d.event,
+      };
+      const screenCoords = { x: event.clientX, y: event.clientY };
+      onPointClick(solsticePoint, screenCoords);
+    }
+  }, [onPointClick]);
+
+  const hoveredIndexRef = useRef<number | null>(null);
+  const lastMousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const trackMouse = (e: MouseEvent) => {
+      lastMousePosRef.current = { x: e.clientX, y: e.clientY };
+    };
+    window.addEventListener('mousemove', trackMouse);
+    return () => window.removeEventListener('mousemove', trackMouse);
+  }, []);
+
+  const handleObjectHover = useCallback((obj: object | null) => {
+    if (hoveredIndexRef.current !== null) {
+      setBeamHovered(hoveredIndexRef.current, false);
+    }
+    if (obj) {
+      const d = obj as GlobeMarkerData;
+      setBeamHovered(d._index, true);
+      hoveredIndexRef.current = d._index;
+      setIsHoveringMarker(true);
+      if (onPointHover && d.eventId) {
+        const solsticePoint: SolsticeGlobePoint = {
+          lat: d.lat,
+          lng: d.lng,
+          size: d.size,
+          eventId: d.eventId,
+          event: d.event,
+        };
+        onPointHover(solsticePoint, lastMousePosRef.current);
+      }
+    } else {
+      hoveredIndexRef.current = null;
+      setIsHoveringMarker(false);
+      if (onPointHover) {
+        onPointHover(null, null);
+      }
+    }
+  }, [onPointHover]);
+
+  const markerData: GlobeMarkerData[] = useMemo(() => {
+    const baseMarkers = mapPointsToMarkers(pointsData);
+    return baseMarkers.map(marker => {
+      const event = marker.event;
+      let programCount = 1;
+      if (event && typeof event === 'object' && 'programs' in event && Array.isArray((event as {programs: unknown[]}).programs)) {
+        programCount = (event as {programs: unknown[]}).programs.length;
+      }
+      return { ...marker, programCount };
+    });
+  }, [pointsData]);
 
   const renderHtmlElement = useCallback((obj: object): HTMLElement => {
     const d = obj as GlobeMarkerData;
@@ -214,6 +282,7 @@ export const SolsticeGlobe3D = ({
     
     return el;
   }, []);
+
   
   const htmlAltitude = useCallback((obj: object): number => {
     const d = obj as GlobeMarkerData;
@@ -245,10 +314,19 @@ export const SolsticeGlobe3D = ({
           animateIn={true}
           polygonsTransitionDuration={0}
           polygonAltitude={0.03}
-          htmlElementsData={markerData}
+          htmlElementsData={markerStyle === 'pins' ? markerData : []}
           htmlLat={(d) => (d as GlobeMarkerData).lat}
+          htmlLng={(d) => (d as GlobeMarkerData).lng}
           htmlAltitude={htmlAltitude}
           htmlElement={renderHtmlElement}
+          objectsData={markerStyle === 'beams' ? markerData : []}
+          objectThreeObject={markerStyle === 'beams' ? createLightBeams : undefined}
+          objectLat={(d: object) => (d as GlobeMarkerData).lat}
+          objectLng={(d: object) => (d as GlobeMarkerData).lng}
+          objectAltitude={() => 0.01}
+          objectFacesSurfaces={() => true}
+          onObjectClick={handleObjectClick}
+          onObjectHover={handleObjectHover}
           showAtmosphere={true}
           atmosphereColor="rgb(206, 233, 255)"
           atmosphereAltitude={0.15}

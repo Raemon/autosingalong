@@ -36,11 +36,15 @@ export type PointOfView = {
 };
 
 export type PointClickCallback = (point: SolsticeGlobePoint, screenCoords: { x: number; y: number }) => void;
+export type PointHoverCallback = (point: SolsticeGlobePoint | null, screenCoords: { x: number; y: number } | null) => void;
+
+export type MarkerStyle = 'pins' | 'beams';
 
 export type SolsticeGlobe3DProps = {
   pointsData: Array<SolsticeGlobePoint>;
   defaultPointOfView: PointOfView;
   onPointClick?: PointClickCallback;
+  onPointHover?: PointHoverCallback;
   onReady?: () => void;
   onFullyLoaded?: () => void;
   onFpsChange?: (fps: number) => void;
@@ -52,4 +56,5 @@ export type SolsticeGlobe3DProps = {
   luminosityImageUrl?: string;
   altitudeScale?: number;
   initialAltitudeMultiplier?: number;
+  markerStyle?: MarkerStyle;
 }

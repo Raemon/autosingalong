@@ -1,7 +1,8 @@
 'use client';
 import React, { useState, useMemo, useCallback, useRef, useEffect, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import SolsticeGlobe3D from './SolsticeGlobe3D';
-import { SolsticeGlobePoint, SolsticeEvent } from './types';
+import { SolsticeGlobePoint, SolsticeEvent, MarkerStyle } from './types';
 import { GlobePopup } from './GlobePopup';
 import { ProgramsPopup } from './ProgramsPopup';
 import type { ProgramWithLocation } from '../../lib/programLocations';
@@ -23,6 +24,7 @@ type GlobeBannerProps = {
 };
 
 function GlobeBannerInner({ dataSource = 'lesswrong-events' }: GlobeBannerProps) {
+  const router = useRouter();
   const [shouldRender, setShouldRender] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [popupCoords, setPopupCoords] = useState<{ x: number; y: number } | null>(null);
@@ -144,6 +146,8 @@ function GlobeBannerInner({ dataSource = 'lesswrong-events' }: GlobeBannerProps)
     }
   }, [dataSource, solsticeEvents, locationGroups]);
 
+  const [isPinned, setIsPinned] = useState(false);
+
   const handleMarkerClick = useCallback((event?: React.MouseEvent<HTMLDivElement>, markerId?: string, screenCoords?: { x: number; y: number }) => {
     event?.stopPropagation();
     event?.preventDefault();
@@ -151,6 +155,7 @@ function GlobeBannerInner({ dataSource = 'lesswrong-events' }: GlobeBannerProps)
       markerClickInProgressRef.current = true;
       setSelectedId(markerId);
       setPopupCoords(screenCoords || { x: window.innerWidth / 2, y: window.innerHeight / 2 });
+      setIsPinned(true);
       setTimeout(() => {
         markerClickInProgressRef.current = false;
       }, 0);
@@ -158,9 +163,21 @@ function GlobeBannerInner({ dataSource = 'lesswrong-events' }: GlobeBannerProps)
       if (!markerClickInProgressRef.current) {
         setSelectedId(null);
         setPopupCoords(null);
+        setIsPinned(false);
       }
     }
   }, []);
+
+  const handleMarkerHover = useCallback((point: SolsticeGlobePoint | null, screenCoords: { x: number; y: number } | null) => {
+    if (isPinned) return;
+    if (point && point.eventId && screenCoords) {
+      setSelectedId(point.eventId);
+      setPopupCoords(screenCoords);
+    } else {
+      setSelectedId(null);
+      setPopupCoords(null);
+    }
+  }, [isPinned]);
 
   if (isHidden || !shouldRender) {
     return null;
@@ -192,9 +209,18 @@ function GlobeBannerInner({ dataSource = 'lesswrong-events' }: GlobeBannerProps)
         <SolsticeGlobe3D 
           pointsData={pointsData}
           defaultPointOfView={defaultPointOfView}
-          onPointClick={(point: SolsticeGlobePoint, screenCoords: { x: number; y: number }) => handleMarkerClick(undefined, point.eventId, screenCoords)}
+          onPointClick={(point: SolsticeGlobePoint) => {
+            if (dataSource === 'programs') {
+              const group = point.event as { city: string } | undefined;
+              if (group?.city) router.push(`/programs?city=${encodeURIComponent(group.city)}`);
+            } else {
+              handleMarkerClick(undefined, point.eventId, { x: window.innerWidth / 2, y: window.innerHeight / 2 });
+            }
+          }}
+          onPointHover={handleMarkerHover}
           onClick={(event) => handleMarkerClick(event, undefined)}
           style={{ width: '100%', height: '100%' }}
+          markerStyle={(dataSource === 'programs' ? 'beams' : 'pins') as MarkerStyle}
         />
         
         {/* LessWrong event popup */}
