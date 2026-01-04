@@ -169,7 +169,7 @@ export const createLightBeams = (obj: object): THREE.Object3D => {
     baseSphereBaseOpacity: 0.6,
     opacityPhase: Math.random() * Math.PI * 2,
     heightPhase: Math.random() * Math.PI * 4,
-    heightSpeed: 0.2 + Math.random() * 1,
+    heightSpeed: 0.2 + Math.random() * 1.5,
     isHovered: false,
   };
   pulsingBeams.push(pulsingBeam);

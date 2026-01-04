@@ -11,7 +11,6 @@ export const CITY_COORDINATES: Record<string, CityCoordinates> = {
   'Seattle': { lat: 47.6062, lng: -122.3321 },
   'Portland': { lat: 45.5152, lng: -122.6784 },
   'Bay': { lat: 37.8716, lng: -122.2727 }, // Berkeley
-  'Bay Outdoor': { lat: 37.8716, lng: -122.2727 }, // Berkeley
   'Austin': { lat: 30.2672, lng: -97.7431 },
   'Frankfurt': { lat: 50.1109, lng: 8.6821 },
   'Montreal': { lat: 45.5017, lng: -73.5673 },
@@ -20,17 +19,18 @@ export const CITY_COORDINATES: Record<string, CityCoordinates> = {
 };
 
 // Extract city name from program title
-// Matches patterns like "NYC 2024" or "Washington DC 2023 - subtitle"
+// Matches patterns like "NYC 2024" or "Washington DC 2023 - subtitle" or "Bay Winter Solstice 2025"
 export function extractCityFromTitle(title: string): string | null {
-  // Match city name followed by year (4 digits)
-  const match = title.match(/^(.+?)\s+\d{4}/);
-  if (!match) return null;
+  // Check if any city name appears in the title (case-insensitive)
+  // Verify there's a year in the title
+  if (!/\b(20\d{2})\b/.test(title)) return null;
   
-  const cityPart = match[1].trim();
-  // Check if this city exists in our mapping
-  if (CITY_COORDINATES[cityPart]) {
-    return cityPart;
+  for (const cityName of Object.keys(CITY_COORDINATES)) {
+    if (title.toLowerCase().includes(cityName.toLowerCase())) {
+      return cityName;
+    }
   }
+  
   return null;
 }
 
