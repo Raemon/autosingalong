@@ -1,25 +1,15 @@
 'use client';
-import { useEffect, useState } from 'react';
 import { marked } from 'marked';
 import RecentSongs from './RecentSongs';
 import RecentPrograms from './RecentPrograms';
 import Link from 'next/link';
 import { SolsticeSeasonBanner } from './solstice-banner';
 import useIsMobile from './hooks/useIsMobile';
+import useStaticMarkdown from './hooks/useStaticMarkdown';
 
 const HomePage = () => {
-  const [content, setContent] = useState<string>('');
-  const [faqContent, setFaqContent] = useState<string>('');
-
-  useEffect(() => {
-    fetch('/home.md')
-      .then(res => res.text())
-      .then(text => setContent(text));
-    fetch('/faq.md')
-      .then(res => res.text())
-      .then(text => setFaqContent(text));
-  }, []);
-
+  const { content } = useStaticMarkdown('/home.md');
+  const { content: faqContent } = useStaticMarkdown('/faq.md');
   const isMobile = useIsMobile()
 
   return (

@@ -45,12 +45,13 @@ const VersionRow = ({version, songId, isSelected}: {version: SongVersion; songId
   );
 };
 
-const SongItem = ({song, selectedSongId, selectedVersionId, showTags = true, maxVersions}: {
+const SongItem = ({song, selectedSongId, selectedVersionId, showTags = true, maxVersions, sortReadmeFirst = true}: {
   song: Song;
   selectedSongId?: string;
   selectedVersionId?: string;
   showTags?: boolean;
   maxVersions?: number;
+  sortReadmeFirst?: boolean;
 }) => {
   const tagsMinusSong = song.tags.filter(tag => tag !== 'song');
   const isSongSelected = selectedSongId === song.id && !selectedVersionId;
@@ -60,8 +61,11 @@ const SongItem = ({song, selectedSongId, selectedVersionId, showTags = true, max
   const mostRecentVersions = map(versionsByLabel, versions => 
     versions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]
   ).sort((a, b) => {
-    if (a.label === 'README.md' && b.label !== 'README.md') return -1;
-    if (a.label !== 'README.md' && b.label === 'README.md') return 1;
+    if (sortReadmeFirst) {
+      if (a.label === 'README.md' && b.label !== 'README.md') return -1;
+      if (a.label !== 'README.md' && b.label === 'README.md') return 1;
+      return 0;
+    }
     return 0;
   });
 

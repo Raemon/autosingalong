@@ -1,36 +1,15 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Program } from './types';
 import ProgramItem from './ProgramItem';
 import NewProgramButton from './programBrowser/components/NewProgramButton';
+import useProgramsProgressiveLoad from '../hooks/useProgramsProgressiveLoad';
 
 const ProgramsList = () => {
-  const [programs, setPrograms] = useState<Program[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { programs, loading: isLoading, error } = useProgramsProgressiveLoad();
   const [search, setSearch] = useState('');
   const [sortOption, setSortOption] = useState<'alphabetical' | 'recently-updated'>('recently-updated');
-
-  useEffect(() => {
-    const loadPrograms = async () => {
-      try {
-        const response = await fetch('/api/programs');
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Failed to load programs');
-        }
-        const data = await response.json();
-        setPrograms(data.programs || []);
-      } catch (err) {
-        console.error('Failed to load programs:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load programs');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadPrograms();
-  }, []);
 
   const topLevelPrograms = useMemo(() => programs.filter((p) => !p.isSubprogram && !p.archived), [programs]);
 
