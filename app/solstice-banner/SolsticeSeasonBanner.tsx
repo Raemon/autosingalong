@@ -7,48 +7,51 @@ import { GlobePopup } from './GlobePopup';
 
 const MIN_BANNER_WIDTH = 1100;
 
-// Sample events - you can replace these with real data from your API
-const SAMPLE_EVENTS: SolsticeEvent[] = [
-  {
-    _id: 'berkeley-2025',
-    title: 'Berkeley Solstice Megameetup',
-    startTime: '2025-12-06T18:00:00',
-    location: 'Lighthaven, Berkeley CA',
-    url: 'https://waypoint.lighthaven.space/solstice-season'
-  },
-  {
-    _id: 'nyc-2025',
-    title: 'NYC Solstice Megameetup',
-    startTime: '2025-12-20T18:00:00',
-    location: 'New York City',
-    url: 'https://rationalistmegameetup.com/'
-  }
-];
-
 function SolsticeSeasonBannerInner() {
   const [shouldRender, setShouldRender] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [popupCoords, setPopupCoords] = useState<{ x: number; y: number } | null>(null);
   const markerClickInProgressRef = useRef(false);
   const [isHidden, setIsHidden] = useState(false);
+  const [solsticeEvents, setSolsticeEvents] = useState<SolsticeEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
     const checkWidth = () => {
       setShouldRender(window.innerWidth >= MIN_BANNER_WIDTH);
     };
-    
     checkWidth();
     window.addEventListener('resize', checkWidth);
     return () => window.removeEventListener('resize', checkWidth);
   }, []);
 
-  const events = useMemo(() => SAMPLE_EVENTS.map((event) => ({
-    _id: event._id,
-    lat: event._id === 'berkeley-2025' ? 37.87 : 40.71,
-    lng: event._id === 'berkeley-2025' ? -122.27 : -74.01,
-  })), []);
+  useEffect(() => {
+    async function fetchEvents() {
+      try {
+        const response = await fetch('/api/solstice-events');
+        if (!response.ok) throw new Error('Failed to fetch events');
+        const data = await response.json();
+        const events: SolsticeEvent[] = (data.events || []).map((event: SolsticeEvent & { pageUrl?: string }) => ({
+          _id: event._id,
+          title: event.title,
+          startTime: event.startTime,
+          endTime: event.endTime,
+          location: event.googleLocation?.formatted_address || event.location,
+          url: event.pageUrl || `https://www.lesswrong.com/events/${event._id}`,
+          lat: event.googleLocation?.geometry?.location?.lat,
+          lng: event.googleLocation?.geometry?.location?.lng,
+          googleLocation: event.googleLocation,
+        }));
+        setSolsticeEvents(events);
+      } catch (error) {
+        console.error('Error fetching solstice events:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchEvents();
+  }, []);
 
   const defaultPointOfView = useMemo(() => ({
     lat: 20,
@@ -61,18 +64,20 @@ function SolsticeSeasonBannerInner() {
   }, []);
 
   const selectedEvent = useMemo(() => {
-    return SAMPLE_EVENTS.find((event) => event._id === selectedEventId);
-  }, [selectedEventId]);
+    return solsticeEvents.find((event) => event._id === selectedEventId);
+  }, [selectedEventId, solsticeEvents]);
 
   const pointsData = useMemo(() => {
-    return events.map((event) => ({
-      lat: event.lat,
-      lng: event.lng,
-      size: 0.5,
-      eventId: event._id,
-      event: SAMPLE_EVENTS.find(e => e._id === event._id),
-    }));
-  }, [events]);
+    return solsticeEvents
+      .filter((event) => event.lat !== undefined && event.lng !== undefined)
+      .map((event) => ({
+        lat: event.lat!,
+        lng: event.lng!,
+        size: 0.5,
+        eventId: event._id,
+        event: event,
+      }));
+  }, [solsticeEvents]);
 
   const handleMeetupClick = useCallback((event?: React.MouseEvent<HTMLDivElement>, eventId?: string, screenCoords?: { x: number; y: number }) => {
     event?.stopPropagation();
