@@ -39,20 +39,32 @@ export const createDayNightShaderMaterial = (contrast: number, brightness: numbe
           rotatedUv.x = mod(vUv.x + textureRotation / (2.0 * PI), 1.0);
         }
         
-        float longitude = (rotatedUv.x - 0.5) * 360.0;
+        // Convert UV to spherical coordinates (lat/lng in radians)
+        // In THREE.js UV: y=1 is top (North Pole), y=0 is bottom (South Pole)
+        float pointLng = (rotatedUv.x - 0.5) * 2.0 * PI - globeRotation.x * PI / 180.0;
+        float pointLat = (rotatedUv.y - 0.5) * PI;
         
-        float adjustedLongitude = longitude - globeRotation.x;
+        // Sun position in radians (sunPosition.x = lng, sunPosition.y = lat)
+        float sunLng = (sunPosition.x + 90.0) * PI / 180.0;
+        float sunLat = sunPosition.y * PI / 180.0;
         
-        float sunLongitude = sunPosition.x + 90.0;
+        // Convert both to 3D unit vectors
+        vec3 pointDir = vec3(
+          cos(pointLat) * cos(pointLng),
+          sin(pointLat),
+          cos(pointLat) * sin(pointLng)
+        );
+        vec3 sunDir = vec3(
+          cos(sunLat) * cos(sunLng),
+          sin(sunLat),
+          cos(sunLat) * sin(sunLng)
+        );
         
-        float lonDiff = adjustedLongitude - sunLongitude;
-        if (lonDiff > 180.0) lonDiff -= 360.0;
-        if (lonDiff < -180.0) lonDiff += 360.0;
+        // Dot product gives cosine of angle between surface point and sun direction
+        float dotProduct = dot(pointDir, sunDir);
         
-        float angleFromSun = abs(lonDiff);
-        
-        float rawBlend = cos(angleFromSun * PI / 180.0);
-        float blendFactor = smoothstep(-0.1, 0.1, rawBlend);
+        // Smooth transition at terminator
+        float blendFactor = smoothstep(-0.1, 0.1, dotProduct);
         
         vec4 dayColor = texture2D(dayTexture, rotatedUv);
         vec4 nightColor = texture2D(nightTexture, rotatedUv);

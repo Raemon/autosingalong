@@ -9,4 +9,4 @@ export const DEFAULT_NIGHT_SKY_IMAGE_URL = "https://res.cloudinary.com/lesswrong
 
 export const DEFAULT_ALTITUDE_SCALE = 0.099;
 export const DEFAULT_INITIAL_ALTITUDE_MULTIPLIER = 1;
-export const DEFAULT_SUN_POSITION = { lat: 0, lng: 30 };
+export const DEFAULT_SUN_POSITION = { lat: -23.4, lng: 30 };
