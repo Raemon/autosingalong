@@ -3,20 +3,9 @@
 import Link from 'next/link';
 import type { Song, SongVersion } from './types';
 import MyTooltip from '@/app/components/Tooltip';
+import HighlightMatch from '@/app/components/HighlightMatch';
 import { formatRelativeTimestamp } from '@/lib/dateUtils';
 import { groupBy, map } from 'lodash';
-
-const HighlightMatch = ({text, searchTerm}: {text: string; searchTerm?: string}) => {
-  if (!searchTerm || searchTerm.trim() === '') return <>{text}</>;
-  const searchLower = searchTerm.toLowerCase();
-  const textLower = text.toLowerCase();
-  const index = textLower.indexOf(searchLower);
-  if (index === -1) return <>{text}</>;
-  const before = text.slice(0, index);
-  const match = text.slice(index, index + searchTerm.length);
-  const after = text.slice(index + searchTerm.length);
-  return <>{before}<span className="text-white underline">{match}</span>{after}</>;
-};
 
 const formatDate = (dateStr: string) => {
   const date = new Date(dateStr);
@@ -30,8 +19,17 @@ const TruncatedFilename = ({label, className, searchTerm}: {label: string; class
   const name = label.slice(0, lastDot);
   const ext = label.slice(lastDot);
   const tailChars = 5;
-  const nameTail = name.slice(-tailChars);
-  const nameHead = name.slice(0, -tailChars);
+  if (name.length <= tailChars) return <span className={`truncate ${className}`}><HighlightMatch text={label} searchTerm={searchTerm} /></span>;
+  const splitIndex = name.length - tailChars;
+  // If search term spans the split boundary, show full label without truncation
+  if (searchTerm && searchTerm.trim()) {
+    const matchIndex = label.toLowerCase().indexOf(searchTerm.toLowerCase());
+    if (matchIndex !== -1 && matchIndex < splitIndex && matchIndex + searchTerm.length > splitIndex) {
+      return <span className={`truncate ${className}`}><HighlightMatch text={label} searchTerm={searchTerm} /></span>;
+    }
+  }
+  const nameHead = name.slice(0, splitIndex);
+  const nameTail = name.slice(splitIndex);
   return (
     <span className={`flex min-w-0 ${className}`}>
       <span className="truncate"><HighlightMatch text={nameHead} searchTerm={searchTerm} /></span>
